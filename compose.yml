@@ -1,0 +1,21 @@
+# Erlangly with Docker Compose: the same container `erlangly install` runs.
+#
+#   docker compose up -d                 then open http://your-server
+#   docker compose pull && docker compose up -d     to upgrade
+#
+# The `erlangly` command adds safer upgrades (automatic rollback), backups and restores; with
+# Compose, back up with `docker compose exec erlangly bin/backup > erlangly.tar.gz`.
+services:
+  erlangly:
+    image: ghcr.io/erlangly/erlangly:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      # - "443:443"                 # with TLS_DOMAIN below
+    # environment:
+    #   TLS_DOMAIN: wfm.example.com  # HTTPS with a Let's Encrypt certificate for this domain
+    volumes:
+      - erlangly:/rails/storage
+
+volumes:
+  erlangly:

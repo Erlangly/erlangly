@@ -1,0 +1,232 @@
+#!/bin/bash
+# The erlangly command: runs and looks after a self-hosted Erlangly install.
+# Installed to /usr/local/bin/erlangly by install.sh. Settings live in /etc/erlangly/erlangly.conf.
+set -euo pipefail
+
+CONF=/etc/erlangly/erlangly.conf
+CONTAINER=erlangly
+VOLUME=erlangly
+BACKUPS=/var/backups/erlangly
+
+usage() {
+  cat <<USAGE
+Usage: erlangly <command>
+
+  status              Is Erlangly up, which version, and where to reach it
+  logs [-f]           Show the app's log (-f to follow it)
+  restart             Restart Erlangly
+  upgrade [tag]       Install the latest release (or a given tag); rolls back if it doesn't come up
+  rollback            Go back to the previous version and the data from just before the upgrade
+  backup [directory]  Save all data to a .tar.gz (default $BACKUPS)
+  restore <file>      Replace all data with a backup (stops Erlangly while it restores)
+  version             Show the installed version
+
+  schedule [DATE] [--lob CODE] [--json]   Published shifts on a day (default today)
+  volumes import FILE.csv                 Import volume history
+  timeoff [--all]                         Time off waiting for a decision (--all: coming up)
+  timeoff approve|decline ID [NOTE]       Decide a time-off request
+
+Settings: $CONF (TLS_DOMAIN, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE, ERLANGLY_TAG)
+USAGE
+}
+
+say() { printf '\033[1m%s\033[0m\n' "$*"; }
+fail() { printf 'erlangly: %s\n' "$*" >&2; exit 1; }
+
+load_settings() {
+  # shellcheck source=/dev/null
+  [ -f "$CONF" ] && . "$CONF"
+  ERLANGLY_IMAGE=${ERLANGLY_IMAGE:-ghcr.io/erlangly/erlangly}
+  ERLANGLY_TAG=${ERLANGLY_TAG:-latest}
+  ERLANGLY_HTTP_PORT=${ERLANGLY_HTTP_PORT:-80}
+  ERLANGLY_HTTPS_PORT=${ERLANGLY_HTTPS_PORT:-443}
+  TLS_DOMAIN=${TLS_DOMAIN:-}
+}
+
+save_settings() {
+  mkdir -p "$(dirname "$CONF")"
+  cat > "$CONF" <<SETTINGS
+# Erlangly settings. Run \`erlangly restart\` after changing them.
+ERLANGLY_IMAGE=$ERLANGLY_IMAGE
+ERLANGLY_TAG=$ERLANGLY_TAG
+ERLANGLY_HTTP_PORT=$ERLANGLY_HTTP_PORT
+ERLANGLY_HTTPS_PORT=$ERLANGLY_HTTPS_PORT
+TLS_DOMAIN=$TLS_DOMAIN
+SETTINGS
+}
+
+# Pulls the release (or loads ERLANGLY_IMAGE_TAR) and tags it erlangly:new.
+fetch_image() {
+  local tag=${1:-$ERLANGLY_TAG} ref
+  if [ -n "${ERLANGLY_IMAGE_TAR:-}" ]; then
+    ref=$(docker load -i "$ERLANGLY_IMAGE_TAR" | sed -n 's/^Loaded image: //p' | tail -n 1)
+    [ -n "$ref" ] || fail "no image found in $ERLANGLY_IMAGE_TAR"
+  else
+    ref="$ERLANGLY_IMAGE:$tag"
+    # A private registry (before launch, or a customer's own mirror) needs a read-only token.
+    if [ -n "${ERLANGLY_REGISTRY_TOKEN:-}" ]; then
+      echo "$ERLANGLY_REGISTRY_TOKEN" | docker login "${ERLANGLY_IMAGE%%/*}" -u "${ERLANGLY_REGISTRY_USER:-erlangly}" --password-stdin > /dev/null 2>&1 ||
+        fail "couldn't sign in to ${ERLANGLY_IMAGE%%/*}"
+    fi
+    docker pull --quiet "$ref" > /dev/null || fail "couldn't download $ref"
+    # Don't leave the registry token on the server; the next upgrade passes it again.
+    [ -z "${ERLANGLY_REGISTRY_TOKEN:-}" ] || docker logout "${ERLANGLY_IMAGE%%/*}" > /dev/null
+  fi
+  docker tag "$ref" erlangly:new
+}
+
+image_version() {
+  docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$1" 2>/dev/null || echo unknown
+}
+
+start_container() {
+  local image=$1 tls=()
+  [ -n "$TLS_DOMAIN" ] && tls=(-p "$ERLANGLY_HTTPS_PORT:443" -e "TLS_DOMAIN=$TLS_DOMAIN")
+  docker rm -f "$CONTAINER" > /dev/null 2>&1 || true
+  docker run -d --name "$CONTAINER" --restart unless-stopped \
+    -p "$ERLANGLY_HTTP_PORT:80" "${tls[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
+}
+
+since() { awk -v started="$1" -v now="$(date +%s.%N)" 'BEGIN { printf "%.1f", now - started }'; }
+
+up() { docker exec "$CONTAINER" curl -fsS -o /dev/null http://localhost:3000/up > /dev/null 2>&1; }
+
+# Waits for the app to answer /up. Gives up after $1 seconds, or once it has crashed 3 times.
+wait_until_up() {
+  local limit=${1:-120} started=$SECONDS
+  until up; do
+    (( SECONDS - started < limit )) || return 1
+    (( $(docker inspect -f '{{.RestartCount}}' "$CONTAINER") < 3 )) || return 1
+    sleep 0.25
+  done
+}
+
+url() {
+  if [ -n "$TLS_DOMAIN" ]; then echo "https://$TLS_DOMAIN"; return; fi
+  local host
+  host=$(hostname -I 2>/dev/null | awk '{print $1}')
+  echo "http://${host:-localhost}$([ "$ERLANGLY_HTTP_PORT" = 80 ] || echo ":$ERLANGLY_HTTP_PORT")"
+}
+
+cmd_install() {
+  if docker container inspect "$CONTAINER" > /dev/null 2>&1; then
+    fail "Erlangly is already installed. Use \`erlangly upgrade\` for a new version, or \`erlangly status\`."
+  fi
+  save_settings
+  say "Downloading Erlangly…"
+  fetch_image
+  docker tag erlangly:new erlangly:current && docker rmi erlangly:new > /dev/null
+  say "Starting Erlangly $(image_version erlangly:current)…"
+  start_container erlangly:current
+  wait_until_up 120 || { docker logs --tail 40 "$CONTAINER" >&2; fail "Erlangly didn't start; the log is above"; }
+  say "Erlangly is running at $(url)  (installed in $(( $(date +%s) - ${ERLANGLY_INSTALL_STARTED:-$(date +%s)} )) s)"
+  echo "Manage it with: erlangly status | logs | upgrade | backup"
+}
+
+cmd_status() {
+  local state
+  state=$(docker inspect -f '{{.State.Status}}' "$CONTAINER" 2>/dev/null) || fail "Erlangly isn't installed"
+  if [ "$state" = running ]; then up && state="up" || state="running, but not answering yet"; fi
+  echo "Erlangly $(image_version erlangly:current): $state"
+  echo "URL:     $(url)"
+  echo "Data:    docker volume $VOLUME ($(docker run --rm -v "$VOLUME:/data" --entrypoint du erlangly:current -sh /data | cut -f1))"
+  if docker image inspect erlangly:previous > /dev/null 2>&1; then
+    echo "Previous version $(image_version erlangly:previous) kept for \`erlangly rollback\`"
+  fi
+}
+
+cmd_restart() {
+  local started
+  started=$(date +%s.%N)
+  start_container erlangly:current
+  wait_until_up 120 || fail "Erlangly didn't come back up; see \`erlangly logs\`"
+  say "Erlangly is up at $(url) ($(since "$started") s)"
+}
+
+cmd_upgrade() {
+  local from to older started
+  started=$(date +%s.%N)
+  say "Downloading ${1:-the latest release}…"
+  fetch_image "${1:-}"
+  from=$(image_version erlangly:current) to=$(image_version erlangly:new)
+  if [ "$(docker image inspect -f '{{.Id}}' erlangly:new)" = "$(docker image inspect -f '{{.Id}}' erlangly:current)" ]; then
+    docker rmi erlangly:new > /dev/null; say "Erlangly $from is already the latest"; return
+  fi
+
+  say "Upgrading $from → $to (your data is snapshotted first)…"
+  older=$(docker image inspect -f '{{.Id}}' erlangly:previous 2>/dev/null || true)
+  docker tag erlangly:current erlangly:previous
+  docker tag erlangly:new erlangly:current && docker rmi erlangly:new > /dev/null
+  start_container erlangly:current
+  if wait_until_up 180; then
+    say "Erlangly $to is up at $(url) ($(since "$started") s). \`erlangly rollback\` goes back to $from."
+  else
+    docker logs --tail 40 "$CONTAINER" >&2 || true
+    say "Erlangly $to didn't start (log above). Rolling back to $from…"
+    cmd_rollback
+    [ -z "$older" ] || docker tag "$older" erlangly:previous
+    exit 1
+  fi
+}
+
+cmd_rollback() {
+  docker image inspect erlangly:previous > /dev/null 2>&1 || fail "there's no previous version to go back to"
+  local to snapshot
+  to=$(image_version erlangly:current)
+  docker rm -f "$CONTAINER" > /dev/null 2>&1 || true
+  snapshot=$(docker run --rm -v "$VOLUME:/rails/storage" --entrypoint sh erlangly:previous -c \
+    "ls -1d storage/snapshots/*-to-$to 2>/dev/null | tail -n 1")
+  if [ -n "$snapshot" ]; then
+    docker run --rm -v "$VOLUME:/rails/storage" --entrypoint bin/restore erlangly:previous "$snapshot"
+  else
+    say "No snapshot from before $to; keeping the current data"
+  fi
+  docker tag erlangly:previous erlangly:current && docker rmi erlangly:previous > /dev/null
+  start_container erlangly:current
+  wait_until_up 120 || fail "the previous version didn't start either; see \`erlangly logs\`"
+  say "Back on Erlangly $(image_version erlangly:current) at $(url)"
+}
+
+cmd_backup() {
+  local directory=${1:-$BACKUPS} file
+  mkdir -p "$directory"
+  file="$directory/erlangly-$(image_version erlangly:current)-$(date -u +%Y%m%dT%H%M%SZ).tar.gz"
+  docker exec "$CONTAINER" bin/backup > "$file" || { rm -f "$file"; fail "backup failed"; }
+  chmod 600 "$file"
+  say "Backed up to $file ($(du -h "$file" | cut -f1))"
+}
+
+cmd_restore() {
+  local file=${1:?"Usage: erlangly restore <backup .tar.gz>"}
+  [ -s "$file" ] || fail "no backup at $file"
+  say "Restoring $file (Erlangly stops meanwhile)…"
+  docker stop "$CONTAINER" > /dev/null
+  docker run --rm -i -v "$VOLUME:/rails/storage" --entrypoint bin/restore erlangly:current - < "$file"
+  cmd_restart
+}
+
+[ "$(id -u)" -eq 0 ] || exec sudo --preserve-env=ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_INSTALL_STARTED "$0" "$@"
+load_settings
+
+case "${1:-}" in
+  install)  cmd_install ;;
+  status)   cmd_status ;;
+  logs)     shift; docker logs "$@" "$CONTAINER" ;;
+  restart)  cmd_restart ;;
+  upgrade)  shift; cmd_upgrade "$@" ;;
+  rollback) cmd_rollback ;;
+  backup)   shift; cmd_backup "$@" ;;
+  restore)  shift; cmd_restore "$@" ;;
+  version)  image_version erlangly:current ;;
+  schedule|timeoff) up || fail "Erlangly isn't running"; docker exec "$CONTAINER" bin/wfm "$@" ;;
+  volumes)
+    up || fail "Erlangly isn't running"
+    # The file is on this server, not in the container: send it in.
+    if [ "${2:-}" = import ] && [ -n "${3:-}" ] && [ "$3" != - ]; then
+      [ -r "$3" ] || fail "can't read $3"
+      docker exec -i "$CONTAINER" bin/wfm volumes import - < "$3"
+    else
+      docker exec -i "$CONTAINER" bin/wfm "$@"
+    fi ;;
+  *)        usage; [ -z "${1:-}" ] || [ "$1" = help ] || exit 1 ;;
+esac
