@@ -6,6 +6,7 @@
 # Installs Docker if it's missing, then the `erlangly` command, then starts Erlangly on port 80.
 # Settings (environment variables):
 #   TLS_DOMAIN=wfm.example.com   serve HTTPS with a Let's Encrypt certificate for this domain
+#   ERLANGLY_URL=https://wfm.example.com   the address people open, when your own HTTPS proxy is in front
 #   ERLANGLY_HTTP_PORT=8080      publish on another port (default 80)
 #   ERLANGLY_IMAGE_TAR=file.tar  install from a saved image instead of the registry (offline, testing)
 #   ERLANGLY_REGISTRY_USER/_TOKEN  sign in to a private registry first (read-only token)
@@ -49,7 +50,7 @@ main() {
   rm -f "$cli"
 
   if [ -n "$sudo" ]; then
-    exec sudo --preserve-env=ERLANGLY_INSTALL_STARTED,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN \
+    exec sudo --preserve-env=ERLANGLY_INSTALL_STARTED,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_URL \
       /usr/local/bin/erlangly install
   fi
   exec /usr/local/bin/erlangly install

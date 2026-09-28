@@ -18,7 +18,13 @@ To serve it over HTTPS with a free Let's Encrypt certificate, point a domain at 
 curl -fsSL https://get.erlangly.com | TLS_DOMAIN=wfm.example.com sh
 ```
 
-Without a domain, Erlangly serves plain HTTP, so passwords and API tokens cross the network unencrypted. Use that only on a trusted network, or put Erlangly behind your own HTTPS proxy.
+Already running a reverse proxy (nginx, Nginx Proxy Manager, Caddy, a Cloudflare tunnel…)? Install on another port and tell Erlangly its address; your proxy handles HTTPS and forwards to it, with WebSockets on for the live wallboard:
+
+```sh
+curl -fsSL https://get.erlangly.com | ERLANGLY_HTTP_PORT=8095 ERLANGLY_URL=https://wfm.example.com sh
+```
+
+Without either, Erlangly serves plain HTTP, so passwords and API tokens cross the network unencrypted. Use that only on a trusted network.
 
 Prefer Docker Compose? [`compose.yml`](compose.yml) runs the same container.
 

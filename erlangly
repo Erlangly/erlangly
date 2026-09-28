@@ -28,7 +28,7 @@ Usage: erlangly <command>
   timeoff [--all]                         Time off waiting for a decision (--all: coming up)
   timeoff approve|decline ID [NOTE]       Decide a time-off request
 
-Settings: $CONF (TLS_DOMAIN, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE, ERLANGLY_TAG)
+Settings: $CONF (TLS_DOMAIN, ERLANGLY_URL, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE, ERLANGLY_TAG)
 USAGE
 }
 
@@ -41,7 +41,7 @@ load_settings() {
   if [ -f "$CONF" ]; then
     while IFS='=' read -r key value; do
       case "$key" in
-        ERLANGLY_IMAGE | ERLANGLY_TAG | ERLANGLY_HTTP_PORT | ERLANGLY_HTTPS_PORT | TLS_DOMAIN) printf -v "$key" '%s' "$value" ;;
+        ERLANGLY_IMAGE | ERLANGLY_TAG | ERLANGLY_HTTP_PORT | ERLANGLY_HTTPS_PORT | TLS_DOMAIN | ERLANGLY_URL) printf -v "$key" '%s' "$value" ;;
       esac
     done < "$CONF"
   fi
@@ -50,6 +50,8 @@ load_settings() {
   ERLANGLY_HTTP_PORT=${ERLANGLY_HTTP_PORT:-80}
   ERLANGLY_HTTPS_PORT=${ERLANGLY_HTTPS_PORT:-443}
   TLS_DOMAIN=${TLS_DOMAIN:-}
+  ERLANGLY_URL=${ERLANGLY_URL:-}
+  ERLANGLY_URL=${ERLANGLY_URL%/}
   check_settings
 }
 
@@ -58,6 +60,7 @@ check_settings() {
   [[ "$ERLANGLY_TAG" =~ ^[A-Za-z0-9._-]+$ ]] || fail "ERLANGLY_TAG isn't a version tag: $ERLANGLY_TAG"
   [[ "$ERLANGLY_HTTP_PORT" =~ ^[0-9]+$ && "$ERLANGLY_HTTPS_PORT" =~ ^[0-9]+$ ]] || fail "the ports must be numbers"
   [[ -z "$TLS_DOMAIN" || "$TLS_DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]] || fail "TLS_DOMAIN isn't a domain name: $TLS_DOMAIN"
+  [[ -z "$ERLANGLY_URL" || "$ERLANGLY_URL" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]+)?$ ]] || fail "ERLANGLY_URL should be the address people open, like https://wfm.example.com"
 }
 
 save_settings() {
@@ -69,6 +72,7 @@ ERLANGLY_TAG=$ERLANGLY_TAG
 ERLANGLY_HTTP_PORT=$ERLANGLY_HTTP_PORT
 ERLANGLY_HTTPS_PORT=$ERLANGLY_HTTPS_PORT
 TLS_DOMAIN=$TLS_DOMAIN
+ERLANGLY_URL=$ERLANGLY_URL
 SETTINGS
 }
 
@@ -99,6 +103,8 @@ image_version() {
 start_container() {
   local image=$1 tls=()
   [ -n "$TLS_DOMAIN" ] && tls=(-p "$ERLANGLY_HTTPS_PORT:443" -e "TLS_DOMAIN=$TLS_DOMAIN")
+  # Behind the customer's own HTTPS proxy: the proxy terminates TLS, and Erlangly trusts it.
+  [ -z "$TLS_DOMAIN" ] && [[ "$ERLANGLY_URL" == https://* ]] && tls=(-e "BEHIND_HTTPS_PROXY=1")
   docker rm -f "$CONTAINER" > /dev/null 2>&1 || true
   docker run -d --name "$CONTAINER" --restart unless-stopped \
     -p "$ERLANGLY_HTTP_PORT:80" "${tls[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
@@ -119,6 +125,7 @@ wait_until_up() {
 }
 
 url() {
+  if [ -n "$ERLANGLY_URL" ]; then echo "$ERLANGLY_URL"; return; fi
   if [ -n "$TLS_DOMAIN" ]; then echo "https://$TLS_DOMAIN"; return; fi
   local host
   host=$(hostname -I 2>/dev/null | awk '{print $1}')
@@ -140,7 +147,7 @@ cmd_install() {
   echo
   echo "Finish setting it up here (this link is secret, and works until you've created the first admin):"
   echo "  $(setup_link)"
-  [ -n "$TLS_DOMAIN" ] || { echo; echo "Note: without TLS_DOMAIN Erlangly serves plain HTTP, so passwords cross the network unencrypted."; echo "      Use it only on a trusted network, or put it behind an HTTPS proxy, or reinstall with TLS_DOMAIN=your.domain."; }
+  [ -n "$TLS_DOMAIN" ] || [[ "$ERLANGLY_URL" == https://* ]] || { echo; echo "Note: without TLS_DOMAIN Erlangly serves plain HTTP, so passwords cross the network unencrypted."; echo "      Use it only on a trusted network, or put it behind an HTTPS proxy (ERLANGLY_URL=https://…), or reinstall with TLS_DOMAIN=your.domain."; }
   echo
   echo "Manage it with: erlangly status | logs | upgrade | backup"
 }
@@ -234,7 +241,7 @@ cmd_restore() {
   cmd_restart
 }
 
-[ "$(id -u)" -eq 0 ] || exec sudo --preserve-env=ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_INSTALL_STARTED "$0" "$@"
+[ "$(id -u)" -eq 0 ] || exec sudo --preserve-env=ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_URL,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_INSTALL_STARTED "$0" "$@"
 load_settings
 
 case "${1:-}" in

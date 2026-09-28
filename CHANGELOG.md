@@ -1,5 +1,8 @@
 # Changes
 
+## 0.8.4 (2026-09-28)
+- Runs behind your own HTTPS proxy: set `ERLANGLY_URL=https://wfm.example.com` (with `ERLANGLY_HTTP_PORT` for another port) and Erlangly trusts the proxy's HTTPS, so sign-in, forms and the live wallboard work.
+
 ## 0.8.3 (2026-09-28)
 - Fixes 0.8.2's first start on a new server, which stopped while making the setup link.
 
