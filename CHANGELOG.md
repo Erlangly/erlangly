@@ -1,5 +1,9 @@
 # Changes
 
+## 0.8.5 (2026-09-28)
+- Swaps only offer colleagues' shifts that neither person is already working during, so an agreed swap can always be approved.
+- The installer says when a private image needs a registry token.
+
 ## 0.8.4 (2026-09-28)
 - Runs behind your own HTTPS proxy: set `ERLANGLY_URL=https://wfm.example.com` (with `ERLANGLY_HTTP_PORT` for another port) and Erlangly trusts the proxy's HTTPS, so sign-in, forms and the live wallboard work.
 

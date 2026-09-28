@@ -89,7 +89,10 @@ fetch_image() {
       echo "$ERLANGLY_REGISTRY_TOKEN" | docker login "${ERLANGLY_IMAGE%%/*}" -u "${ERLANGLY_REGISTRY_USER:-erlangly}" --password-stdin > /dev/null 2>&1 ||
         fail "couldn't sign in to ${ERLANGLY_IMAGE%%/*}"
     fi
-    docker pull --quiet "$ref" > /dev/null || fail "couldn't download $ref"
+    if ! docker pull --quiet "$ref" > /dev/null; then
+      [ -n "${ERLANGLY_REGISTRY_TOKEN:-}" ] || fail "couldn't download $ref. If the image is private, pass ERLANGLY_REGISTRY_USER and ERLANGLY_REGISTRY_TOKEN (a read-only token)."
+      fail "couldn't download $ref with that registry token: check it can read packages"
+    fi
     # Don't leave the registry token on the server; the next upgrade passes it again.
     [ -z "${ERLANGLY_REGISTRY_TOKEN:-}" ] || docker logout "${ERLANGLY_IMAGE%%/*}" > /dev/null
   fi
