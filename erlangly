@@ -2,6 +2,7 @@
 # The erlangly command: runs and looks after a self-hosted Erlangly install.
 # Installed to /usr/local/bin/erlangly by install.sh. Settings live in /etc/erlangly/erlangly.conf.
 set -euo pipefail
+umask 077 # backups and settings hold secrets: nobody else on the server may read them, even while they're written
 
 CONF=/etc/erlangly/erlangly.conf
 CONTAINER=erlangly
@@ -20,6 +21,7 @@ Usage: erlangly <command>
   backup [directory]  Save all data to a .tar.gz (default $BACKUPS)
   restore <file>      Replace all data with a backup (stops Erlangly while it restores)
   version             Show the installed version
+  setup-link          The secret link for creating the first admin on a new install
 
   schedule [DATE] [--lob CODE] [--json]   Published shifts on a day (default today)
   volumes import FILE.csv                 Import volume history
@@ -33,14 +35,29 @@ USAGE
 say() { printf '\033[1m%s\033[0m\n' "$*"; }
 fail() { printf 'erlangly: %s\n' "$*" >&2; exit 1; }
 
+# Reads the settings file as KEY=value lines (it's never run as a script), keeping only known keys.
 load_settings() {
-  # shellcheck source=/dev/null
-  [ -f "$CONF" ] && . "$CONF"
+  local key value
+  if [ -f "$CONF" ]; then
+    while IFS='=' read -r key value; do
+      case "$key" in
+        ERLANGLY_IMAGE | ERLANGLY_TAG | ERLANGLY_HTTP_PORT | ERLANGLY_HTTPS_PORT | TLS_DOMAIN) printf -v "$key" '%s' "$value" ;;
+      esac
+    done < "$CONF"
+  fi
   ERLANGLY_IMAGE=${ERLANGLY_IMAGE:-ghcr.io/erlangly/erlangly}
   ERLANGLY_TAG=${ERLANGLY_TAG:-latest}
   ERLANGLY_HTTP_PORT=${ERLANGLY_HTTP_PORT:-80}
   ERLANGLY_HTTPS_PORT=${ERLANGLY_HTTPS_PORT:-443}
   TLS_DOMAIN=${TLS_DOMAIN:-}
+  check_settings
+}
+
+check_settings() {
+  [[ "$ERLANGLY_IMAGE" =~ ^[a-z0-9./_:-]+$ ]] || fail "ERLANGLY_IMAGE isn't an image name: $ERLANGLY_IMAGE"
+  [[ "$ERLANGLY_TAG" =~ ^[A-Za-z0-9._-]+$ ]] || fail "ERLANGLY_TAG isn't a version tag: $ERLANGLY_TAG"
+  [[ "$ERLANGLY_HTTP_PORT" =~ ^[0-9]+$ && "$ERLANGLY_HTTPS_PORT" =~ ^[0-9]+$ ]] || fail "the ports must be numbers"
+  [[ -z "$TLS_DOMAIN" || "$TLS_DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]] || fail "TLS_DOMAIN isn't a domain name: $TLS_DOMAIN"
 }
 
 save_settings() {
@@ -120,7 +137,19 @@ cmd_install() {
   start_container erlangly:current
   wait_until_up 120 || { docker logs --tail 40 "$CONTAINER" >&2; fail "Erlangly didn't start; the log is above"; }
   say "Erlangly is running at $(url)  (installed in $(( $(date +%s) - ${ERLANGLY_INSTALL_STARTED:-$(date +%s)} )) s)"
+  echo
+  echo "Finish setting it up here (this link is secret, and works until you've created the first admin):"
+  echo "  $(setup_link)"
+  [ -n "$TLS_DOMAIN" ] || { echo; echo "Note: without TLS_DOMAIN Erlangly serves plain HTTP, so passwords cross the network unencrypted."; echo "      Use it only on a trusted network, or put it behind an HTTPS proxy, or reinstall with TLS_DOMAIN=your.domain."; }
+  echo
   echo "Manage it with: erlangly status | logs | upgrade | backup"
+}
+
+# The one-time link for creating the first admin (a new token if the old one is gone).
+setup_link() {
+  local token
+  token=$(docker exec "$CONTAINER" sh -c '[ -s storage/setup_token ] || (umask 077 && ruby -rsecurerandom -e "print SecureRandom.base58(24)" > storage/setup_token); cat storage/setup_token')
+  echo "$(url)/first_run/new?token=$token"
 }
 
 cmd_status() {
@@ -218,6 +247,7 @@ case "${1:-}" in
   backup)   shift; cmd_backup "$@" ;;
   restore)  shift; cmd_restore "$@" ;;
   version)  image_version erlangly:current ;;
+  setup-link) up || fail "Erlangly isn't running"; setup_link ;;
   schedule|timeoff) up || fail "Erlangly isn't running"; docker exec "$CONTAINER" bin/wfm "$@" ;;
   volumes)
     up || fail "Erlangly isn't running"
@@ -230,3 +260,4 @@ case "${1:-}" in
     fi ;;
   *)        usage; [ -z "${1:-}" ] || [ "$1" = help ] || exit 1 ;;
 esac
+# end of erlangly (install.sh checks for this line, to know the download is complete)

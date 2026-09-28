@@ -1,6 +1,7 @@
 # Erlangly with Docker Compose: the same container `erlangly install` runs.
 #
-#   docker compose up -d                 then open http://your-server
+#   docker compose up -d                 then open the setup link from:
+#   docker compose exec erlangly sh -c 'echo "/first_run/new?token=$(cat storage/setup_token)"' 
 #   docker compose pull && docker compose up -d     to upgrade
 #
 # The `erlangly` command adds safer upgrades (automatic rollback), backups and restores; with

@@ -10,13 +10,15 @@ On a Linux server (Ubuntu or Debian, x86-64 or ARM64, 2 GB of memory or more):
 curl -fsSL https://get.erlangly.com | sh
 ```
 
-This installs Docker if it isn't there yet, installs the `erlangly` command, and starts Erlangly on port 80. It takes about a minute. Open the server's address in a browser to set up your organisation and your admin account.
+This installs Docker if it isn't there yet, installs the `erlangly` command, and starts Erlangly on port 80. It takes about a minute, then prints a secret setup link: open it to create your organisation and your admin account. Until then, nobody else can set up your server. (Lost the link? Run `erlangly setup-link`.)
 
 To serve it over HTTPS with a free Let's Encrypt certificate, point a domain at the server and pass it in:
 
 ```sh
 curl -fsSL https://get.erlangly.com | TLS_DOMAIN=wfm.example.com sh
 ```
+
+Without a domain, Erlangly serves plain HTTP, so passwords and API tokens cross the network unencrypted. Use that only on a trusted network, or put Erlangly behind your own HTTPS proxy.
 
 Prefer Docker Compose? [`compose.yml`](compose.yml) runs the same container.
 
@@ -31,6 +33,7 @@ erlangly rollback            Go back to the previous version and the data from j
 erlangly backup              Save all data to /var/backups/erlangly
 erlangly restore <file>      Replace all data with a backup
 erlangly version             Show the installed version
+erlangly setup-link          The secret link for creating the first admin on a new install
 
 erlangly schedule [DATE]     Published shifts on a day (--lob CODE, --json)
 erlangly volumes import FILE Import contact volume history from a CSV file

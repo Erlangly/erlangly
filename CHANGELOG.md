@@ -1,5 +1,12 @@
 # Changes
 
+## 0.8.2 (2026-09-28)
+- A new install is set up through a secret one-time link that `erlangly install` prints (`erlangly setup-link` shows it again), so nobody else can claim a fresh server.
+- Passwords need at least 12 characters, and a blank one no longer accepts an invitation or resets a password. Sessions last 30 days.
+- A supervisor's own time off waits for another supervisor.
+- A strict Content-Security-Policy; SMTP requires STARTTLS unless set otherwise; the install warns when it serves plain HTTP.
+- The `erlangly` command keeps its files private, reads its settings instead of running them, and the installer only runs once fully downloaded.
+
 ## 0.8.1 (2026-09-28)
 - Fixes from a code review: periods with shift swaps can take a new draft; expired swaps can't be approved; coverage counts only planned activities; recorded exceptions survive shift changes and swaps; ACD agent IDs match their connection; supervisors can't decide their own requests.
 
