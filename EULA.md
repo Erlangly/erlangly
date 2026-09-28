@@ -1,6 +1,4 @@
-<!-- DRAFT: needs legal review before Erlangly is sold or the repository is made public (planning/02_Open_Decisions.md D-11, 06_Pricing.md). Placeholders are in [square brackets]. -->
-
-# Erlangly End User Licence Agreement (draft)
+# Erlangly End User Licence Agreement
 
 This agreement is between **FrontLine Software Solutions Inc.**, a Canadian federal corporation ("we"), and the organisation that installs or uses Erlangly ("you"). By installing or using Erlangly you accept it on your organisation's behalf.
 
@@ -72,4 +70,4 @@ When the licence ends, you must stop using Erlangly. You keep your data, and you
 - **Governing law:** the laws of Prince Edward Island and the federal laws of Canada that apply there. The courts of Prince Edward Island have jurisdiction.
 - **Entire agreement:** this is the whole agreement about Erlangly. It replaces anything said before.
 - **Changes:** we may update it for new versions; the version that came with your copy applies to it.
-- **Contact:** FrontLine Software Solutions Inc., [address], [legal@erlangly.com].
+- **Contact:** FrontLine Software Solutions Inc., 30 Hummingbird St., Charlottetown, PE C1E 0B2, Canada; legal@erlangly.com.
