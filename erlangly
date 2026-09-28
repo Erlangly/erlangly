@@ -148,7 +148,7 @@ cmd_install() {
 # The one-time link for creating the first admin (a new token if the old one is gone).
 setup_link() {
   local token
-  token=$(docker exec "$CONTAINER" sh -c '[ -s storage/setup_token ] || (umask 077 && ruby -rsecurerandom -e "print SecureRandom.base58(24)" > storage/setup_token); cat storage/setup_token')
+  token=$(docker exec "$CONTAINER" sh -c '[ -s storage/setup_token ] || (umask 077 && ruby -rsecurerandom -e "print SecureRandom.alphanumeric(32)" > storage/setup_token); cat storage/setup_token')
   echo "$(url)/first_run/new?token=$token"
 }
 

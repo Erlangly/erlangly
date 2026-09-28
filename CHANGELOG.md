@@ -1,5 +1,8 @@
 # Changes
 
+## 0.8.3 (2026-09-28)
+- Fixes 0.8.2's first start on a new server, which stopped while making the setup link.
+
 ## 0.8.2 (2026-09-28)
 - A new install is set up through a secret one-time link that `erlangly install` prints (`erlangly setup-link` shows it again), so nobody else can claim a fresh server.
 - Passwords need at least 12 characters, and a blank one no longer accepts an invitation or resets a password. Sessions last 30 days.
