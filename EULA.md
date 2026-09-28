@@ -69,7 +69,7 @@ When the licence ends, you must stop using Erlangly. You keep your data, and you
 
 ## 10. General
 
-- **Governing law:** the laws of [province] and the federal laws of Canada that apply there. The courts of [province] have jurisdiction.
+- **Governing law:** the laws of Prince Edward Island and the federal laws of Canada that apply there. The courts of Prince Edward Island have jurisdiction.
 - **Entire agreement:** this is the whole agreement about Erlangly. It replaces anything said before.
 - **Changes:** we may update it for new versions; the version that came with your copy applies to it.
 - **Contact:** FrontLine Software Solutions Inc., [address], [legal@erlangly.com].
