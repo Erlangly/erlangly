@@ -1,5 +1,8 @@
 # Changes
 
+## 0.8.12 (2026-09-29)
+- When your mail server refuses an email and hangs up straight away, as Google's SMTP relay does, Erlangly now shows what the server said (for example "Invalid credentials for relay") instead of "SSL_read: unexpected eof while reading": on Settings → Email for test emails, and in the log for emails sent in the background.
+
 ## 0.8.11 (2026-09-29)
 - Copies off the server with Litestream: set `LITESTREAM_REPLICA_URL` and its two keys in `/etc/erlangly/erlangly.conf`, and every change to the database goes to your S3-compatible bucket within seconds. A new server with the same settings restores the data on its first start. On a server installed before 0.8.9, get the new `erlangly` command first (see 0.8.9).
 - After such a restore, Settings → Email asks for the mail server password again instead of failing.
