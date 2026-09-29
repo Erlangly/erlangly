@@ -21,6 +21,7 @@ Usage: erlangly <command>
   backup [directory]  Save all data to a .tar.gz (default $BACKUPS)
   restore <file>      Replace all data with a backup (stops Erlangly while it restores)
   version             Show the installed version
+  licence             The plan, agents and updates this install is licensed for
   setup-link          The secret link for creating the first admin on a new install
 
   schedule [DATE] [--lob CODE] [--json]   Published shifts on a day (default today)
@@ -191,6 +192,7 @@ cmd_upgrade() {
   if [ "$(docker image inspect -f '{{.Id}}' erlangly:new)" = "$(docker image inspect -f '{{.Id}}' erlangly:current)" ]; then
     docker rmi erlangly:new > /dev/null; say "Erlangly $from is already the latest"; return
   fi
+  check_updates_cover "$from" "$to"
 
   say "Upgrading $from → $to (your data is snapshotted first)…"
   older=$(docker image inspect -f '{{.Id}}' erlangly:previous 2>/dev/null || true)
@@ -205,6 +207,18 @@ cmd_upgrade() {
     cmd_rollback
     [ -z "$older" ] || docker tag "$older" erlangly:previous
     exit 1
+  fi
+}
+
+# A pay-once licence covers releases up to its updates date. One released later isn't installed:
+# the current version keeps running.
+check_updates_cover() {
+  local released until
+  released=$(docker image inspect --format '{{ index .Config.Labels "com.erlangly.released-on" }}' erlangly:new 2>/dev/null || true)
+  until=$(up && docker exec "$CONTAINER" bin/wfm licence --updates-until 2>/dev/null || true)
+  if [[ -n "$released" && -n "$until" && "$released" > "$until" ]]; then
+    docker rmi erlangly:new > /dev/null
+    fail "Erlangly $2 came out on $released, after your licence's updates ended on $until. Renew updates (hello@erlangly.com) to install it; you're still on $1."
   fi
 }
 
@@ -258,7 +272,7 @@ case "${1:-}" in
   restore)  shift; cmd_restore "$@" ;;
   version)  image_version erlangly:current ;;
   setup-link) up || fail "Erlangly isn't running"; setup_link ;;
-  schedule|timeoff) up || fail "Erlangly isn't running"; docker exec "$CONTAINER" bin/wfm "$@" ;;
+  schedule|timeoff|licence) up || fail "Erlangly isn't running"; docker exec "$CONTAINER" bin/wfm "$@" ;;
   volumes)
     up || fail "Erlangly isn't running"
     # The file is on this server, not in the container: send it in.

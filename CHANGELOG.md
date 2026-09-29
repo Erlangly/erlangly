@@ -1,5 +1,16 @@
 # Changes
 
+## 0.8.8 (2026-09-29)
+- Pay-once licences: `erlangly upgrade` installs releases up to the licence's updates date, and new rule packs follow the same date. After it, your current version keeps running.
+- Settings → Licence shows when a pay-once licence's updates end, and admins are told 30 days before.
+- `erlangly licence` shows the plan, agents and updates date on the server.
+
+## 0.8.7 (2026-09-28)
+- *Invite to sign in* says why nobody can be invited: everyone can already sign in, email addresses are missing, or the list is only sample people.
+
+## 0.8.6 (2026-09-28)
+- Invite a whole roster at once: *Invite to sign in* on People emails an invitation to everyone on the list who has an email address and can't sign in yet.
+
 ## 0.8.5 (2026-09-28)
 - Swaps only offer colleagues' shifts that neither person is already working during, so an agreed swap can always be approved.
 - The installer says when a private image needs a registry token.

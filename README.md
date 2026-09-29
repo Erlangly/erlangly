@@ -40,6 +40,7 @@ erlangly backup              Save all data to /var/backups/erlangly
 erlangly restore <file>      Replace all data with a backup
 erlangly version             Show the installed version
 erlangly setup-link          The secret link for creating the first admin on a new install
+erlangly licence             The plan, agents and updates this install is licensed for
 
 erlangly schedule [DATE]     Published shifts on a day (--lob CODE, --json)
 erlangly volumes import FILE Import contact volume history from a CSV file
@@ -58,7 +59,7 @@ Everything Erlangly stores lives in one Docker volume named `erlangly`: the data
 
 **Backups.** Erlangly saves a copy of all its data every night, on the server, keeping the newest 14. Those protect against mistakes and bad upgrades. To protect against losing the server, copy backups somewhere else too: `erlangly backup` writes one to `/var/backups/erlangly`, ready for your usual off-site backups.
 
-**Upgrades** are safe to run at any time. Before a new version changes the database, Erlangly takes a snapshot. If the new version doesn't start, `erlangly upgrade` puts the previous version and the snapshot back by itself.
+**Upgrades** are safe to run at any time. Before a new version changes the database, Erlangly takes a snapshot. If the new version doesn't start, `erlangly upgrade` puts the previous version and the snapshot back by itself. With a pay-once licence, it installs releases that came out before your updates end; after that, your current version keeps running.
 
 ## Connect your ACD, and your own tools
 
