@@ -55,7 +55,7 @@ Settings live in `/etc/erlangly/erlangly.conf`. Run `erlangly restart` after cha
 
 Everything Erlangly stores lives in one Docker volume named `erlangly`: the databases, uploaded files and the secret key. Nothing leaves your server unless you set it up to:
 
-- **Email** goes through your own mail server (Settings → Email).
+- **Email** goes through your own mail server (Settings → Email). Some hosting companies, DigitalOcean among them, block outgoing mail ports (25, 465, 587) on new servers: if the test email says the mail server can't be reached, ask them to unblock port 587.
 - **Litestream copies**, if you turn them on, go to your own bucket.
 - **The update check** asks get.erlangly.com once a day for the latest version number and sends nothing about you. Turn it off under Settings → System.
 - **There's no telemetry.**

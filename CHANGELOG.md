@@ -1,5 +1,11 @@
 # Changes
 
+## 0.8.14 (2026-09-29)
+- When the mail server can't be reached at all, Settings → Email says so and names the likely cause: some hosting companies, DigitalOcean among them, block outgoing mail ports on new servers. Before, it said "execution expired".
+
+## 0.8.13 (2026-09-29)
+- Licence keys from the Erlangly store (trials now, purchases soon) are accepted alongside the keys we issue by hand. Rule packs are still only accepted with our own signature.
+
 ## 0.8.12 (2026-09-29)
 - When your mail server refuses an email and hangs up straight away, as Google's SMTP relay does, Erlangly now shows what the server said (for example "Invalid credentials for relay") instead of "SSL_read: unexpected eof while reading": on Settings → Email for test emails, and in the log for emails sent in the background.
 
