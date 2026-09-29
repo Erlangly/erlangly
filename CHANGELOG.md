@@ -1,5 +1,9 @@
 # Changes
 
+## 0.8.11 (2026-09-29)
+- Copies off the server with Litestream: set `LITESTREAM_REPLICA_URL` and its two keys in `/etc/erlangly/erlangly.conf`, and every change to the database goes to your S3-compatible bucket within seconds. A new server with the same settings restores the data on its first start. On a server installed before 0.8.9, get the new `erlangly` command first (see 0.8.9).
+- After such a restore, Settings → Email asks for the mail server password again instead of failing.
+
 ## 0.8.10 (2026-09-29)
 - get.erlangly.com/images also lists the releases before 0.8.9, so installing or going back to one of them works with the new `erlangly` command.
 

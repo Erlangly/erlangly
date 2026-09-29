@@ -10,6 +10,8 @@
 #   ERLANGLY_HTTP_PORT=8080      publish on another port (default 80)
 #   ERLANGLY_IMAGE_TAR=file.tar  install from a saved image instead of the registry (offline, testing)
 #   ERLANGLY_REGISTRY_USER/_TOKEN  sign in to a private registry first (read-only token)
+#   LITESTREAM_REPLICA_URL=s3://bucket/path  copy the database off the server as it changes, with
+#     LITESTREAM_ACCESS_KEY_ID/_SECRET_ACCESS_KEY; a new server restores from it on first start
 #   ERLANGLY_SOURCE=url          where to fetch the `erlangly` command and the list of releases from
 #                                (default https://get.erlangly.com)
 set -eu
@@ -51,7 +53,7 @@ main() {
   rm -f "$cli"
 
   if [ -n "$sudo" ]; then
-    exec sudo --preserve-env=ERLANGLY_SOURCE,ERLANGLY_INSTALL_STARTED,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_URL \
+    exec sudo --preserve-env=LITESTREAM_REPLICA_URL,LITESTREAM_ACCESS_KEY_ID,LITESTREAM_SECRET_ACCESS_KEY,ERLANGLY_SOURCE,ERLANGLY_INSTALL_STARTED,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_URL \
       /usr/local/bin/erlangly install
   fi
   exec /usr/local/bin/erlangly install

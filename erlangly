@@ -31,7 +31,8 @@ Usage: erlangly <command>
   timeoff [--all]                         Time off waiting for a decision (--all: coming up)
   timeoff approve|decline ID [NOTE]       Decide a time-off request
 
-Settings: $CONF (TLS_DOMAIN, ERLANGLY_URL, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE, ERLANGLY_TAG)
+Settings: $CONF (TLS_DOMAIN, ERLANGLY_URL, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE, ERLANGLY_TAG,
+          LITESTREAM_REPLICA_URL, LITESTREAM_ACCESS_KEY_ID, LITESTREAM_SECRET_ACCESS_KEY)
 USAGE
 }
 
@@ -44,7 +45,8 @@ load_settings() {
   if [ -f "$CONF" ]; then
     while IFS='=' read -r key value; do
       case "$key" in
-        ERLANGLY_IMAGE | ERLANGLY_TAG | ERLANGLY_HTTP_PORT | ERLANGLY_HTTPS_PORT | TLS_DOMAIN | ERLANGLY_URL) printf -v "$key" '%s' "$value" ;;
+        ERLANGLY_IMAGE | ERLANGLY_TAG | ERLANGLY_HTTP_PORT | ERLANGLY_HTTPS_PORT | TLS_DOMAIN | ERLANGLY_URL | \
+          LITESTREAM_REPLICA_URL | LITESTREAM_ACCESS_KEY_ID | LITESTREAM_SECRET_ACCESS_KEY) printf -v "$key" '%s' "$value" ;;
       esac
     done < "$CONF"
   fi
@@ -55,6 +57,9 @@ load_settings() {
   TLS_DOMAIN=${TLS_DOMAIN:-}
   ERLANGLY_URL=${ERLANGLY_URL:-}
   ERLANGLY_URL=${ERLANGLY_URL%/}
+  LITESTREAM_REPLICA_URL=${LITESTREAM_REPLICA_URL:-}
+  LITESTREAM_ACCESS_KEY_ID=${LITESTREAM_ACCESS_KEY_ID:-}
+  LITESTREAM_SECRET_ACCESS_KEY=${LITESTREAM_SECRET_ACCESS_KEY:-}
   check_settings
 }
 
@@ -64,6 +69,9 @@ check_settings() {
   [[ "$ERLANGLY_HTTP_PORT" =~ ^[0-9]+$ && "$ERLANGLY_HTTPS_PORT" =~ ^[0-9]+$ ]] || fail "the ports must be numbers"
   [[ -z "$TLS_DOMAIN" || "$TLS_DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]] || fail "TLS_DOMAIN isn't a domain name: $TLS_DOMAIN"
   [[ -z "$ERLANGLY_URL" || "$ERLANGLY_URL" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]+)?$ ]] || fail "ERLANGLY_URL should be the address people open, like https://wfm.example.com"
+  [[ -z "$LITESTREAM_REPLICA_URL" || "$LITESTREAM_REPLICA_URL" =~ ^s3://[A-Za-z0-9._/?=\&:-]+$ ]] ||
+    fail "LITESTREAM_REPLICA_URL should be an S3 bucket and path, like s3://my-bucket/erlangly?endpoint=tor1.digitaloceanspaces.com"
+  [[ "$LITESTREAM_ACCESS_KEY_ID$LITESTREAM_SECRET_ACCESS_KEY" =~ ^[A-Za-z0-9/+=_-]*$ ]] || fail "the Litestream access keys have characters keys don't use"
 }
 
 save_settings() {
@@ -76,6 +84,10 @@ ERLANGLY_HTTP_PORT=$ERLANGLY_HTTP_PORT
 ERLANGLY_HTTPS_PORT=$ERLANGLY_HTTPS_PORT
 TLS_DOMAIN=$TLS_DOMAIN
 ERLANGLY_URL=$ERLANGLY_URL
+# Off-server copies of the database with Litestream (optional): an S3 bucket and its keys.
+LITESTREAM_REPLICA_URL=$LITESTREAM_REPLICA_URL
+LITESTREAM_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
+LITESTREAM_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
 SETTINGS
 }
 
@@ -124,13 +136,18 @@ image_version() {
 }
 
 start_container() {
-  local image=$1 tls=()
+  local image=$1 tls=() litestream=()
   [ -n "$TLS_DOMAIN" ] && tls=(-p "$ERLANGLY_HTTPS_PORT:443" -e "TLS_DOMAIN=$TLS_DOMAIN")
   # Behind the customer's own HTTPS proxy: the proxy terminates TLS, and Erlangly trusts it.
   [ -z "$TLS_DOMAIN" ] && [[ "$ERLANGLY_URL" == https://* ]] && tls=(-e "BEHIND_HTTPS_PROXY=1")
+  # Passed by name, so the keys never show in the list of running processes.
+  if [ -n "$LITESTREAM_REPLICA_URL" ]; then
+    export LITESTREAM_REPLICA_URL LITESTREAM_ACCESS_KEY_ID LITESTREAM_SECRET_ACCESS_KEY
+    litestream=(-e LITESTREAM_REPLICA_URL -e LITESTREAM_ACCESS_KEY_ID -e LITESTREAM_SECRET_ACCESS_KEY)
+  fi
   docker rm -f "$CONTAINER" > /dev/null 2>&1 || true
   docker run -d --name "$CONTAINER" --restart unless-stopped \
-    -p "$ERLANGLY_HTTP_PORT:80" "${tls[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
+    -p "$ERLANGLY_HTTP_PORT:80" "${tls[@]}" "${litestream[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
 }
 
 since() { awk -v started="$1" -v now="$(date +%s.%N)" 'BEGIN { printf "%.1f", now - started }'; }
@@ -189,6 +206,7 @@ cmd_status() {
   echo "Erlangly $(image_version erlangly:current): $state"
   echo "URL:     $(url)"
   echo "Data:    docker volume $VOLUME ($(docker run --rm -v "$VOLUME:/data" --entrypoint du erlangly:current -sh /data | cut -f1))"
+  [ -z "$LITESTREAM_REPLICA_URL" ] || echo "Copied:  ${LITESTREAM_REPLICA_URL%%\?*}, as it changes (Litestream)"
   if docker image inspect erlangly:previous > /dev/null 2>&1; then
     echo "Previous version $(image_version erlangly:previous) kept for \`erlangly rollback\`"
   fi
@@ -277,7 +295,7 @@ cmd_restore() {
   cmd_restart
 }
 
-[ "$(id -u)" -eq 0 ] || exec sudo --preserve-env=ERLANGLY_SOURCE,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_URL,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_INSTALL_STARTED "$0" "$@"
+[ "$(id -u)" -eq 0 ] || exec sudo --preserve-env=LITESTREAM_REPLICA_URL,LITESTREAM_ACCESS_KEY_ID,LITESTREAM_SECRET_ACCESS_KEY,ERLANGLY_SOURCE,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_URL,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_INSTALL_STARTED "$0" "$@"
 load_settings
 
 case "${1:-}" in

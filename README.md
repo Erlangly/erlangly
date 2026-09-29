@@ -56,10 +56,21 @@ Settings live in `/etc/erlangly/erlangly.conf`. Run `erlangly restart` after cha
 Everything Erlangly stores lives in one Docker volume named `erlangly`: the databases, uploaded files and the secret key. Nothing leaves your server unless you set it up to:
 
 - **Email** goes through your own mail server (Settings → Email).
+- **Litestream copies**, if you turn them on, go to your own bucket.
 - **The update check** asks get.erlangly.com once a day for the latest version number and sends nothing about you. Turn it off under Settings → System.
 - **There's no telemetry.**
 
 **Backups.** Erlangly saves a copy of all its data every night, on the server, keeping the newest 14. Those protect against mistakes and bad upgrades. To protect against losing the server, copy backups somewhere else too: `erlangly backup` writes one to `/var/backups/erlangly`, ready for your usual off-site backups.
+
+**Copies off the server.** Erlangly can copy every change to its database to S3-compatible storage (AWS S3, DigitalOcean Spaces, Cloudflare R2, Backblaze B2…) as it happens, with [Litestream](https://litestream.io). Add these to `/etc/erlangly/erlangly.conf` and run `erlangly restart`:
+
+```
+LITESTREAM_REPLICA_URL=s3://my-bucket/erlangly?endpoint=tor1.digitaloceanspaces.com
+LITESTREAM_ACCESS_KEY_ID=…
+LITESTREAM_SECRET_ACCESS_KEY=…
+```
+
+If you lose the server, install on a new one with the same three settings (pass them to the installer, like `TLS_DOMAIN`): Erlangly restores the data from the copy on its first start. Keep them somewhere other than the server. Afterwards everyone signs in again, and an admin re-enters the mail server password under Settings → Email.
 
 **Upgrades** are safe to run at any time. Before a new version changes the database, Erlangly takes a snapshot. If the new version doesn't start, `erlangly upgrade` puts the previous version and the snapshot back by itself. With a pay-once licence, it installs releases that came out before your updates end; after that, your current version keeps running.
 
