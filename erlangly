@@ -5,6 +5,8 @@ set -euo pipefail
 umask 077 # backups and settings hold secrets: nobody else on the server may read them, even while they're written
 
 CONF=/etc/erlangly/erlangly.conf
+OFFICIAL_IMAGE=ghcr.io/erlangly/erlangly
+SOURCE=${ERLANGLY_SOURCE:-https://get.erlangly.com}
 CONTAINER=erlangly
 VOLUME=erlangly
 BACKUPS=/var/backups/erlangly
@@ -46,7 +48,7 @@ load_settings() {
       esac
     done < "$CONF"
   fi
-  ERLANGLY_IMAGE=${ERLANGLY_IMAGE:-ghcr.io/erlangly/erlangly}
+  ERLANGLY_IMAGE=${ERLANGLY_IMAGE:-$OFFICIAL_IMAGE}
   ERLANGLY_TAG=${ERLANGLY_TAG:-latest}
   ERLANGLY_HTTP_PORT=${ERLANGLY_HTTP_PORT:-80}
   ERLANGLY_HTTPS_PORT=${ERLANGLY_HTTPS_PORT:-443}
@@ -84,7 +86,7 @@ fetch_image() {
     ref=$(docker load -i "$ERLANGLY_IMAGE_TAR" | sed -n 's/^Loaded image: //p' | tail -n 1)
     [ -n "$ref" ] || fail "no image found in $ERLANGLY_IMAGE_TAR"
   else
-    ref="$ERLANGLY_IMAGE:$tag"
+    ref=$(image_ref "$tag")
     # A private registry (before launch, or a customer's own mirror) needs a read-only token.
     if [ -n "${ERLANGLY_REGISTRY_TOKEN:-}" ]; then
       echo "$ERLANGLY_REGISTRY_TOKEN" | docker login "${ERLANGLY_IMAGE%%/*}" -u "${ERLANGLY_REGISTRY_USER:-erlangly}" --password-stdin > /dev/null 2>&1 ||
@@ -98,6 +100,23 @@ fetch_image() {
     [ -z "${ERLANGLY_REGISTRY_TOKEN:-}" ] || docker logout "${ERLANGLY_IMAGE%%/*}" > /dev/null
   fi
   docker tag "$ref" erlangly:new
+}
+
+# The official image is pulled by the digest get.erlangly.com lists for that version, not by its tag,
+# so a tag changed on the registry can't swap in a different image. Your own mirror (ERLANGLY_IMAGE)
+# is pulled by tag.
+image_ref() {
+  local tag=$1 version digest
+  if [ "$ERLANGLY_IMAGE" != "$OFFICIAL_IMAGE" ]; then echo "$ERLANGLY_IMAGE:$tag"; return; fi
+  version=$tag
+  if [ "$tag" = latest ]; then
+    version=$(curl -fsSL "$SOURCE/latest.json" | sed -n 's/.*"version": *"\([^"]*\)".*/\1/p') || true
+    [ -n "$version" ] || fail "couldn't find the latest version at $SOURCE/latest.json"
+  fi
+  digest=$(curl -fsSL "$SOURCE/images" | awk -v version="${version#v}" '$1 == version { print $2 }') ||
+    fail "couldn't download the list of releases from $SOURCE/images"
+  [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || fail "$version isn't a released version of Erlangly ($SOURCE/images lists them)"
+  echo "$ERLANGLY_IMAGE@$digest"
 }
 
 image_version() {
@@ -258,7 +277,7 @@ cmd_restore() {
   cmd_restart
 }
 
-[ "$(id -u)" -eq 0 ] || exec sudo --preserve-env=ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_URL,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_INSTALL_STARTED "$0" "$@"
+[ "$(id -u)" -eq 0 ] || exec sudo --preserve-env=ERLANGLY_SOURCE,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_URL,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_INSTALL_STARTED "$0" "$@"
 load_settings
 
 case "${1:-}" in

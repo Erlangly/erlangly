@@ -26,6 +26,8 @@ curl -fsSL https://get.erlangly.com | ERLANGLY_HTTP_PORT=8095 ERLANGLY_URL=https
 
 Without either, Erlangly serves plain HTTP, so passwords and API tokens cross the network unencrypted. Use that only on a trusted network.
 
+To read the installer before running it, check it against the published checksums: `curl -fsSLO https://get.erlangly.com/install.sh && curl -fsSL https://get.erlangly.com/SHA256SUMS | sha256sum -c --ignore-missing`. The `erlangly` command then downloads Erlangly by the image digest listed for each release at [get.erlangly.com/images](https://get.erlangly.com/images), never just by its tag.
+
 Prefer Docker Compose? [`compose.yml`](compose.yml) runs the same container.
 
 ## Run it

@@ -8,6 +8,8 @@
 # Compose, back up with `docker compose exec erlangly bin/backup > erlangly.tar.gz`.
 services:
   erlangly:
+    # To run exactly the image we built, pin its digest from https://get.erlangly.com/images:
+    #   image: ghcr.io/erlangly/erlangly@sha256:…
     image: ghcr.io/erlangly/erlangly:latest
     restart: unless-stopped
     ports:

@@ -1,5 +1,11 @@
 # Changes
 
+## 0.8.10 (2026-09-29)
+- get.erlangly.com/images also lists the releases before 0.8.9, so installing or going back to one of them works with the new `erlangly` command.
+
+## 0.8.9 (2026-09-29)
+- `erlangly install` and `erlangly upgrade` download Erlangly by the image digest listed for each release at get.erlangly.com/images, never just by its tag, so the image you run is the one we built. On a server installed before 0.8.9, get the new `erlangly` command first: `curl -fsSL https://get.erlangly.com/erlangly | sudo install -m 755 /dev/stdin /usr/local/bin/erlangly`.
+
 ## 0.8.8 (2026-09-29)
 - Pay-once licences: `erlangly upgrade` installs releases up to the licence's updates date, and new rule packs follow the same date. After it, your current version keeps running.
 - Settings → Licence shows when a pay-once licence's updates end, and admins are told 30 days before.
