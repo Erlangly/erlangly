@@ -1,5 +1,13 @@
 # Changes
 
+## 0.8.15 (2026-09-30)
+- A new forecast covers the same weeks as a new schedule period, from your organisation's week start. It used to start on a Monday, so with Sunday weeks a schedule's Sundays had no forecast.
+- *Forecast every line of business* on the Forecast page makes a forecast for each line of business with history, in one go.
+- When lines of business have no published forecast for some days of a schedule, the draft says so once, naming the days, instead of once a week for each. A forecast covering only part of a week no longer counts for the rest of it.
+- New organisations start their weeks on Sunday. Yours keeps its setting (Settings → Organisation).
+- A new install opens with a choice: look around with the sample data, or set up your own, with the steps in order. The sample lines of business now plan for realistic shrinkage, and removing the sample data works after you've forecast or scheduled it.
+- The installer says when a new server is still installing its own updates, and waits for them.
+
 ## 0.8.14 (2026-09-29)
 - When the mail server can't be reached at all, Settings → Email says so and names the likely cause: some hosting companies, DigitalOcean among them, block outgoing mail ports on new servers. Before, it said "execution expired".
 

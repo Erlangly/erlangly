@@ -35,10 +35,16 @@ main() {
   if ! command -v docker > /dev/null; then
     log=$(mktemp)
     say "Installing Docker…"
-    # Package mirrors have blips: try once more after a pause before giving up.
+    # A new server spends its first minutes installing its own updates, which holds the package
+    # manager; package mirrors have blips too. Wait for the first, pause for the second, try again.
     if ! curl -fsSL https://get.docker.com | $sudo sh > "$log" 2>&1; then
-      say "Docker didn't install; trying again in 20 seconds…"
-      sleep 20
+      if grep -q -i "lock" "$log"; then
+        say "The server is still installing its own updates (new servers do, for a few minutes). Waiting for them to finish…"
+        for _ in $(seq 60); do pgrep -x "apt|apt-get|dpkg|unattended-upgr" > /dev/null || break; sleep 5; done
+      else
+        say "Docker's install hit a snag; trying again in 20 seconds…"
+        sleep 20
+      fi
       curl -fsSL https://get.docker.com | $sudo sh > "$log" 2>&1 ||
         { tail -n 20 "$log" >&2; fail "couldn't install Docker, twice (log above). Check this server can reach download.docker.com and its package mirror."; }
     fi

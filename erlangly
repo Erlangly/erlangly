@@ -255,7 +255,7 @@ check_updates_cover() {
   until=$(up && docker exec "$CONTAINER" bin/wfm licence --updates-until 2>/dev/null || true)
   if [[ -n "$released" && -n "$until" && "$released" > "$until" ]]; then
     docker rmi erlangly:new > /dev/null
-    fail "Erlangly $2 came out on $released, after your licence's updates ended on $until. Renew updates (hello@erlangly.com) to install it; you're still on $1."
+    fail "Erlangly $2 came out on $released, after your licence's updates ended on $until. Renew Updates (see erlangly.com/getting-started/licence) to install it; you're still on $1."
   fi
 }
 
