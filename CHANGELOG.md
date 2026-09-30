@@ -1,5 +1,54 @@
 # Changes
 
+## 0.8.31 (2026-09-30)
+- **Connect Claude, ChatGPT and other AI assistants by address.** Once an admin turns AI assistants on (*Settings → AI agents*), a person pastes your Erlangly's address with `/mcp` on the end into their assistant, signs in to Erlangly as usual (password or SSO), and chooses what it may do: only read, or read and change. No token to copy. It never sees other people's personal details, and it can't publish schedules.
+- **See and disconnect connected assistants:** your own under *Your account*, and everyone's for admins under *Settings → AI agents*. A connection ends by itself after 30 days without use, and sooner for people who must use SSO.
+
+## 0.8.30 (2026-09-30)
+- The live forecast page picks its days with a **From and To date picker**, with *Today* and *This week* shortcuts, instead of a button per week. It shows up to five weeks at a time, and a single day shows its intervals.
+
+## 0.8.29 (2026-09-30)
+- **Moving someone off a line of business vacates their shifts on it.** When their assignment ends, by hand or by a people import, their shifts on that line from then on are removed, for the planner to fill. The schedule is flagged as needing regenerating, with who moved and from when, and they're asked to look at their schedule again. The import preview says how many shifts each move removes. Days that have gone by are never touched.
+- Shrinkage rates can be entered to a hundredth of a percent (like 0.63% for 15 minutes of coaching a week), not just in half-percent steps.
+
+## 0.8.28 (2026-09-30)
+- **One live forecast per line of business.** The Forecast page shows each line of business's live forecast (everything published for it, as one) and its drafts, instead of a growing list of published pieces. The live forecast has its own page, a week at a time, with the same figures, accuracy and day-by-day intervals as a forecast.
+- **Nothing replaced is lost.** When a published forecast takes over days, what it replaced for them is archived, not deleted, and each line of business has a forecast **history**: every publish, who made it, the days it added and what it replaced.
+
+## 0.8.27 (2026-09-30)
+- **AI assistants and scripts get less personal data.** The API and MCP leave out other people's email addresses, ACD IDs and time-off notes, since what an AI assistant reads goes to the company that makes it. People still see their own. An admin can make a token that includes them, for scripts like an HR sync.
+- **Erlangly only answers to its own address** once one is set (with `TLS_DOMAIN`, in *Settings → Email*, or by the installer), and to its IP addresses. This protects against pages elsewhere reaching it through a borrowed domain name. If people reach your Erlangly by a second name, set the address to the one they use.
+- **Sturdier AI connections.** Odd requests from an assistant get a clear error instead of a failure, requests are limited per address as well as per token, and a draft with nothing to cover no longer reports 100% coverage.
+
+## 0.8.26 (2026-09-30)
+- **Move people between lines of business by import.** In a people import, the lines of business in someone's row are now theirs from then on: any others end the day before. A new optional `effective_date` column says when (today if blank, and never in the past), so you can prepare a move for next Monday. Leaving the cell blank still changes nothing. The preview says who leaves and joins which line, and when, and undo puts it back.
+
+## 0.8.25 (2026-09-30)
+- The file picker on the import pages looks like the rest of Erlangly: its *Choose file* button is centred in the box, with the file name beside it.
+
+## 0.8.24 (2026-09-30)
+- Adding or editing an ACD queue on a line of business saves again. Before, *Add queue* and *Save* did nothing.
+
+## 0.8.23 (2026-09-30)
+- **A line of business's published forecast is its forecast over time.** Publishing a forecast now merges it in: a published forecast already covering some of its days keeps only the days the new one doesn't cover (split in two if the new one sits in the middle). No day has two published forecasts, and none is left without one. This replaces 0.8.21's refuse-and-unpublish rule, and *Unpublish* is gone.
+- **Days that have gone by stay as they were forecast.** In a published forecast they can't be overridden, and *Recalculate* only changes today onwards, so accuracy is measured against what was really forecast.
+- **Forecasts are made from today on.** A new forecast can't start in the past, and one that starts in the past can't be published.
+- **New forecast for one or more lines of business.** Tick the lines you want; each gets its own draft for the same dates and history. This replaces the *Forecast every line of business* button.
+
+## 0.8.22 (2026-09-30)
+- **Works with your AI assistant.** Claude, ChatGPT, Copilot and other assistants that speak MCP can connect to Erlangly and answer from your schedules, forecasts, coverage, adherence and the floor, or ask for, approve and turn down time off, each as the person whose token it uses and with their role. Read-only tokens only look; nothing can publish a schedule. It's off until an admin turns it on under *Settings → AI agents*, which then shows the address to give your assistant.
+
+## 0.8.21 (2026-09-30)
+- **A line of business has one published forecast for any day.** Publishing a forecast whose dates overlap a published one is refused, naming it and the days they share; unpublish that one first with the new *Unpublish* button. Before, publishing turned the whole overlapping forecast back into a draft, which could leave some of its days with no published forecast. Drafts can still overlap, so you can compare versions.
+- **API tokens fit for AI agents.** New tokens are read-only unless you let them change things, and they expire after 30 days, 90 days or a year. They stop working when their person is turned off, and within 30 days for people who must sign in with SSO. Making and revoking them is in the audit trail. Admins see everyone's tokens in *Settings → AI agents* and can revoke any. Existing tokens keep read-and-write access and now expire in 90 days.
+- **The API reads more:** forecasts with the agents each interval needs, schedule periods and their drafts, coverage through the day, adherence by person, team or line of business, the floor right now, and one person in detail. Staff only, as on the pages.
+
+## 0.8.20 (2026-09-30)
+- **Forecast every line of business asks first**, and says what it will make: which lines of business, for which dates, from how much history, and that nothing is published until you check and publish each draft. The button is hidden when every line of business is already forecast for the next planning period.
+
+## 0.8.19 (2026-09-30)
+- **Delete a draft forecast.** Draft forecasts have a *Delete* button on their page and in the list on Forecast, and ask before deleting. Published forecasts can't be deleted, since staffing and scheduling use them: publish another for those dates first, and the old one becomes a draft you can delete. Deletions are recorded in the audit trail.
+
 ## 0.8.18 (2026-09-30)
 - **Discard a draft you don't need.** A schedule period's drafts each have a *Discard* button, so a draft made in error no longer sits there for good. The schedule itself, a draft still being generated and the period's last draft can't be discarded; the other drafts keep their numbers.
 - **Settings → Export** gives you everything this install holds as a .zip of CSV files, one per table, with secrets left out. It's made in the background and kept for a week, and exports and downloads are recorded in the audit trail. `erlangly export` does the same on the server.
