@@ -44,9 +44,17 @@ You're responsible for your schedules following the laws that apply to you. Chec
 
 While your licence or Updates subscription is current, you may install new versions and rule-pack updates. Support is as described in your plan.
 
-## 6. Fees
+## 6. Fees and refunds
 
-Paid plans are billed as described at erlangly.com or in your order. Fees aren't refundable except where the law requires it or your order says so.
+Paid plans are billed as described at erlangly.com or in your order, in US dollars, plus any tax that applies.
+
+- **Yearly licences.** If you're not happy, ask for a refund within 30 days of your first payment and we'll refund it in full. Later yearly renewals, and charges for agents added during a year, aren't refunded. You can cancel at any time, and your licence then runs to the end of the year you've paid for.
+- **Pay once.** Ask within 30 days of payment. Because a pay-once licence has no end date, we decide these case by case.
+- **Updates** (after a pay-once licence's first year) aren't refunded. You can stop them at any time before the next renewal.
+
+**A refund ends the paid plan it paid for.** Remove that licence key from Erlangly; your install then runs on the free plan. Nothing in this section takes away a refund the law gives you.
+
+To ask for a refund, write to licences@erlangly.com from the email address you bought with.
 
 ## 7. No warranty
 
@@ -63,7 +71,7 @@ To the extent the law allows:
 
 You can stop using Erlangly at any time. We can end your licence if you break this agreement and don't fix it within 30 days of our notice.
 
-When the licence ends, you must stop using Erlangly. You keep your data, and you can export it first.
+When a paid plan ends (it runs out, you cancel it, or it's refunded), your install carries on under the free plan. If we end your licence because you broke this agreement, you must stop using Erlangly. Either way, you keep your data, and you can export it first.
 
 ## 10. General
 
@@ -71,3 +79,5 @@ When the licence ends, you must stop using Erlangly. You keep your data, and you
 - **Entire agreement:** this is the whole agreement about Erlangly. It replaces anything said before.
 - **Changes:** we may update it for new versions; the version that came with your copy applies to it.
 - **Contact:** FrontLine Software Solutions Inc., 30 Hummingbird St., Charlottetown, PE C1E 0B2, Canada; legal@erlangly.com.
+
+Last updated: September 30, 2026.
