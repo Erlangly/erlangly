@@ -24,6 +24,7 @@ Usage: erlangly <command>
   restore <file>      Replace all data with a backup (stops Erlangly while it restores)
   version             Show the installed version
   licence             The plan, agents and updates this install is licensed for
+  sso [off]           Signing in with your identity provider; off stops requiring it (if you're locked out)
   setup-link          The secret link for creating the first admin on a new install
 
   schedule [DATE] [--lob CODE] [--json]   Published shifts on a day (default today)
@@ -309,7 +310,7 @@ case "${1:-}" in
   restore)  shift; cmd_restore "$@" ;;
   version)  image_version erlangly:current ;;
   setup-link) up || fail "Erlangly isn't running"; setup_link ;;
-  schedule|timeoff|licence) up || fail "Erlangly isn't running"; docker exec "$CONTAINER" bin/wfm "$@" ;;
+  schedule|timeoff|licence|sso) up || fail "Erlangly isn't running"; docker exec "$CONTAINER" bin/wfm "$@" ;;
   volumes)
     up || fail "Erlangly isn't running"
     # The file is on this server, not in the container: send it in.

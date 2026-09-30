@@ -1,5 +1,11 @@
 # Changes
 
+## 0.8.17 (2026-09-30)
+- **Sign in with your company account.** Settings → Sign-in connects Erlangly to Microsoft Entra ID, Google Workspace, Okta or another OIDC identity provider. You test it by signing in yourself before turning it on. Only people you've invited can sign in, and only with an email address in the domains you allow; with Microsoft, only members of your organisation, not guests. An SSO sign-in lasts 12 hours.
+- **Require it** for staff or for everyone, keeping one or more break-glass admins who can still use a password; each of their password sign-ins is emailed to the other admins. Locked out? `erlangly sso off` on the server stops requiring it.
+- Schedule's *Start here* shows the two ways to begin side by side: the sample data, or the steps to set up your own.
+- The licence and pricing pages state the refund policy, as does the EULA (sections 6 and 9).
+
 ## 0.8.16 (2026-09-30)
 - Removing the sample data also removes the schedules you made from it while trying Erlangly out, as long as they weren't published and hold none of your own people's shifts.
 - Forecasts longer than a week are named for their dates ("Billing, October 4, 2026 to October 31, 2026") instead of "week of".
