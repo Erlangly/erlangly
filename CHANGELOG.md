@@ -1,5 +1,9 @@
 # Changes
 
+## 0.8.18 (2026-09-30)
+- **Discard a draft you don't need.** A schedule period's drafts each have a *Discard* button, so a draft made in error no longer sits there for good. The schedule itself, a draft still being generated and the period's last draft can't be discarded; the other drafts keep their numbers.
+- **Settings → Export** gives you everything this install holds as a .zip of CSV files, one per table, with secrets left out. It's made in the background and kept for a week, and exports and downloads are recorded in the audit trail. `erlangly export` does the same on the server.
+
 ## 0.8.17 (2026-09-30)
 - **Sign in with your company account.** Settings → Sign-in connects Erlangly to Microsoft Entra ID, Google Workspace, Okta or another OIDC identity provider. You test it by signing in yourself before turning it on. Only people you've invited can sign in, and only with an email address in the domains you allow; with Microsoft, only members of your organisation, not guests. An SSO sign-in lasts 12 hours.
 - **Require it** for staff or for everyone, keeping one or more break-glass admins who can still use a password; each of their password sign-ins is emailed to the other admins. Locked out? `erlangly sso off` on the server stops requiring it.

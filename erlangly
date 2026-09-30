@@ -22,6 +22,7 @@ Usage: erlangly <command>
   rollback            Go back to the previous version and the data from just before the upgrade
   backup [directory]  Save all data to a .tar.gz (default $BACKUPS)
   restore <file>      Replace all data with a backup (stops Erlangly while it restores)
+  export [directory]  All your data as CSV files in a .zip, to take elsewhere (default $BACKUPS)
   version             Show the installed version
   licence             The plan, agents and updates this install is licensed for
   sso [off]           Signing in with your identity provider; off stops requiring it (if you're locked out)
@@ -287,6 +288,17 @@ cmd_backup() {
   say "Backed up to $file ($(du -h "$file" | cut -f1))"
 }
 
+cmd_export() {
+  local directory=${1:-$BACKUPS} path file
+  up || fail "Erlangly isn't running"
+  mkdir -p "$directory"
+  path=$(docker exec "$CONTAINER" bin/wfm export) || fail "export failed"
+  file="$directory/$(basename "$path")"
+  docker cp "$CONTAINER:$path" "$file" > /dev/null || fail "couldn't copy the export out of the container"
+  chmod 600 "$file"
+  say "Exported to $file ($(du -h "$file" | cut -f1))"
+}
+
 cmd_restore() {
   local file=${1:?"Usage: erlangly restore <backup .tar.gz>"}
   [ -s "$file" ] || fail "no backup at $file"
@@ -308,6 +320,7 @@ case "${1:-}" in
   rollback) cmd_rollback ;;
   backup)   shift; cmd_backup "$@" ;;
   restore)  shift; cmd_restore "$@" ;;
+  export)   shift; cmd_export "$@" ;;
   version)  image_version erlangly:current ;;
   setup-link) up || fail "Erlangly isn't running"; setup_link ;;
   schedule|timeoff|licence|sso) up || fail "Erlangly isn't running"; docker exec "$CONTAINER" bin/wfm "$@" ;;
