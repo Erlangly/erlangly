@@ -1,5 +1,10 @@
 # Changes
 
+## 0.8.16 (2026-09-30)
+- Removing the sample data also removes the schedules you made from it while trying Erlangly out, as long as they weren't published and hold none of your own people's shifts.
+- Forecasts longer than a week are named for their dates ("Billing, October 4, 2026 to October 31, 2026") instead of "week of".
+- *Forecast every line of business* also makes a forecast for a line of business whose forecasts leave some of the days out.
+
 ## 0.8.15 (2026-09-30)
 - A new forecast covers the same weeks as a new schedule period, from your organisation's week start. It used to start on a Monday, so with Sunday weeks a schedule's Sundays had no forecast.
 - *Forecast every line of business* on the Forecast page makes a forecast for each line of business with history, in one go.
