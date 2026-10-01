@@ -1,5 +1,14 @@
 # Changes
 
+## 0.8.33 (2026-10-01)
+- **Choose the day a new draft takes over the schedule.** Once a period has a schedule, *Use draft N* and *Add draft N to the schedule* ask for the day it starts from: the start of next week by default, tomorrow at the earliest. Shifts before that day stay exactly as they are, so schedules can go out with notice, and a new draft no longer replaces days already worked. Only the people whose shifts change are asked to look again.
+- **People imports change contract hours from the effective date.** A row with an `effective_date` now starts the new hours and days a week on that date, like its lines of business, and the contract before ends the day before. The preview says what the contract becomes and from when.
+- **Zoom Contact Center connector (beta).** Connect it under *Settings → Connections*: it's checked with Zoom before saving, Zoom's statuses come pre-mapped, and agents are linked by email the first time. Agent states arrive live for adherence and the wallboard, and queue volumes come in every 15 minutes as volume history for forecasting, with 13 weeks of history when a queue is first matched. A connection's page shows its health, with a diagnostics file for support.
+- **`erlangly upgrade` is safer.** It brings itself up to date before upgrading, never goes back to an older version unless you name one, and always means the latest public release: a version named when installing is no longer remembered.
+
+## 0.8.32 (2026-09-30)
+- **Schedule some lines of business without touching the others.** In a schedule period, *For some lines of business…* generates a draft for the lines you tick. It schedules only their people, around the shifts they already have on the other lines. *Add it to the schedule* replaces only those lines' shifts from today on: the others stay exactly as published, and only the people whose shifts changed are told. Useful for a new line of business starting mid-schedule, or for regenerating one line.
+
 ## 0.8.31 (2026-09-30)
 - **Connect Claude, ChatGPT and other AI assistants by address.** Once an admin turns AI assistants on (*Settings → AI agents*), a person pastes your Erlangly's address with `/mcp` on the end into their assistant, signs in to Erlangly as usual (password or SSO), and chooses what it may do: only read, or read and change. No token to copy. It never sees other people's personal details, and it can't publish schedules.
 - **See and disconnect connected assistants:** your own under *Your account*, and everyone's for admins under *Settings → AI agents*. A connection ends by itself after 30 days without use, and sooner for people who must use SSO.

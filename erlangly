@@ -33,7 +33,7 @@ Usage: erlangly <command>
   timeoff [--all]                         Time off waiting for a decision (--all: coming up)
   timeoff approve|decline ID [NOTE]       Decide a time-off request
 
-Settings: $CONF (TLS_DOMAIN, ERLANGLY_URL, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE, ERLANGLY_TAG,
+Settings: $CONF (TLS_DOMAIN, ERLANGLY_URL, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE,
           LITESTREAM_REPLICA_URL, LITESTREAM_ACCESS_KEY_ID, LITESTREAM_SECRET_ACCESS_KEY)
 USAGE
 }
@@ -47,7 +47,9 @@ load_settings() {
   if [ -f "$CONF" ]; then
     while IFS='=' read -r key value; do
       case "$key" in
-        ERLANGLY_IMAGE | ERLANGLY_TAG | ERLANGLY_HTTP_PORT | ERLANGLY_HTTPS_PORT | TLS_DOMAIN | ERLANGLY_URL | \
+        # Not ERLANGLY_TAG: a version named when installing was for that install, and saving it made every
+        # later `erlangly upgrade` reinstall it (installs from before 0.8.33 still have it in their settings).
+        ERLANGLY_IMAGE | ERLANGLY_HTTP_PORT | ERLANGLY_HTTPS_PORT | TLS_DOMAIN | ERLANGLY_URL | \
           LITESTREAM_REPLICA_URL | LITESTREAM_ACCESS_KEY_ID | LITESTREAM_SECRET_ACCESS_KEY) printf -v "$key" '%s' "$value" ;;
       esac
     done < "$CONF"
@@ -81,7 +83,6 @@ save_settings() {
   cat > "$CONF" <<SETTINGS
 # Erlangly settings. Run \`erlangly restart\` after changing them.
 ERLANGLY_IMAGE=$ERLANGLY_IMAGE
-ERLANGLY_TAG=$ERLANGLY_TAG
 ERLANGLY_HTTP_PORT=$ERLANGLY_HTTP_PORT
 ERLANGLY_HTTPS_PORT=$ERLANGLY_HTTPS_PORT
 TLS_DOMAIN=$TLS_DOMAIN
@@ -222,14 +223,42 @@ cmd_restart() {
   say "Erlangly is up at $(url) ($(since "$started") s)"
 }
 
+# Before upgrading, the erlangly command brings itself up to date from get.erlangly.com (checked
+# like the installer checks it, and against the published checksums), so an install made long ago
+# upgrades by today's rules. Not with a local image, and only once per upgrade.
+update_self() {
+  [ -z "${ERLANGLY_IMAGE_TAR:-}" ] && [ -z "${ERLANGLY_SELF_UPDATED:-}" ] || return 0
+  local new sums expected
+  new=$(mktemp)
+  if curl -fsSL "$SOURCE/erlangly" -o "$new" && bash -n "$new" && tail -n 1 "$new" | grep -q '^# end of erlangly' &&
+     sums=$(curl -fsSL "$SOURCE/SHA256SUMS") && expected=$(printf '%s\n' "$sums" | awk '$2 == "erlangly" { print $1 }') &&
+     [ -n "$expected" ] && [ "$(sha256sum "$new" | cut -d' ' -f1)" = "$expected" ]; then
+    if ! cmp -s "$new" "$0"; then
+      install -m 755 "$new" "$0"
+      rm -f "$new"
+      say "Updated the erlangly command"
+      ERLANGLY_SELF_UPDATED=1 exec "$0" upgrade "$@"
+    fi
+  else
+    say "Couldn't update the erlangly command from $SOURCE; upgrading with this one"
+  fi
+  rm -f "$new"
+}
+
 cmd_upgrade() {
   local from to older started
+  update_self "$@"
   started=$(date +%s.%N)
   say "Downloading ${1:-the latest release}…"
   fetch_image "${1:-}"
   from=$(image_version erlangly:current) to=$(image_version erlangly:new)
   if [ "$(docker image inspect -f '{{.Id}}' erlangly:new)" = "$(docker image inspect -f '{{.Id}}' erlangly:current)" ]; then
     docker rmi erlangly:new > /dev/null; say "Erlangly $from is already the latest"; return
+  fi
+  if [ -z "${1:-}" ] && older_version "$to" "$from"; then
+    docker rmi erlangly:new > /dev/null
+    say "Erlangly $from is newer than the latest release ($to), so there's nothing to upgrade to. To go back to $to on purpose: erlangly upgrade $to"
+    return
   fi
   check_updates_cover "$from" "$to"
 
@@ -247,6 +276,12 @@ cmd_upgrade() {
     [ -z "$older" ] || docker tag "$older" erlangly:previous
     exit 1
   fi
+}
+
+# Is version $1 older than $2? Only for release numbers like 0.8.31 (not "dev" builds).
+older_version() {
+  [[ "$1" =~ ^[0-9]+(\.[0-9]+)*$ && "$2" =~ ^[0-9]+(\.[0-9]+)*$ && "$1" != "$2" ]] &&
+    [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -1)" = "$1" ]
 }
 
 # A pay-once licence covers releases up to its updates date. One released later isn't installed:
