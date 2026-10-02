@@ -1,5 +1,33 @@
 # Changes
 
+## 0.8.40 (2026-10-01)
+- **Genesys Cloud connector (beta), complete.** Match Genesys's queues to your lines of business (a queue taking calls and chats is listed once for each) and Erlangly reads their contacts, handle time and abandons every 15 minutes, with the last 13 weeks straight away.
+- Checked against Genesys's own API description: agents on queue are recognised however Genesys spells it, and an agent who's on queue but in no active queue shows as Aux.
+- Agents the OAuth client's role can't see no longer stop everyone else's status: the connection's page says how many aren't heard and which permission is missing.
+- Safer: Erlangly only signs in to Genesys's own addresses for your region, checked before anything is sent; presence messages and out-of-office stay out of diagnostics.
+- Setting up: erlangly.com/getting-started/acd has a Genesys Cloud section.
+
+## 0.8.39 (2026-10-01)
+- Schedules flagged before 0.8.37 also stop warning about a republished forecast on drafts made after it.
+
+## 0.8.38 (2026-10-01)
+- The schedule's hours also stretch to cover every interval the forecast needs people, so a gap with forecast volume and no shifts is never cut off.
+
+## 0.8.37 (2026-10-01)
+- **Late and overnight shifts show on their own day in the schedule.** The grid's day used to stop at 10 PM, so shifts ending later spilled into the next morning: they were counted there in the week view's coverage, and a shift ending at midnight was drawn as a sliver with its breaks outside it. Days now stretch to fit the shifts (all 24 hours once one runs past midnight), and the week and day views agree.
+- The warning that a forecast was republished (or that someone moved off a line of business) now shows only on drafts made before it, not on ones generated since.
+
+## 0.8.36 (2026-10-01)
+- **Change a shift pattern's breaks and lunch without removing them.** Each activity on a shift pattern has an *Edit* link that opens it in place, with its length, window and minimum shift length filled in.
+- **Genesys Cloud connector (beta), first part.** Connect it under *Settings → Connections* with a view-only OAuth client and your region: it's checked with Genesys before saving, and agents' live statuses arrive for adherence and the wallboard, pre-mapped from Genesys's own presences.
+
+## 0.8.35 (2026-10-01)
+- **Zoom Contact Center connector (beta), made sturdier:** it stays connected instead of reconnecting every half minute, notices a dropped connection within a minute, reads chat and email volumes correctly, copes with floors of more than 500 agents, waits when Zoom asks it to slow down, and shows on the connection's page when reading volumes or statuses fails. Its diagnostics file now keeps only what says nothing about a person.
+- Stopping the Zoom connector's process no longer stops Erlangly.
+
+## 0.8.34 (2026-10-01)
+- The *From* date beside *Use draft* shows the whole date.
+
 ## 0.8.33 (2026-10-01)
 - **Choose the day a new draft takes over the schedule.** Once a period has a schedule, *Use draft N* and *Add draft N to the schedule* ask for the day it starts from: the start of next week by default, tomorrow at the earliest. Shifts before that day stay exactly as they are, so schedules can go out with notice, and a new draft no longer replaces days already worked. Only the people whose shifts change are asked to look again.
 - **People imports change contract hours from the effective date.** A row with an `effective_date` now starts the new hours and days a week on that date, like its lines of business, and the contract before ends the day before. The preview says what the contract becomes and from when.
