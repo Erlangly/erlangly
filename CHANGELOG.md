@@ -1,5 +1,25 @@
 # Changes
 
+## 0.8.45 (2026-10-02)
+- **NICE CXone connector (beta), complete.** Floors of any size stay connected (the first check hands over everyone 500 at a time). Volumes count only real demand: contacts that reached a queue, handled when an agent worked them, each once, without consults, takeovers, short abandons or outbound calls. Every night the last week is read again, so emails and work items completed days later are counted.
+- Safer: Erlangly asks CXone only for the agent and contact fields it uses, never addresses, pay or callers' details, and refuses oversized answers. You can switch a CXone connection back to Erlangly's own NICE registration.
+- The data export leaves every connection's access key secret out, encrypted or not.
+- Setting up: erlangly.com/getting-started/acd has a NICE CXone section.
+
+## 0.8.44 (2026-10-02)
+- In the schedule grid, the lines between people run exactly as far as the hours shown, instead of stopping at the edge of the screen.
+- A published schedule's header says plainly who can see it: *Seen by 12 of 40 people with a login*, or, when nobody on it can sign in yet, that no one has an Erlangly login, with a link for admins to invite them.
+
+## 0.8.43 (2026-10-02)
+- **The schedule's summary follows what you're looking at.** Coverage, Short, Over and Shifts on a draft now show the week or day and line of business you've picked, with a line saying which, instead of always the whole period. Each line of business counts against its own need, so one line's spare people don't hide another's gap.
+- **NICE CXone connector (beta), first parts.** Connect it under *Settings → Connections* with a CXone access key: agents' live states arrive for adherence and the wallboard, and CXone's inbound skills can be matched to your lines of business, whose contacts, handle time and abandons come in as volume history.
+
+## 0.8.42 (2026-10-02)
+- The schedule's week view opens faster again for large teams (about 45 ms less for 500 people), after overnight shifts got their own day.
+
+## 0.8.41 (2026-10-01)
+- In the schedule's week view, the lines between days fall at midnight again, now that a day can show more than 6 AM to 10 PM.
+
 ## 0.8.40 (2026-10-01)
 - **Genesys Cloud connector (beta), complete.** Match Genesys's queues to your lines of business (a queue taking calls and chats is listed once for each) and Erlangly reads their contacts, handle time and abandons every 15 minutes, with the last 13 weeks straight away.
 - Checked against Genesys's own API description: agents on queue are recognised however Genesys spells it, and an agent who's on queue but in no active queue shows as Aux.
