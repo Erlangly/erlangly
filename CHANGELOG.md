@@ -1,5 +1,43 @@
 # Changes
 
+## 0.8.55 (2026-10-04)
+- **Amazon Connect connector (beta).** Connect it under *Settings → Connections* with your instance's ARN and an IAM user's access key: the page shows the read-only policy to give that user. Erlangly follows agents' states every few seconds (on a contact, after contact work, or in their own status) and reads your queues' volumes every 15 minutes, by channel, with the last 13 weeks straight away. It asks AWS at most once a second, half of what AWS allows by default, so your own tools keep their share. Setting up: erlangly.com/getting-started/acd.
+- On the mapping page, a connection's status called like one of Erlangly's own states (such as *Break* or *Offline*) now follows its row there.
+- Reading a connection's 13-week history carries on past a week that fails, instead of stopping there.
+
+## 0.8.54 (2026-10-04)
+- **The wallboard follows Zoom, Genesys Cloud, NICE CXone and Five9 live.** Agents' state changes from these connections now show on open wallboards within a second, as changes sent through the API always have; before, they showed only when the page was reloaded.
+- When several agents change state in the same second, the wallboard now shows every change, not just the first.
+
+## 0.8.53 (2026-10-02)
+- **A draft warns when shifts run where the forecast needs nobody.** If a line of business has people on shift for an hour or more of the day when its forecast needs no one, usually because a shift pattern starts earlier or ends later than the forecast, the draft says so, with the times and the patterns to adjust. Scheduling then is still allowed.
+
+## 0.8.52 (2026-10-02)
+- **Long leave.** New unpaid time-off types, *Leave of absence* and *Parental leave*. Requests has an *On leave* list of everyone away for two weeks or more, with the day they're back, flagged *Back soon* when that's within a week and *Back early?* when the ACD shows them working during their leave.
+- Supervisors can change the dates of time off asked for or approved (back early, or a leave extended), and the schedule follows.
+
+## 0.8.51 (2026-10-02)
+- **Overlapping activities take someone off the phone once.** A Late placed over a break, say, no longer counts them away twice in coverage and the summary figures.
+- The schedule grid shows each activity in its own colour (Late, Training, Coaching…), not every one but lunch as a break.
+
+## 0.8.50 (2026-10-02)
+- Coverage counts activities that keep people on the phone, like nesting, as time on the phone, rather than taking them off it like a break.
+- **Five9 connector (beta), first part.** Connect it under *Settings → Connections* with your data centre and a dedicated Five9 user: it's checked with Five9 before saving, and agents' live states arrive for adherence and the wallboard.
+
+## 0.8.49 (2026-10-02)
+- **Change a shift's breaks and other activities without removing them.** On a shift's page, each break, lunch or other activity has an *Edit* link that opens it in place, with its activity, start time and minutes filled in. It's checked like a new one: it has to fit in the shift, and labour rules apply.
+
+## 0.8.48 (2026-10-02)
+- **Adherence counts approved time off as expected time away.** Someone on vacation over a published shift is no longer scored out of adherence: for the time off, being logged out is what's expected, as for an approved absence. The wallboard shows them as expected away too.
+- The schedule grid's legend includes time off.
+
+## 0.8.47 (2026-10-02)
+- **Time off shows on the schedule, as a layer over it.** Approved time off (vacation, sick, other reasons) is drawn over the person's shift and its breaks and lunch, which stay as planned underneath, and people who are off without a shift get a row. The time it takes out of a shift counts as away from the phone in coverage and the summary figures, without counting a break twice.
+- A shift with approved time off over it no longer stops a schedule being published: the schedule page lists them instead, in case you'd rather move a shift. On their own schedule, people see the time off inside the shift.
+
+## 0.8.46 (2026-10-02)
+- **Every day of a forecast can be opened.** A forecast's page has the live forecast's *From / to* date picker instead of buttons for only its first 14 days: it opens on the whole forecast, with *Whole forecast* and *Today* shortcuts, and the same day for both shows that day's intervals.
+
 ## 0.8.45 (2026-10-02)
 - **NICE CXone connector (beta), complete.** Floors of any size stay connected (the first check hands over everyone 500 at a time). Volumes count only real demand: contacts that reached a queue, handled when an agent worked them, each once, without consults, takeovers, short abandons or outbound calls. Every night the last week is read again, so emails and work items completed days later are counted.
 - Safer: Erlangly asks CXone only for the agent and contact fields it uses, never addresses, pay or callers' details, and refuses oversized answers. You can switch a CXone connection back to Erlangly's own NICE registration.
