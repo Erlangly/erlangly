@@ -24,9 +24,11 @@ Usage: erlangly <command>
   restore <file>      Replace all data with a backup (stops Erlangly while it restores)
   export [directory]  All your data as CSV files in a .zip, to take elsewhere (default $BACKUPS)
   version             Show the installed version
+  help                This list
   licence             The plan, agents and updates this install is licensed for
   sso [off]           Signing in with your identity provider; off stops requiring it (if you're locked out)
   setup-link          The secret link for creating the first admin on a new install
+  reset-link EMAIL    A link for someone to choose a new password (if you're locked out, say)
 
   schedule [DATE] [--lob CODE] [--json]   Published shifts on a day (default today)
   volumes import FILE.csv                 Import volume history
@@ -38,7 +40,7 @@ Settings: $CONF (TLS_DOMAIN, ERLANGLY_URL, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE,
 USAGE
 }
 
-say() { printf '\033[1m%s\033[0m\n' "$*"; }
+say() { if [ -t 1 ]; then printf '\033[1m%s\033[0m\n' "$*"; else printf '%s\n' "$*"; fi; }
 fail() { printf 'erlangly: %s\n' "$*" >&2; exit 1; }
 
 # Reads the settings file as KEY=value lines (it's never run as a script), keeping only known keys.
@@ -81,11 +83,15 @@ check_settings() {
 save_settings() {
   mkdir -p "$(dirname "$CONF")"
   cat > "$CONF" <<SETTINGS
-# Erlangly settings. Run \`erlangly restart\` after changing them.
+# Erlangly settings. Change them here, then run \`erlangly restart\`.
+# Where Erlangly is downloaded from: the official image, or your own mirror of it (from the next upgrade).
 ERLANGLY_IMAGE=$ERLANGLY_IMAGE
+# The ports Erlangly answers on.
 ERLANGLY_HTTP_PORT=$ERLANGLY_HTTP_PORT
 ERLANGLY_HTTPS_PORT=$ERLANGLY_HTTPS_PORT
+# HTTPS with a free Let's Encrypt certificate: a domain pointed at this server, with ports 80 and 443 open.
 TLS_DOMAIN=$TLS_DOMAIN
+# The address people open, when your own HTTPS proxy is in front (like https://wfm.example.com).
 ERLANGLY_URL=$ERLANGLY_URL
 # Off-server copies of the database with Litestream (optional): an S3 bucket and its keys.
 LITESTREAM_REPLICA_URL=$LITESTREAM_REPLICA_URL
@@ -177,7 +183,7 @@ url() {
 
 cmd_install() {
   if docker container inspect "$CONTAINER" > /dev/null 2>&1; then
-    fail "Erlangly is already installed. Use \`erlangly upgrade\` for a new version, or \`erlangly status\`."
+    fail "Erlangly is already installed. To change its settings (like TLS_DOMAIN), edit $CONF and run \`erlangly restart\`; for a new version, \`erlangly upgrade\`."
   fi
   save_settings
   say "Downloading Erlangly…"
@@ -187,19 +193,35 @@ cmd_install() {
   start_container erlangly:current
   wait_until_up 120 || { docker logs --tail 40 "$CONTAINER" >&2; fail "Erlangly didn't start; the log is above"; }
   say "Erlangly is running at $(url)  (installed in $(( $(date +%s) - ${ERLANGLY_INSTALL_STARTED:-$(date +%s)} )) s)"
+  if [ -z "$TLS_DOMAIN" ] && [[ "$ERLANGLY_URL" != https://* ]]; then
+    echo
+    echo "Note: this is plain HTTP, so passwords cross the network unencrypted: use it only on a trusted network."
+    echo "      For HTTPS: point a domain at this server (ports 80 and 443 open), put it in TLS_DOMAIN= in $CONF"
+    echo "      (with sudo), run \`erlangly restart\`, then \`erlangly setup-link\` for the new link."
+    echo "      Behind your own HTTPS proxy: erlangly.com/docs/install"
+  fi
+  echo
+  echo "Manage it with: erlangly status | logs | upgrade | backup | help"
   echo
   echo "Finish setting it up here (this link is secret, and works until you've created the first admin):"
   echo "  $(setup_link)"
-  [ -n "$TLS_DOMAIN" ] || [[ "$ERLANGLY_URL" == https://* ]] || { echo; echo "Note: without TLS_DOMAIN Erlangly serves plain HTTP, so passwords cross the network unencrypted."; echo "      Use it only on a trusted network, or put it behind an HTTPS proxy (ERLANGLY_URL=https://…), or reinstall with TLS_DOMAIN=your.domain."; }
-  echo
-  echo "Manage it with: erlangly status | logs | upgrade | backup"
+  private_address_note || true
 }
 
-# The one-time link for creating the first admin (a new token if the old one is gone).
+# Is the address in this URL one a network keeps to itself (10.x, 172.16–31.x, 192.168.x)?
+private_address() { [[ "$1" =~ ^https?://(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.) ]]; }
+
+# After a link with such an address (on stderr, so a script capturing the link gets just the link).
+private_address_note() {
+  [ -z "$ERLANGLY_URL$TLS_DOMAIN" ] && private_address "$(url)" &&
+    echo "  That's this server's address on its own network. From elsewhere, use its public address instead, once its firewall lets people in on port $ERLANGLY_HTTP_PORT." >&2
+}
+
+# The one-time link for creating the first admin (a new token if the old one is gone), while there's none.
 setup_link() {
-  local token
-  token=$(docker exec "$CONTAINER" sh -c '[ -s storage/setup_token ] || (umask 077 && ruby -rsecurerandom -e "print SecureRandom.alphanumeric(32)" > storage/setup_token); cat storage/setup_token')
-  echo "$(url)/first_run/new?token=$token"
+  local path
+  path=$(docker exec "$CONTAINER" bin/wfm setup-link) || return 1
+  echo "$(url)$path"
 }
 
 cmd_status() {
@@ -292,7 +314,7 @@ check_updates_cover() {
   until=$(up && docker exec "$CONTAINER" bin/wfm licence --updates-until 2>/dev/null || true)
   if [[ -n "$released" && -n "$until" && "$released" > "$until" ]]; then
     docker rmi erlangly:new > /dev/null
-    fail "Erlangly $2 came out on $released, after your licence's updates ended on $until. Renew Updates (see erlangly.com/getting-started/licence) to install it; you're still on $1."
+    fail "Erlangly $2 came out on $released, after your licence's updates ended on $until. Renew Updates (see erlangly.com/docs/licence) to install it; you're still on $1."
   fi
 }
 
@@ -343,6 +365,16 @@ cmd_restore() {
   cmd_restart
 }
 
+# Help, and a command that doesn't exist, without asking for sudo first. -h or --help anywhere is help
+# (so \`erlangly rollback --help\` doesn't roll back).
+for argument; do case $argument in -h | --help) usage; exit 0 ;; esac; done
+case "${1:-}" in
+  "" | help | -h | --help) usage; exit 0 ;;
+  install | status | logs | restart | upgrade | rollback | backup | restore | export | version | --version | setup-link | reset-link | \
+    schedule | timeoff | licence | sso | volumes) ;;
+  *) printf 'erlangly: there'"'"'s no command "%s"\n\n' "$1" >&2; usage >&2; exit 1 ;;
+esac
+
 [ "$(id -u)" -eq 0 ] || exec sudo --preserve-env=LITESTREAM_REPLICA_URL,LITESTREAM_ACCESS_KEY_ID,LITESTREAM_SECRET_ACCESS_KEY,ERLANGLY_SOURCE,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_URL,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_INSTALL_STARTED "$0" "$@"
 load_settings
 
@@ -356,9 +388,24 @@ case "${1:-}" in
   backup)   shift; cmd_backup "$@" ;;
   restore)  shift; cmd_restore "$@" ;;
   export)   shift; cmd_export "$@" ;;
-  version)  image_version erlangly:current ;;
-  setup-link) up || fail "Erlangly isn't running"; setup_link ;;
-  schedule|timeoff|licence|sso) up || fail "Erlangly isn't running"; docker exec "$CONTAINER" bin/wfm "$@" ;;
+  version | --version) image_version erlangly:current ;;
+  setup-link)
+    up || fail "Erlangly isn't running"
+    [ ! -t 2 ] || printf 'Asking Erlangly (a few seconds)…\n' >&2
+    setup_link || exit 1
+    private_address_note || true ;;
+  reset-link)
+    up || fail "Erlangly isn't running"
+    [ -n "${2:-}" ] || fail "Usage: erlangly reset-link EMAIL"
+    [ ! -t 2 ] || printf 'Asking Erlangly (a few seconds)…\n' >&2
+    path=$(docker exec "$CONTAINER" bin/wfm reset-link "$2") || exit 1
+    echo "$(url)$path"
+    echo "  It works once, for 15 minutes. Erlangly keeps a note of it in the audit trail." >&2
+    private_address_note || true ;;
+  schedule|timeoff|licence|sso)
+    up || fail "Erlangly isn't running"
+    [ ! -t 2 ] || printf 'Asking Erlangly (a few seconds)…\n' >&2
+    docker exec "$CONTAINER" bin/wfm "$@" ;;
   volumes)
     up || fail "Erlangly isn't running"
     # The file is on this server, not in the container: send it in.
@@ -368,6 +415,6 @@ case "${1:-}" in
     else
       docker exec -i "$CONTAINER" bin/wfm "$@"
     fi ;;
-  *)        usage; [ -z "${1:-}" ] || [ "$1" = help ] || exit 1 ;;
+  *)        usage ;;
 esac
 # end of erlangly (install.sh checks for this line, to know the download is complete)

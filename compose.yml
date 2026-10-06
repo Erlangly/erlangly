@@ -3,6 +3,7 @@
 #   docker compose up -d                 then open the setup link from:
 #   docker compose exec erlangly sh -c 'echo "/first_run/new?token=$(cat storage/setup_token)"' 
 #   docker compose pull && docker compose up -d     to upgrade
+#   docker compose exec erlangly bin/wfm reset-link you@example.com   locked out? a password reset link's path, to open on your address
 #
 # The `erlangly` command adds safer upgrades (automatic rollback), backups and restores; with
 # Compose, back up with `docker compose exec erlangly bin/backup > erlangly.tar.gz`.

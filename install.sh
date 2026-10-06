@@ -21,7 +21,7 @@ main() {
   ERLANGLY_SOURCE=${ERLANGLY_SOURCE:-https://get.erlangly.com}
   export ERLANGLY_INSTALL_STARTED=${ERLANGLY_INSTALL_STARTED:-$(date +%s)}
 
-  say() { printf '\033[1m%s\033[0m\n' "$*"; }
+  say() { if [ -t 1 ]; then printf '\033[1m%s\033[0m\n' "$*"; else printf '%s\n' "$*"; fi; }
   fail() { printf 'Erlangly install failed: %s\n' "$*" >&2; exit 1; }
 
   [ "$(uname -s)" = Linux ] || fail "Erlangly installs on Linux. On a Mac or Windows PC, use a Linux server or VM."
@@ -32,15 +32,26 @@ main() {
 
   if [ "$(id -u)" -eq 0 ]; then sudo=""; else sudo="sudo"; command -v sudo > /dev/null || fail "run this as root"; fi
 
+  # A new server installs its own updates in its first minutes, which holds the package manager: apt,
+  # apt-get or dpkg running, unattended-upgrade itself, or the daily script running them. Not
+  # unattended-upgrades' shutdown helper, which waits for the whole life of the server (process names
+  # are cut to 15 characters, so both read "unattended-upgr").
+  updating() { pgrep -x "apt|apt-get|dpkg" > /dev/null || pgrep -f "bin/unattended-upgrade( |$)|apt\.systemd\.daily" > /dev/null; }
+
   if ! command -v docker > /dev/null; then
     log=$(mktemp)
     say "Installing Docker…"
-    # A new server spends its first minutes installing its own updates, which holds the package
-    # manager; package mirrors have blips too. Wait for the first, pause for the second, try again.
+    # Wait for the server's own updates, pause for a package mirror's blip, then try again.
     if ! curl -fsSL https://get.docker.com | $sudo sh > "$log" 2>&1; then
       if grep -q -i "lock" "$log"; then
-        say "The server is still installing its own updates (new servers do, for a few minutes). Waiting for them to finish…"
-        for _ in $(seq 60); do pgrep -x "apt|apt-get|dpkg|unattended-upgr" > /dev/null || break; sleep 5; done
+        say "The server is still installing its own updates (new servers do, in their first minutes). Waiting for them to finish…"
+        waited=0
+        while updating || { sleep 5; updating; }; do # quiet for 5 s, not a gap between two update steps
+          [ "$waited" -lt 1200 ] || fail "the server's own updates are still running after 20 minutes. Run the install again later: it waits for them to finish."
+          sleep 10
+          waited=$((waited + 10))
+          [ $((waited % 60)) -ne 0 ] || say "  Still installing updates ($((waited / 60)) min)…"
+        done
       else
         say "Docker's install hit a snag; trying again in 20 seconds…"
         sleep 20
