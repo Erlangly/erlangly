@@ -1,5 +1,18 @@
 # Changes
 
+## 0.8.77 (2026-10-07)
+- **Older "generate again" warnings clear the same way.** A warning raised before 0.8.73, when someone moved off a line of business or a forecast changed, could only be cleared by a whole new draft. Erlangly now reads who or what each one is about from its wording, so a draft for just that person, or that line of business, clears it like any newer warning.
+
+## 0.8.76 (2026-10-07)
+- **Breaks and lunches go where they cost the least.** Generation used to place each person's breaks once, as it picked their shift, so later people could leave breaks bunched where the floor was already thin. Now its last step goes back over everyone's breaks, a person at a time, and moves each to where it's missed least, repeating until nothing more helps. On the 500-person sample week, coverage went from 98.3% to 99.5%.
+  - Breaks stay within the windows their shift patterns allow, in the same order, and never back to back. Shifts and days off don't change.
+- **Even out breaks on a schedule or draft.** After changes (people moved, shifts edited, time off approved), *Even out breaks…* does the same from a day you pick, for all or some lines of business, and says how many breaks moved and what it did to coverage.
+  - Breaks placed by hand stay where they are, and so does any break that has started or starts in the next half hour.
+  - On a published schedule, only the people whose breaks moved are told, and asked to look at their schedule again.
+
+## 0.8.75 (2026-10-06)
+- **Search engines leave your install out.** Every page and file Erlangly serves now tells search engines not to list it, so your sign-in page, or a test copy you run on the internet, won't turn up in search results.
+
 ## 0.8.74 (2026-10-06)
 - **Nobody is booked by two clients at once.** Someone who works for more than one client could be given a shift for one client over a shift they already had for another, when a schedule was generated. Generating a client's schedule now works around their published shifts for other clients, with rest either side, and counts those hours and days towards their week.
   - Rest and days in a row carry over from all their shifts before the period, whichever client they were for.
