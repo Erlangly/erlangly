@@ -1,5 +1,14 @@
 # Changes
 
+## 0.8.80 (2026-10-08)
+- **Sample data can't stand in for your own people.** The sample is as big as your licence: 25 agents on the free plan, as many as a paid licence covers, and all 500 on a trial. Sample people still don't count, but change one's name, employee number or email, invite them to sign in or give them an ACD ID, and they become one of your people, counted like anyone you add; with no seat left, Erlangly says so and changes nothing. Sample people have a *Sample* badge, and their edit page says what makes them count. A sample you've already loaded stays as it is.
+
+## 0.8.79 (2026-10-07)
+- **A draft's name matches its address.** Drafts are called by the number in their web address, so "Draft 27" is the one at /drafts/27. Before, the name counted the drafts in its schedule period, so it could read "Draft 25" on a page whose address said 27. The tabs, buttons, notices and warnings all use the new name. Numbers in one period can now skip, such as 27, 31 and 33.
+
+## 0.8.78 (2026-10-07)
+- **Five9 connector (beta): a setup guide.** The *Connect Five9* page links to erlangly.com/docs/five9, which says what to set up in Five9 (a user with a supervisor role and a view-only administrator role), how states and reason codes are mapped, and that volumes don't come from Five9 yet.
+
 ## 0.8.77 (2026-10-07)
 - **Older "generate again" warnings clear the same way.** A warning raised before 0.8.73, when someone moved off a line of business or a forecast changed, could only be cleared by a whole new draft. Erlangly now reads who or what each one is about from its wording, so a draft for just that person, or that line of business, clears it like any newer warning.
 
