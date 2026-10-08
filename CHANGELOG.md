@@ -1,5 +1,13 @@
 # Changes
 
+## 0.8.82 (2026-10-08)
+- **Why a schedule can't be generated is said once.** When your licence stops schedules being generated, the form says why, or the alert after trying does, and the licence warning admins see on every page steps aside there. Admins get a link to Settings → Licence with it.
+
+## 0.8.81 (2026-10-08)
+- **Sample data counts towards your licence: 25 in all on the free plan.** It's either the sample or your own people. The sample takes the seats that are free (all 25 on a new free install, up to 500 on a trial), and while it's loaded, adding your own agents waits until you remove it. Changing a sample person's name, employee number or email, inviting them to sign in or giving them an ACD ID makes them one of your people, who stays when the sample goes.
+- **Over your licence, schedules aren't generated.** With more active agents than your licence covers, Erlangly won't generate schedules or even out breaks until you're back within it, and the forms say why. Everything already made keeps working: viewing, editing and publishing schedules, forecasts, adherence and the wallboard.
+- **A schedule period counts everyone in it.** Generating one line of business at a time can't take a period past your licence: everyone with shifts in it counts.
+
 ## 0.8.80 (2026-10-08)
 - **Sample data can't stand in for your own people.** The sample is as big as your licence: 25 agents on the free plan, as many as a paid licence covers, and all 500 on a trial. Sample people still don't count, but change one's name, employee number or email, invite them to sign in or give them an ACD ID, and they become one of your people, counted like anyone you add; with no seat left, Erlangly says so and changes nothing. Sample people have a *Sample* badge, and their edit page says what makes them count. A sample you've already loaded stays as it is.
 
