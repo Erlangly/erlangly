@@ -1,5 +1,22 @@
 # Changes
 
+## 0.8.85 (2026-10-09)
+- **You can remove a connection.** Settings → Connections has a Remove button: it deletes the connection and unlinks its agents, keeping your past adherence. Before, connections could only be added and edited.
+- **The sample wallboard comes alive.** With the sample data loaded and a schedule published for today, the simulated ACD now feeds agent states on any install, so the wallboard and adherence show live activity to explore — no setup.
+
+## 0.8.84 (2026-10-09)
+- **Your install shows who it's licensed to.** The sign-in page and your data exports name the organisation on the licence, so a shared licence key is easy to spot.
+- **A leaked or shared licence key can be stopped.** If a key gets out, it can be revoked so it stops working from the next update; email hello@erlangly.com.
+- **Licence terms, clarified.** The free plan's 25 active agents are counted across all your installs, and a licence key is for one organisation.
+
+## 0.8.83 (2026-10-08)
+- **Email and tickets planned within opening hours, to their response target.** An email or ticket line of business can now have opening hours (Settings → Lines of business → the line → Opening hours): each weekday's opening and closing time, or around the clock. Its work is then planned to be done while it's open, before its response target is up, instead of the moment it arrives.
+  - Email that comes in while the line is closed waits for it to open, and anything not done by closing carries over to the next morning.
+  - Maximum occupancy now applies to these lines too.
+  - A forecast's day shows how many contacts are still **waiting** at the end of each interval, instead of a service level.
+  - A line without opening hours is planned as before, as the work arrives.
+- **Chats: whole sessions or the agent's own time.** A chat line's page says what its handle time measures. Connected ACDs always report whole chat sessions, which are divided by the chats at a time. For imported figures, you can say they're the agent's own time per chat, so they're not divided again.
+
 ## 0.8.82 (2026-10-08)
 - **Why a schedule can't be generated is said once.** When your licence stops schedules being generated, the form says why, or the alert after trying does, and the licence warning admins see on every page steps aside there. Admins get a link to Settings → Licence with it.
 

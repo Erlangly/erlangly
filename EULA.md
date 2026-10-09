@@ -8,12 +8,14 @@ We licence you to install and use Erlangly for your own organisation's internal 
 
 The licence isn't exclusive, and you can't transfer or sublicence it. You get it for the plan you choose:
 
-- **Free:** self-hosted, up to 25 active agents. It doesn't expire.
+- **Free:** self-hosted, up to 25 active agents across all your installs. It doesn't expire.
 - **Trial:** 30 days, all features, unlimited agents and up to 5 people signing in.
 - **Paid:** the number of active agents on your licence key, for the term on it.
 - **Perpetual:** the version you bought, for good. Updates are covered for as long as your Updates subscription runs.
 
 An "active agent" is a person on your roster marked active. Signing in is free.
+
+Your plan's agent limit is for your whole organisation: if you run Erlangly on more than one server, the active agents on all of them count together. A licence key is for one organisation; you may not share it or use it for another. We may ask you to confirm the number of active agents across your installs.
 
 ## 2. What you may not do
 
@@ -21,6 +23,7 @@ You may not:
 
 - Copy, share, sell, rent or lend Erlangly, or run it for anyone else, including hosting it as a service for other organisations.
 - Change, get around or remove the licence key check, or use more active agents than your plan allows.
+- Run more than one install, or share or reuse a licence key, to use more active agents than a single plan allows.
 - Reverse engineer, decompile or disassemble Erlangly, including its compiled core, except where the law allows it despite this agreement.
 - Use Erlangly's rule packs, holiday calendars or other data outside Erlangly.
 
