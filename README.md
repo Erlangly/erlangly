@@ -33,8 +33,8 @@ Prefer Docker Compose? [`compose.yml`](compose.yml) runs the same container.
 ## Run it
 
 ```
-erlangly status              Is Erlangly up, which version, and where to reach it
-erlangly logs -f             Follow the app's log
+erlangly status              Is Erlangly up, which version, where to reach it, what needs looking at
+erlangly logs -f             Follow the app's log (the newest 100 MB are kept)
 erlangly restart             Restart Erlangly
 erlangly upgrade             Install the latest release; rolls back by itself if it doesn't start
 erlangly rollback            Go back to the previous version and the data from just before the upgrade
@@ -73,7 +73,7 @@ LITESTREAM_SECRET_ACCESS_KEY=…
 
 If you lose the server, install on a new one with the same three settings (pass them to the installer, like `TLS_DOMAIN`): Erlangly restores the data from the copy on its first start. Keep them somewhere other than the server. Afterwards everyone signs in again, and an admin re-enters the mail server password under Settings → Email.
 
-**Upgrades** are safe to run at any time. Before a new version changes the database, Erlangly takes a snapshot. If the new version doesn't start, `erlangly upgrade` puts the previous version and the snapshot back by itself. With a pay-once licence, it installs releases that came out before your updates end; after that, your current version keeps running.
+**Upgrades** are safe to run at any time. Before a new version changes the database, Erlangly takes a snapshot. If the new version doesn't start, `erlangly upgrade` puts the previous version and the snapshot back by itself. With a lot of data the snapshot and the changes can take a few minutes, and the upgrade waits for them. With a pay-once licence, it installs releases that came out before your updates end; after that, your current version keeps running.
 
 ## Connect your ACD, and your own tools
 

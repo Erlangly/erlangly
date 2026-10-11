@@ -7,6 +7,7 @@
 # Settings (environment variables):
 #   TLS_DOMAIN=wfm.example.com   serve HTTPS with a Let's Encrypt certificate for this domain
 #   ERLANGLY_URL=https://wfm.example.com   the address people open, when your own HTTPS proxy is in front
+#   TRUSTED_PROXIES=192.168.1.10           that proxy's address, when it runs on another machine
 #   ERLANGLY_HTTP_PORT=8080      publish on another port (default 80)
 #   ERLANGLY_IMAGE_TAR=file.tar  install from a saved image instead of the registry (offline, testing)
 #   ERLANGLY_REGISTRY_USER/_TOKEN  sign in to a private registry first (read-only token)
@@ -38,11 +39,22 @@ main() {
   # are cut to 15 characters, so both read "unattended-upgr").
   updating() { pgrep -x "apt|apt-get|dpkg" > /dev/null || pgrep -f "bin/unattended-upgrade( |$)|apt\.systemd\.daily" > /dev/null; }
 
+  # Docker's own install script, downloaded to a file before it runs, then a check that Docker is
+  # there. Piped straight into sh, a download that failed (a new server whose DNS isn't up yet, a
+  # mirror's blip) ran as an empty script, which succeeds, and the install went on without Docker.
+  install_docker() {
+    docker_script=$(mktemp)
+    curl -fsSL https://get.docker.com -o "$docker_script" > "$log" 2>&1 && $sudo sh "$docker_script" > "$log" 2>&1 && command -v docker > /dev/null
+    installed=$?
+    rm -f "$docker_script"
+    return $installed
+  }
+
   if ! command -v docker > /dev/null; then
     log=$(mktemp)
     say "Installing Docker…"
     # Wait for the server's own updates, pause for a package mirror's blip, then try again.
-    if ! curl -fsSL https://get.docker.com | $sudo sh > "$log" 2>&1; then
+    if ! install_docker; then
       if grep -q -i "lock" "$log"; then
         say "The server is still installing its own updates (new servers do, in their first minutes). Waiting for them to finish…"
         waited=0
@@ -56,8 +68,8 @@ main() {
         say "Docker's install hit a snag; trying again in 20 seconds…"
         sleep 20
       fi
-      curl -fsSL https://get.docker.com | $sudo sh > "$log" 2>&1 ||
-        { tail -n 20 "$log" >&2; fail "couldn't install Docker, twice (log above). Check this server can reach download.docker.com and its package mirror."; }
+      install_docker ||
+        { tail -n 20 "$log" >&2; fail "couldn't install Docker, twice (log above). Check this server can reach get.docker.com, download.docker.com and its package mirror."; }
     fi
   fi
   $sudo systemctl enable --now docker > /dev/null 2>&1 || true
@@ -70,7 +82,7 @@ main() {
   rm -f "$cli"
 
   if [ -n "$sudo" ]; then
-    exec sudo --preserve-env=LITESTREAM_REPLICA_URL,LITESTREAM_ACCESS_KEY_ID,LITESTREAM_SECRET_ACCESS_KEY,ERLANGLY_SOURCE,ERLANGLY_INSTALL_STARTED,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_URL \
+    exec sudo --preserve-env=LITESTREAM_REPLICA_URL,LITESTREAM_ACCESS_KEY_ID,LITESTREAM_SECRET_ACCESS_KEY,ERLANGLY_SOURCE,ERLANGLY_INSTALL_STARTED,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_URL,TRUSTED_PROXIES \
       /usr/local/bin/erlangly install
   fi
   exec /usr/local/bin/erlangly install

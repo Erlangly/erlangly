@@ -15,7 +15,7 @@ usage() {
   cat <<USAGE
 Usage: erlangly <command>
 
-  status              Is Erlangly up, which version, and where to reach it
+  status              Is Erlangly up, which version, where to reach it, what needs looking at
   logs [-f]           Show the app's log (-f to follow it)
   restart             Restart Erlangly
   upgrade [tag]       Install the latest release (or a given tag); rolls back if it doesn't come up
@@ -35,7 +35,7 @@ Usage: erlangly <command>
   timeoff [--all]                         Time off waiting for a decision (--all: coming up)
   timeoff approve|decline ID [NOTE]       Decide a time-off request
 
-Settings: $CONF (TLS_DOMAIN, ERLANGLY_URL, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE,
+Settings: $CONF (TLS_DOMAIN, ERLANGLY_URL, TRUSTED_PROXIES, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE,
           LITESTREAM_REPLICA_URL, LITESTREAM_ACCESS_KEY_ID, LITESTREAM_SECRET_ACCESS_KEY)
 USAGE
 }
@@ -51,7 +51,7 @@ load_settings() {
       case "$key" in
         # Not ERLANGLY_TAG: a version named when installing was for that install, and saving it made every
         # later `erlangly upgrade` reinstall it (installs from before 0.8.33 still have it in their settings).
-        ERLANGLY_IMAGE | ERLANGLY_HTTP_PORT | ERLANGLY_HTTPS_PORT | TLS_DOMAIN | ERLANGLY_URL | \
+        ERLANGLY_IMAGE | ERLANGLY_HTTP_PORT | ERLANGLY_HTTPS_PORT | TLS_DOMAIN | ERLANGLY_URL | TRUSTED_PROXIES | \
           LITESTREAM_REPLICA_URL | LITESTREAM_ACCESS_KEY_ID | LITESTREAM_SECRET_ACCESS_KEY) printf -v "$key" '%s' "$value" ;;
       esac
     done < "$CONF"
@@ -63,6 +63,7 @@ load_settings() {
   TLS_DOMAIN=${TLS_DOMAIN:-}
   ERLANGLY_URL=${ERLANGLY_URL:-}
   ERLANGLY_URL=${ERLANGLY_URL%/}
+  TRUSTED_PROXIES=${TRUSTED_PROXIES:-}
   LITESTREAM_REPLICA_URL=${LITESTREAM_REPLICA_URL:-}
   LITESTREAM_ACCESS_KEY_ID=${LITESTREAM_ACCESS_KEY_ID:-}
   LITESTREAM_SECRET_ACCESS_KEY=${LITESTREAM_SECRET_ACCESS_KEY:-}
@@ -75,9 +76,21 @@ check_settings() {
   [[ "$ERLANGLY_HTTP_PORT" =~ ^[0-9]+$ && "$ERLANGLY_HTTPS_PORT" =~ ^[0-9]+$ ]] || fail "the ports must be numbers"
   [[ -z "$TLS_DOMAIN" || "$TLS_DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]] || fail "TLS_DOMAIN isn't a domain name: $TLS_DOMAIN"
   [[ -z "$ERLANGLY_URL" || "$ERLANGLY_URL" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]+)?$ ]] || fail "ERLANGLY_URL should be the address people open, like https://wfm.example.com"
+  local proxies proxy
+  IFS=', ' read -r -a proxies <<< "$TRUSTED_PROXIES"
+  for proxy in "${proxies[@]}"; do
+    proxy_address "$proxy" || fail "TRUSTED_PROXIES should be your proxy's address, like 192.168.1.10 (several separated by commas), not: $proxy"
+  done
   [[ -z "$LITESTREAM_REPLICA_URL" || "$LITESTREAM_REPLICA_URL" =~ ^s3://[A-Za-z0-9._/?=\&:-]+$ ]] ||
     fail "LITESTREAM_REPLICA_URL should be an S3 bucket and path, like s3://my-bucket/erlangly?endpoint=tor1.digitaloceanspaces.com"
   [[ "$LITESTREAM_ACCESS_KEY_ID$LITESTREAM_SECRET_ACCESS_KEY" =~ ^[A-Za-z0-9/+=_-]*$ ]] || fail "the Litestream access keys have characters keys don't use"
+}
+
+# An address for TRUSTED_PROXIES, or a range no wider than /16 (IPv4) or /48 (IPv6).
+proxy_address() {
+  local octet='(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])'
+  [[ "$1" =~ ^$octet\.$octet\.$octet\.$octet(/(1[6-9]|2[0-9]|3[0-2]))?$ ]] ||
+    [[ "$1" =~ ^[0-9A-Fa-f]{0,4}(:[0-9A-Fa-f]{0,4}){2,7}(/(4[89]|[5-9][0-9]|1[01][0-9]|12[0-8]))?$ ]]
 }
 
 save_settings() {
@@ -93,6 +106,8 @@ ERLANGLY_HTTPS_PORT=$ERLANGLY_HTTPS_PORT
 TLS_DOMAIN=$TLS_DOMAIN
 # The address people open, when your own HTTPS proxy is in front (like https://wfm.example.com).
 ERLANGLY_URL=$ERLANGLY_URL
+# That proxy's address, when it runs on another machine (like 192.168.1.10), so people's own addresses count.
+TRUSTED_PROXIES=$TRUSTED_PROXIES
 # Off-server copies of the database with Litestream (optional): an S3 bucket and its keys.
 LITESTREAM_REPLICA_URL=$LITESTREAM_REPLICA_URL
 LITESTREAM_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
@@ -144,29 +159,55 @@ image_version() {
   docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$1" 2>/dev/null || echo unknown
 }
 
+# Stops Erlangly and removes its container. It stops cleanly first, within 30 seconds: requests finish, and a
+# background job still running after Solid Queue's 5 seconds (a schedule being generated, say) goes back in the
+# queue, to run again once it's up. Removing it outright killed them partway, and they were never finished.
+remove_container() {
+  docker stop -t 30 "$CONTAINER" > /dev/null 2>&1 || true
+  docker rm -f "$CONTAINER" > /dev/null 2>&1 || true
+}
+
 start_container() {
-  local image=$1 tls=() litestream=()
+  local image=$1 published=(-p "$ERLANGLY_HTTP_PORT:80") tls=() litestream=() logs=()
   [ -n "$TLS_DOMAIN" ] && tls=(-p "$ERLANGLY_HTTPS_PORT:443" -e "TLS_DOMAIN=$TLS_DOMAIN")
-  # Behind the customer's own HTTPS proxy: the proxy terminates TLS, and Erlangly trusts it.
-  [ -z "$TLS_DOMAIN" ] && [[ "$ERLANGLY_URL" == https://* ]] && tls=(-e "BEHIND_HTTPS_PROXY=1")
+  # Behind the customer's own HTTPS proxy: the proxy terminates TLS, and Erlangly takes its word for each
+  # visitor's address when it connects from this server or from TRUSTED_PROXIES. Over IPv4 only: Docker
+  # hands IPv6 connections on as if they came from this server, so anyone's word would count.
+  if [ -z "$TLS_DOMAIN" ] && [[ "$ERLANGLY_URL" == https://* ]]; then
+    published=(-p "0.0.0.0:$ERLANGLY_HTTP_PORT:80")
+    tls=(-e "BEHIND_HTTPS_PROXY=1")
+    [ -z "${TRUSTED_PROXIES:-}" ] || tls+=(-e "TRUSTED_PROXIES=$TRUSTED_PROXIES")
+  fi
   # Passed by name, so the keys never show in the list of running processes.
   if [ -n "$LITESTREAM_REPLICA_URL" ]; then
     export LITESTREAM_REPLICA_URL LITESTREAM_ACCESS_KEY_ID LITESTREAM_SECRET_ACCESS_KEY
     litestream=(-e LITESTREAM_REPLICA_URL -e LITESTREAM_ACCESS_KEY_ID -e LITESTREAM_SECRET_ACCESS_KEY)
   fi
-  docker rm -f "$CONTAINER" > /dev/null 2>&1 || true
-  docker run -d --name "$CONTAINER" --restart unless-stopped \
-    -p "$ERLANGLY_HTTP_PORT:80" "${tls[@]}" "${litestream[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
+  # Docker's usual log driver keeps the log forever, until it fills the disk: keep the newest 100 MB.
+  # Other drivers (journald, a log shipper) have limits of their own and are left as the server has them.
+  [ "$(docker info --format '{{.LoggingDriver}}' 2>/dev/null)" != json-file ] || logs=(--log-opt max-size=20m --log-opt max-file=5)
+  remove_container
+  docker run -d --name "$CONTAINER" --restart unless-stopped "${logs[@]}" \
+    "${published[@]}" "${tls[@]}" "${litestream[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
 }
 
 since() { awk -v started="$1" -v now="$(date +%s.%N)" 'BEGIN { printf "%.1f", now - started }'; }
 
 up() { docker exec "$CONTAINER" curl -fsS -o /dev/null http://localhost:3000/up > /dev/null 2>&1; }
 
-# Waits for the app to answer /up. Gives up after $1 seconds, or once it has crashed 3 times.
+# Is a new version snapshotting and migrating the data? (bin/docker-entrypoint marks it.)
+upgrading() { docker exec "$CONTAINER" test -e storage/upgrading > /dev/null 2>&1; }
+
+# Waits for the app to answer /up. Gives up after $1 seconds, or once it has crashed 3 times. The
+# seconds count only once an upgrade has snapshotted and migrated the data: on a big database that
+# can take many minutes, and cutting it short would only roll it back.
 wait_until_up() {
-  local limit=${1:-120} started=$SECONDS
+  local limit=${1:-120} started=$SECONDS waited=$SECONDS
   until up; do
+    if upgrading; then
+      started=$SECONDS
+      (( SECONDS - waited < 60 )) || { waited=$SECONDS; say "Still snapshotting and migrating your data…"; }
+    fi
     (( SECONDS - started < limit )) || return 1
     (( $(docker inspect -f '{{.RestartCount}}' "$CONTAINER") < 3 )) || return 1
     sleep 0.25
@@ -203,8 +244,24 @@ cmd_install() {
   echo
   echo "Manage it with: erlangly status | logs | upgrade | backup | help"
   echo
-  echo "Finish setting it up here (this link is secret, and works until you've created the first admin):"
-  echo "  $(setup_link)"
+  setup_step
+}
+
+# The install's last step: the link for creating the first admin. A server whose data was there before
+# it started has an admin already: a new one that Litestream copied the data back onto, or a volume
+# kept from an earlier install. It says so, and where to sign in, instead of a setup link (issue #225).
+setup_step() {
+  local link refusal
+  refusal=$(mktemp)
+  if link=$(setup_link 2> "$refusal"); then
+    echo "Finish setting it up here (this link is secret, and works until you've created the first admin):"
+    echo "  $link"
+  elif grep -q "already set up" "$refusal"; then
+    echo "It's already set up${LITESTREAM_REPLICA_URL:+, with its data back from ${LITESTREAM_REPLICA_URL%%\?*}}: sign in at $(url) as before."
+  else
+    cat "$refusal" >&2
+  fi
+  rm -f "$refusal"
   private_address_note || true
 }
 
@@ -225,7 +282,7 @@ setup_link() {
 }
 
 cmd_status() {
-  local state
+  local state health
   state=$(docker inspect -f '{{.State.Status}}' "$CONTAINER" 2>/dev/null) || fail "Erlangly isn't installed"
   if [ "$state" = running ]; then up && state="up" || state="running, but not answering yet"; fi
   echo "Erlangly $(image_version erlangly:current): $state"
@@ -235,6 +292,9 @@ cmd_status() {
   if docker image inspect erlangly:previous > /dev/null 2>&1; then
     echo "Previous version $(image_version erlangly:previous) kept for \`erlangly rollback\`"
   fi
+  # Backups, background jobs, disk space, connections and Litestream copies, as Settings → System shows them.
+  # Only its answer: a version from before it (after a rollback) answers with bin/wfm's usage.
+  if [ "$state" = up ] && health=$(docker exec "$CONTAINER" bin/wfm health 2> /dev/null); then echo "$health"; fi
 }
 
 cmd_restart() {
@@ -268,7 +328,7 @@ update_self() {
 }
 
 cmd_upgrade() {
-  local from to older started
+  local from to older started began
   update_self "$@"
   started=$(date +%s.%N)
   say "Downloading ${1:-the latest release}…"
@@ -285,16 +345,20 @@ cmd_upgrade() {
   check_updates_cover "$from" "$to"
 
   say "Upgrading $from → $to (your data is snapshotted first)…"
+  # This upgrade takes a snapshot of its own. A rollback by an older erlangly command leaves the
+  # marker of the upgrade it undid, and a retry would carry on from that upgrade's older snapshot.
+  docker run --rm -v "$VOLUME:/rails/storage" --entrypoint rm erlangly:current -f storage/upgrading
   older=$(docker image inspect -f '{{.Id}}' erlangly:previous 2>/dev/null || true)
   docker tag erlangly:current erlangly:previous
   docker tag erlangly:new erlangly:current && docker rmi erlangly:new > /dev/null
+  began=$(date -u +%Y%m%dT%H%M%SZ)
   start_container erlangly:current
   if wait_until_up 180; then
     say "Erlangly $to is up at $(url) ($(since "$started") s). \`erlangly rollback\` goes back to $from."
   else
     docker logs --tail 40 "$CONTAINER" >&2 || true
     say "Erlangly $to didn't start (log above). Rolling back to $from…"
-    cmd_rollback
+    cmd_rollback "$began"
     [ -z "$older" ] || docker tag "$older" erlangly:previous
     exit 1
   fi
@@ -318,18 +382,25 @@ check_updates_cover() {
   fi
 }
 
+# Puts back the previous version and the newest whole snapshot from before this one. After an
+# upgrade that didn't start, $1 is when it began: only a snapshot it took will do, as an older one
+# would lose what was entered since (without one, it hadn't changed the data yet). If the snapshot
+# can't be put back, Erlangly stays stopped and the data stays as it is.
 cmd_rollback() {
   docker image inspect erlangly:previous > /dev/null 2>&1 || fail "there's no previous version to go back to"
   local to snapshot
   to=$(image_version erlangly:current)
-  docker rm -f "$CONTAINER" > /dev/null 2>&1 || true
+  remove_container
   snapshot=$(docker run --rm -v "$VOLUME:/rails/storage" --entrypoint sh erlangly:previous -c \
-    "ls -1d storage/snapshots/*-to-$to 2>/dev/null | tail -n 1")
+    "rm -rf storage/snapshots/*.partial; ls -1d storage/snapshots/*-to-$to 2>/dev/null | tail -n 1")
+  [[ -z "${1:-}" || "${snapshot##*/}" > "$1" ]] || snapshot=""
   if [ -n "$snapshot" ]; then
-    docker run --rm -v "$VOLUME:/rails/storage" --entrypoint bin/restore erlangly:previous "$snapshot"
+    docker run --rm -v "$VOLUME:/rails/storage" --entrypoint bin/restore erlangly:previous "$snapshot" ||
+      fail "couldn't put back the data from before $to (above), so Erlangly is stopped and its data is as the upgrade left it. Once that's fixed (often by freeing disk space), run \`erlangly rollback\` again."
   else
     say "No snapshot from before $to; keeping the current data"
   fi
+  docker run --rm -v "$VOLUME:/rails/storage" --entrypoint rm erlangly:previous -f storage/upgrading
   docker tag erlangly:previous erlangly:current && docker rmi erlangly:previous > /dev/null
   start_container erlangly:current
   wait_until_up 120 || fail "the previous version didn't start either; see \`erlangly logs\`"
@@ -360,8 +431,11 @@ cmd_restore() {
   local file=${1:?"Usage: erlangly restore <backup .tar.gz>"}
   [ -s "$file" ] || fail "no backup at $file"
   say "Restoring $file (Erlangly stops meanwhile)…"
-  docker stop "$CONTAINER" > /dev/null
-  docker run --rm -i -v "$VOLUME:/rails/storage" --entrypoint bin/restore erlangly:current - < "$file"
+  docker stop -t 30 "$CONTAINER" > /dev/null
+  if ! docker run --rm -i -v "$VOLUME:/rails/storage" --entrypoint bin/restore erlangly:current - < "$file"; then
+    cmd_restart
+    fail "nothing was restored from $file (above), so Erlangly carries on with the data it had"
+  fi
   cmd_restart
 }
 
@@ -375,8 +449,11 @@ case "${1:-}" in
   *) printf 'erlangly: there'"'"'s no command "%s"\n\n' "$1" >&2; usage >&2; exit 1 ;;
 esac
 
-[ "$(id -u)" -eq 0 ] || exec sudo --preserve-env=LITESTREAM_REPLICA_URL,LITESTREAM_ACCESS_KEY_ID,LITESTREAM_SECRET_ACCESS_KEY,ERLANGLY_SOURCE,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_URL,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_INSTALL_STARTED "$0" "$@"
+[ "$(id -u)" -eq 0 ] || exec sudo --preserve-env=LITESTREAM_REPLICA_URL,LITESTREAM_ACCESS_KEY_ID,LITESTREAM_SECRET_ACCESS_KEY,ERLANGLY_SOURCE,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_URL,TRUSTED_PROXIES,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_INSTALL_STARTED "$0" "$@"
 load_settings
+# Every command from here runs Docker. Without it, the first docker call failed with a message that
+# sent you the wrong way ("If the image is private…").
+command -v docker > /dev/null || fail "Docker isn't installed on this server. The installer installs it first: curl -fsSL https://get.erlangly.com | sh"
 
 case "${1:-}" in
   install)  cmd_install ;;

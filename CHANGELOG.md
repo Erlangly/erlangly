@@ -1,5 +1,81 @@
 # Changes
 
+## 0.8.99 (2026-10-11)
+- **Availability can run past midnight.** Someone available from 22:00 to 06:00 can say so: an end at or before the start means the next morning, shown as "22:00–06:00 (next day)", and generation gives people available at night their night shifts.
+- **A period's first morning counts the night before.** On a 24/7 floor, the people still on from the previous period's last night now count in a period's figures, coverage and "Even out breaks…", so its first hours no longer show short. Their hours still count in the period they started in.
+- **Overtime caps keep counting.** Where an overtime cap blocks publishing (South Africa, Panama), the overtime hours it counts from can't be turned off while it's on, which used to stop the cap counting without a word.
+- **Changed labour rules read cleanly:** "10 h", not "10.0 h".
+
+## 0.8.98 (2026-10-11)
+- **Generation makes night shifts.** Shifts that run past midnight are generated like any other: a 22:00 to 06:00 pattern now makes shifts, a Sunday night runs into the next week, and its hours count on the day it starts, for weekly hours and days in a row. Breaks are placed inside night shifts, and the labour check's rest, overtime caps and night shifts (as in Panama) count the hours on both sides of midnight, on each person's own clock and across the night the clocks change.
+- **People with set availability.** Availability that ends after midnight can't be entered yet, so someone with set availability isn't given night shifts; the draft says so when they're on a night pattern.
+- **Faster "Even out breaks…"** on long schedules.
+
+## 0.8.97 (2026-10-11)
+- **The installer copes when Docker's download fails.** On a new server whose network isn't quite up yet, or when Docker's download site has a blip, it tries again after 20 seconds, and stops with the reason if that fails too. Before, it carried on without Docker and stopped later saying the image might be private.
+- **Without Docker, the erlangly command says so,** and how to install it.
+- **A rebuilt server's install says it's already set up.** Installing on a new server with your Litestream settings brings your data back. The install now ends with where to sign in, instead of a setup link that wasn't there.
+- **ACD connections asked to slow down wait the whole time asked.** NICE CXone and Amazon Connect could ask again a little early, and be slowed down for longer.
+
+## 0.8.96 (2026-10-11)
+- **The Philippines' labour rules.** Overtime after 8 hours' work in a day, a 60-minute meal for every 7 hours of work, at most 6 days in a row, and the year's proclaimed holidays, Chinese New Year and the Eids included. A compressed workweek (DOLE Department Advisory 02, 2004), up to 12 hours a day and 48 a week, is there to choose for a site or person on one.
+- **South Africa's labour rules.** Under the Basic Conditions of Employment Act: overtime past 9 hours a day or 45 a week, at most 12 hours' work a day and 10 hours' overtime a week, 12 hours' rest between shifts, an hour's meal within 5 hours of work, and the public holidays, with a Sunday holiday adding the Monday after.
+- **Choosing them.** A new organisation in the Philippines or South Africa starts on its country's labour rules. One set up before: choose its labour rules under Settings → Organisation. A site or person there, in an organisation elsewhere: choose them on the site or person.
+- **Rules you loosen take any number.** A labour rule's numbers can now be fractions, like a 9.6-hour compressed day, and a changed rule's warnings name both values, the law's and yours.
+
+## 0.8.95 (2026-10-11)
+- **Panama's labour rules.** An organisation, site or person in Panama now gets Panama's labour law. A shift is a night shift when more than 3 of its hours fall between 18:00 and 06:00, with 7 ordinary hours instead of 8 (mixed shifts 7.5), and overtime is capped at 3 hours a day and 9 a week, which generation keeps to. Panama's holidays come with it.
+
+## 0.8.94 (2026-10-11)
+- **Holidays that fall on a weekend are taken on the right day.**
+  - US federal holidays on a Saturday move to the Friday before, as the federal calendar has them: 3 July 2026 and 24 December 2027, for example.
+  - In Canada, Christmas and Boxing Day 2027 are Monday 27 and Tuesday 28 December, where both had landed on the Monday. Federal Canada Day, Truth and Reconciliation and Remembrance Day on a weekend go to the Monday.
+  - In Jamaica, Labour Day on a weekend goes to the Monday (25 May 2026), and a Sunday Boxing Day goes to the Monday.
+- **Day, night and mixed shifts in the labour check.** Where the law sets shorter limits for night work, a shift is judged by how much of it falls at night, and overtime has its own daily and weekly caps that generation keeps to. Panama is the first country to use them; you can now choose Panama as a country, and its labour rules follow in an update.
+
+## 0.8.93 (2026-10-10)
+- **Import a forecast from a spreadsheet.** A client's forecast, or one for a new programme, comes in as a file: a row per interval with the line of business, its start (in the line's time zone, on the 24-hour clock), contacts and, if you have it, handle time. It becomes a draft forecast for each line of business, with a preview, row errors in plain words and undo, and staffing works from it as from a calculated one. Hours the clocks skip or repeat are handled, and repeated rows aren't added up silently.
+- **Holidays and special days, a whole day at a time.** On a forecast, mark one or more days as closed, at a percentage of normal, or like another day, for one or several lines of business; undo puts them back, overrides included. Add the holidays your people have off that the rule pack doesn't have (a city's holiday, a company day) under Settings → Labour rules, and forecasts leave them out of their history like the pack's.
+- **Holidays keep up by themselves.** Each jurisdiction on Settings → Labour rules says how current its rules are ("Rules as of September 28, 2026"), and the holidays roll on to the coming years every month instead of waiting for a new rule pack.
+- **Volume imports read times strictly.** A volume file (or the volume API) with 12-hour times like "1:00 PM", seconds, or a date that doesn't exist is now refused with how to fix it, instead of being read wrong.
+
+## 0.8.92 (2026-10-10)
+- **Labour rules, plainly.** Settings → Labour rules now says where the rules come from (signed rule packs) and that they aren't legal advice, so check them against the law where your people work. The packs aren't labelled beta any more, and the licence agreement's labour-rules section no longer mentions beta packs.
+
+## 0.8.91 (2026-10-10)
+- **Changing "Weeks start on" can't break your schedule periods.** Once there's a schedule period, the week start stays the day periods start on. Before, changing it made those periods refuse every save, and publishing a forecast then failed. If you'd already changed it, you can move it back.
+- **A draft that was generating when Erlangly restarted doesn't get stuck.** Its generating carries on after the restart, or, if it stopped for good, the draft says so within about half an hour and you can generate again. It no longer holds up discarding the draft or changing or deleting its period.
+- **Restarts, upgrades and going back let Erlangly finish first.** `erlangly restart`, `upgrade` and `rollback` now give it up to 30 seconds to finish what it's doing before stopping it, and a backup cut short by a stop no longer leaves a part-made copy behind.
+
+## 0.8.90 (2026-10-10)
+- **"Use draft" and "Add to the schedule" check labour law.** On a published schedule they used to publish straight away. Now they're checked like Publish: a new violation stops it and shows what's wrong, and new warnings need a reason before anything goes out. A draft that takes over from a later week is also planned around the days the schedule keeps, so rest and days in a row hold where they meet.
+- **A schedule period can be fixed.** You can rename it and change its dates: lengthen it, shorten it up to its last published week, or move its start while nothing's published. You can delete it while nothing in it is published for today or earlier. People whose published shifts go with it are told their schedule is withdrawn. Removing the sample data now removes its schedule periods too.
+- **Shift patterns that run past midnight say so.** Generation can't make shifts past midnight yet, so a pattern starting at 22:00 made nothing without a word. Now the pattern and the draft say which shifts are left out; add night shifts by hand meanwhile.
+- **Contract limits say they aren't used yet.** A contract's "Max a day" and "Days off in a row" are kept, but generation doesn't use them yet, and the person's page now says so: check their shifts by hand before publishing.
+
+## 0.8.89 (2026-10-10)
+- **"Today" is your floor's day.** From the evening on, Erlangly used to think it was already tomorrow (it went by UTC). Now today is the day in your organisation's time zone, or the line of business's or person's own: an exception's day, a people import dated today, the start dates on new people, lines of business, contracts, targets and shrinkage, and when a leaver stops counting and signing in all go by it.
+- **Adherence sees late logins and no-shows after a night logged off.** Someone who logged off at 16:35 and logs in at 08:25 is out of adherence for those 25 minutes, as on the wallboard, and a no-show scores 0% and comes first in the adherence report. If a connection sends nothing about anyone for 12 hours, what it last said stops counting until it sends again.
+- **The adherence report keeps people apart.** Two people with the same name are two rows, shown with their employee numbers, and with several clients each line of business shows its client. In the API (`GET /api/v1/adherence`), each row also has `person`, `team` or `lob` with its id; `name` is what the page shows.
+- **No handle time, no made-up staffing.** Volume history without handle times used to staff about one agent an interval without a word. Now those intervals say "No handle time" with what to do, and generating leaves them out with a warning instead of guessing.
+- **The planning interval is fixed once there's data.** Changing it after volume history or a forecast exists silently halved (or doubled) every staffing figure; now the setting says why it can't change. Removing the sample data lets you choose again.
+
+## 0.8.88 (2026-10-10)
+- **Behind your own HTTPS proxy, nobody can pass for someone else.** Erlangly now takes a visitor's address only from your proxy, so someone on the office network can't claim another address to get round the sign-in limits. A proxy on the same server counts as it is; if yours runs on another machine, put its address in `TRUSTED_PROXIES` in `/etc/erlangly/erlangly.conf` and run `erlangly restart`.
+  - Erlangly now answers your proxy over IPv4 only: if your proxy points at `[::1]` or another IPv6 address, point it at `127.0.0.1` and the port instead.
+
+## 0.8.87 (2026-10-10)
+- **Upgrades can't overwrite your data with a broken copy.** Before an upgrade, Erlangly copies your data. That copy now only counts once it's complete, and going back checks a copy before using it, leaving your data as it was if anything's wrong. A long upgrade of a big database isn't cut short while it's still working.
+- **Logs can't fill the disk.** Erlangly keeps the newest 100 MB of its log.
+- **Emails are tried again.** If your mail server is busy or can't be reached, Erlangly keeps trying for about four hours, sending one email at a time, so publishing a schedule to hundreds of people gets through limits like Microsoft 365's. An email that couldn't be sent shows under Settings → Email, with how to fix it.
+- **Admins hear when something needs looking at.** Settings → System says when backups have stopped, background jobs failed, the disk is filling up, a connection stopped sending agent states, or the Litestream copy stopped; admins see a line about it at the top of each page, and `erlangly status` lists it too. The wallboard and adherence say when agent states have stopped coming in.
+- **A whole floor can sign in at shift start.** Wrong-password limits now count per person, not per office address, so people sharing one internet address can all sign in at once, and single sign-on isn't held back at all.
+- **A paid licence says when it's ending.** From 30 days before a licence key ends, admins see the date and that the renewal key is emailed to whoever bought it. Settings → Licence now says "Key valid until".
+
+## 0.8.86 (2026-10-10)
+- **A page's buttons stay in its top bar.** When they don't fit beside the page's name, as on a draft, they go on a line of their own instead of spilling out of the bar. On a phone, the bar scrolls away with the page.
+- **Generating another draft is one menu.** On a draft, **Generate another draft** offers **For everyone**, **For some lines of business…** and **For some people…**.
+
 ## 0.8.85 (2026-10-09)
 - **You can remove a connection.** Settings → Connections has a Remove button: it deletes the connection and unlinks its agents, keeping your past adherence. Before, connections could only be added and edited.
 - **The sample wallboard comes alive.** With the sample data loaded and a schedule published for today, the simulated ACD now feeds agent states on any install, so the wallboard and adherence show live activity to explore — no setup.
@@ -435,7 +511,7 @@
 - Shift swaps between agents, checked against labour law.
 
 ## 0.5.0 (2026-09-28)
-- Labour-law rule packs (Canada, Jamaica, United States; beta), holidays, and checks on generation, edits and publishing.
+- Labour-law rule packs (Canada, Jamaica, United States), holidays, and checks on generation, edits and publishing.
 
 ## 0.4.0 (2026-09-28)
 - Schedule periods, generated drafts, hand editing and publishing.

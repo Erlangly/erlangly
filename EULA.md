@@ -39,7 +39,7 @@ You're responsible for your server, backups and security, and for having the rig
 
 ## 4. Labour rules
 
-Erlangly's labour-law rule packs help you follow the law. They aren't legal advice, and they may be incomplete or out of date. Packs marked "beta" haven't had a legal review.
+Erlangly's labour-law rule packs help you follow the law. They aren't legal advice, and they may be incomplete or out of date.
 
 You're responsible for your schedules following the laws that apply to you. Check the rules against the law where your people work, and adjust them in Erlangly where needed.
 
@@ -83,4 +83,4 @@ When a paid plan ends (it runs out, you cancel it, or it's refunded), your insta
 - **Changes:** we may update it for new versions; the version that came with your copy applies to it.
 - **Contact:** FrontLine Software Solutions Inc., 30 Hummingbird St., Charlottetown, PE C1E 0B2, Canada; legal@erlangly.com.
 
-Last updated: September 30, 2026.
+Last updated: October 10, 2026.
