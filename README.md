@@ -4,7 +4,7 @@ Workforce management for contact centres: forecasting, Erlang C staffing, schedu
 
 ## Install
 
-On a Linux server (Ubuntu or Debian, x86-64 or ARM64, 2 GB of memory or more):
+On a Linux server (Ubuntu or Debian, x86-64 or ARM64, 2 GB of memory or more, and disk for a year of your data: 20 GB for a small floor, about 80 GB for 500 agents; see [how much disk](https://erlangly.com/docs/install#disk)):
 
 ```sh
 curl -fsSL https://get.erlangly.com | sh
@@ -37,7 +37,9 @@ erlangly status              Is Erlangly up, which version, where to reach it, w
 erlangly logs -f             Follow the app's log (the newest 100 MB are kept)
 erlangly restart             Restart Erlangly
 erlangly upgrade             Install the latest release; rolls back by itself if it doesn't start
+                             (it needs twice your data's size free on disk; --force goes ahead anyway)
 erlangly rollback            Go back to the previous version and the data from just before the upgrade
+                             (it asks first, and saves your data as it is now in /var/backups/erlangly)
 erlangly backup              Save all data to /var/backups/erlangly
 erlangly restore <file>      Replace all data with a backup
 erlangly version             Show the installed version
@@ -61,7 +63,7 @@ Everything Erlangly stores lives in one Docker volume named `erlangly`: the data
 - **The update check** asks get.erlangly.com once a day for the latest version number and sends nothing about you. Turn it off under Settings → System.
 - **There's no telemetry.**
 
-**Backups.** Erlangly saves a copy of all its data every night, on the server, keeping the newest 14. Those protect against mistakes and bad upgrades. To protect against losing the server, copy backups somewhere else too: `erlangly backup` writes one to `/var/backups/erlangly`, ready for your usual off-site backups.
+**Backups.** Erlangly saves a copy of all its data every night, on the server, keeping one a day for the last 7 days and one a week for the 4 weeks before those (`ERLANGLY_DAILY_BACKUPS` and `ERLANGLY_WEEKLY_BACKUPS` in `/etc/erlangly/erlangly.conf` change that). Those protect against mistakes and bad upgrades. To protect against losing the server, copy backups somewhere else too: `erlangly backup` writes one to `/var/backups/erlangly`, ready for your usual off-site backups.
 
 **Copies off the server.** Erlangly can copy every change to its database to S3-compatible storage (AWS S3, DigitalOcean Spaces, Cloudflare R2, Backblaze B2…) as it happens, with [Litestream](https://litestream.io). Add these to `/etc/erlangly/erlangly.conf` and run `erlangly restart`:
 
@@ -71,9 +73,13 @@ LITESTREAM_ACCESS_KEY_ID=…
 LITESTREAM_SECRET_ACCESS_KEY=…
 ```
 
-If you lose the server, install on a new one with the same three settings (pass them to the installer, like `TLS_DOMAIN`): Erlangly restores the data from the copy on its first start. Keep them somewhere other than the server. Afterwards everyone signs in again, and an admin re-enters the mail server password under Settings → Email.
+Once Erlangly is running with them (after installing, `erlangly restart` or `erlangly upgrade`), the `erlangly` command adds a copy of Erlangly's secret key to the same file (`ERLANGLY_SECRET_KEY`), which the passwords and secrets saved in Erlangly are encrypted with. Keep a copy of the whole file somewhere other than the server, as safe as your backups: with it, anyone can read the copies in your bucket and the passwords and secrets saved in them.
 
-**Upgrades** are safe to run at any time. Before a new version changes the database, Erlangly takes a snapshot. If the new version doesn't start, `erlangly upgrade` puts the previous version and the snapshot back by itself. With a lot of data the snapshot and the changes can take a few minutes, and the upgrade waits for them. With a pay-once licence, it installs releases that came out before your updates end; after that, your current version keeps running.
+If you lose the server, put your copy at `/etc/erlangly/erlangly.conf` on a new one and install there: Erlangly restores the data from the copy on its first start, and carries on as before. Without the secret key, everyone signs in again and an admin enters the mail server password, the single sign-on client secret and each ACD connection's secret again (Settings → System lists them; see [erlangly.com/docs/running](https://erlangly.com/docs/running)).
+
+**Monitoring.** Point an uptime checker at `https://your-address/up` (200 once Erlangly is running), and at `/up?deep=1` (503 while Settings → System lists something that needs looking at). On the server, `erlangly status` exits with 1 when Erlangly isn't up or something needs looking at, for cron or your monitoring agent.
+
+**Upgrades** are safe to run at any time. Before a new version changes the database, Erlangly takes a snapshot (the last two upgrades' are kept). If the new version doesn't start, `erlangly upgrade` puts the previous version and the snapshot back by itself. With a lot of data the snapshot and the changes can take a few minutes, and the upgrade waits for them. With a pay-once licence, it installs releases that came out before your updates end; after that, your current version keeps running.
 
 ## Connect your ACD, and your own tools
 

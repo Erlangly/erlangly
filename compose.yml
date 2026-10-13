@@ -1,4 +1,5 @@
 # Erlangly with Docker Compose: the same container `erlangly install` runs.
+# Erlangly is licensed under its licence agreement: https://erlangly.com/eula (by installing it you accept it).
 #
 #   docker compose up -d                 then open the setup link from:
 #   docker compose exec erlangly sh -c 'echo "/first_run/new?token=$(cat storage/setup_token)"' 
@@ -20,6 +21,8 @@ services:
     #   TLS_DOMAIN: wfm.example.com  # HTTPS with a Let's Encrypt certificate for this domain
     #   BEHIND_HTTPS_PROXY: "1"      # or: your own HTTPS proxy is in front (see erlangly.com/docs/install)
     #   TRUSTED_PROXIES: "192.168.1.10"  # and, if that proxy runs on another machine, its address
+    #   ERLANGLY_DAILY_BACKUPS: "7"   # nightly backups kept in the volume: one a day for this many days
+    #   ERLANGLY_WEEKLY_BACKUPS: "4"  # then one a week for this many weeks before those
     #   (behind your own proxy, publish the port for it alone, like "127.0.0.1:8095:80", on Docker's usual network)
     volumes:
       - erlangly:/rails/storage

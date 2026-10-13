@@ -18,8 +18,10 @@ Usage: erlangly <command>
   status              Is Erlangly up, which version, where to reach it, what needs looking at
   logs [-f]           Show the app's log (-f to follow it)
   restart             Restart Erlangly
-  upgrade [tag]       Install the latest release (or a given tag); rolls back if it doesn't come up
-  rollback            Go back to the previous version and the data from just before the upgrade
+  upgrade [tag]       Install the latest release (or a given tag); rolls back if it doesn't come up.
+                      It needs twice your data's size free on disk (--force goes ahead anyway)
+  rollback [--yes]    Go back to the previous version and the data from just before the upgrade.
+                      It asks first (--yes doesn't), and saves your data as it is now in $BACKUPS
   backup [directory]  Save all data to a .tar.gz (default $BACKUPS)
   restore <file>      Replace all data with a backup (stops Erlangly while it restores)
   export [directory]  All your data as CSV files in a .zip, to take elsewhere (default $BACKUPS)
@@ -36,12 +38,28 @@ Usage: erlangly <command>
   timeoff approve|decline ID [NOTE]       Decide a time-off request
 
 Settings: $CONF (TLS_DOMAIN, ERLANGLY_URL, TRUSTED_PROXIES, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE,
-          LITESTREAM_REPLICA_URL, LITESTREAM_ACCESS_KEY_ID, LITESTREAM_SECRET_ACCESS_KEY)
+          LITESTREAM_REPLICA_URL, LITESTREAM_ACCESS_KEY_ID, LITESTREAM_SECRET_ACCESS_KEY,
+          ERLANGLY_DAILY_BACKUPS, ERLANGLY_WEEKLY_BACKUPS)
 USAGE
 }
 
 say() { if [ -t 1 ]; then printf '\033[1m%s\033[0m\n' "$*"; else printf '%s\n' "$*"; fi; }
 fail() { printf 'erlangly: %s\n' "$*" >&2; exit 1; }
+
+# Asks question $2 at the terminal, unless --yes ($1) answered it already. From a script, only --yes will do.
+agreed() {
+  local answer
+  [ -z "$1" ] || return 0
+  [ -t 0 ] || fail "$2 There's no terminal here to answer, so nothing was changed: add --yes to go ahead without being asked."
+  read -r -p "$2 [y/N] " answer
+  [[ "$answer" =~ ^[Yy]([Ee][Ss])?$ ]]
+}
+
+# A size in KB, in words: 640 KB, 87 MB, 2.4 GB.
+human_size() {
+  awk -v kb="$1" 'BEGIN { if (kb >= 1048576) printf "%.1f GB", kb / 1048576; else if (kb >= 1024) printf "%d MB", kb / 1024 + 0.5; else printf "%d KB", kb }'
+}
+licence_agreement() { echo "Erlangly is licensed under its licence agreement: https://erlangly.com/eula (by installing it you accept it)."; }
 
 # Reads the settings file as KEY=value lines (it's never run as a script), keeping only known keys.
 load_settings() {
@@ -52,7 +70,8 @@ load_settings() {
         # Not ERLANGLY_TAG: a version named when installing was for that install, and saving it made every
         # later `erlangly upgrade` reinstall it (installs from before 0.8.33 still have it in their settings).
         ERLANGLY_IMAGE | ERLANGLY_HTTP_PORT | ERLANGLY_HTTPS_PORT | TLS_DOMAIN | ERLANGLY_URL | TRUSTED_PROXIES | \
-          LITESTREAM_REPLICA_URL | LITESTREAM_ACCESS_KEY_ID | LITESTREAM_SECRET_ACCESS_KEY) printf -v "$key" '%s' "$value" ;;
+          LITESTREAM_REPLICA_URL | LITESTREAM_ACCESS_KEY_ID | LITESTREAM_SECRET_ACCESS_KEY | \
+          ERLANGLY_DAILY_BACKUPS | ERLANGLY_WEEKLY_BACKUPS | ERLANGLY_SECRET_KEY) printf -v "$key" '%s' "$value" ;;
       esac
     done < "$CONF"
   fi
@@ -67,6 +86,9 @@ load_settings() {
   LITESTREAM_REPLICA_URL=${LITESTREAM_REPLICA_URL:-}
   LITESTREAM_ACCESS_KEY_ID=${LITESTREAM_ACCESS_KEY_ID:-}
   LITESTREAM_SECRET_ACCESS_KEY=${LITESTREAM_SECRET_ACCESS_KEY:-}
+  ERLANGLY_DAILY_BACKUPS=${ERLANGLY_DAILY_BACKUPS:-}
+  ERLANGLY_WEEKLY_BACKUPS=${ERLANGLY_WEEKLY_BACKUPS:-}
+  ERLANGLY_SECRET_KEY=${ERLANGLY_SECRET_KEY:-}
   check_settings
 }
 
@@ -84,6 +106,9 @@ check_settings() {
   [[ -z "$LITESTREAM_REPLICA_URL" || "$LITESTREAM_REPLICA_URL" =~ ^s3://[A-Za-z0-9._/?=\&:-]+$ ]] ||
     fail "LITESTREAM_REPLICA_URL should be an S3 bucket and path, like s3://my-bucket/erlangly?endpoint=tor1.digitaloceanspaces.com"
   [[ "$LITESTREAM_ACCESS_KEY_ID$LITESTREAM_SECRET_ACCESS_KEY" =~ ^[A-Za-z0-9/+=_-]*$ ]] || fail "the Litestream access keys have characters keys don't use"
+  [[ "$ERLANGLY_DAILY_BACKUPS" =~ ^([1-9][0-9]{0,2})?$ ]] || fail "ERLANGLY_DAILY_BACKUPS should be how many days to keep a nightly backup for, from 1 to 999 (7 if it's empty)"
+  [[ "$ERLANGLY_WEEKLY_BACKUPS" =~ ^([0-9]{1,3})?$ ]] || fail "ERLANGLY_WEEKLY_BACKUPS should be how many weeks to keep one nightly backup a week for, from 0 to 999 (4 if it's empty)"
+  [[ "$ERLANGLY_SECRET_KEY" =~ ^[0-9a-f]*$ ]] || fail "ERLANGLY_SECRET_KEY isn't the key Erlangly made: copy it as it is in the old server's $CONF"
 }
 
 # An address for TRUSTED_PROXIES, or a range no wider than /16 (IPv4) or /48 (IPv6).
@@ -93,9 +118,19 @@ proxy_address() {
     [[ "$1" =~ ^[0-9A-Fa-f]{0,4}(:[0-9A-Fa-f]{0,4}){2,7}(/(4[89]|[5-9][0-9]|1[01][0-9]|12[0-8]))?$ ]]
 }
 
+# The settings are written beside the file and moved over it once whole, so a full disk or a write cut short leaves
+# them as they were (restarts and upgrades write them too, to keep the secret key). They hold keys: for root's eyes
+# only, even if an older erlangly command made the file readable.
 save_settings() {
   mkdir -p "$(dirname "$CONF")"
-  cat > "$CONF" <<SETTINGS
+  rm -f "$CONF.new"
+  if (umask 077 && settings_file > "$CONF.new") && mv -f "$CONF.new" "$CONF"; then return; fi
+  rm -f "$CONF.new"
+  fail "couldn't write $CONF (is the disk full?): the settings in it are as they were"
+}
+
+settings_file() {
+  cat <<SETTINGS &&
 # Erlangly settings. Change them here, then run \`erlangly restart\`.
 # Where Erlangly is downloaded from: the official image, or your own mirror of it (from the next upgrade).
 ERLANGLY_IMAGE=$ERLANGLY_IMAGE
@@ -112,7 +147,42 @@ TRUSTED_PROXIES=$TRUSTED_PROXIES
 LITESTREAM_REPLICA_URL=$LITESTREAM_REPLICA_URL
 LITESTREAM_ACCESS_KEY_ID=$LITESTREAM_ACCESS_KEY_ID
 LITESTREAM_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
+# Nightly backups kept on this server: one a day for this many days (7 if empty), then one a week for this many weeks before those (4 if empty).
+ERLANGLY_DAILY_BACKUPS=$ERLANGLY_DAILY_BACKUPS
+ERLANGLY_WEEKLY_BACKUPS=$ERLANGLY_WEEKLY_BACKUPS
 SETTINGS
+  if [ -n "$ERLANGLY_SECRET_KEY" ]; then
+    cat <<SETTINGS
+# A copy of the secret key in Erlangly's data, which the mail, sign-in and ACD secrets saved in it are encrypted
+# with (kept while Litestream is on). A new server with this file reads them as before: keep a copy of this file
+# somewhere other than this server, as safe as your backups.
+ERLANGLY_SECRET_KEY=$ERLANGLY_SECRET_KEY
+SETTINGS
+  fi
+}
+
+# With Litestream on, a copy of the secret key in Erlangly's data (storage/secret_key_base, which the passwords
+# and secrets saved in Erlangly are encrypted with) is kept in the settings, as the docs say to keep them off the
+# server. Without it, a new server restored from the copy can't read them, and each must be entered again.
+# Read from the running container, never shown.
+keep_secret_key() {
+  [ -n "$LITESTREAM_REPLICA_URL" ] || return 0
+  local key
+  key=$(docker exec "$CONTAINER" cat storage/secret_key_base 2> /dev/null) || return 0
+  [[ "$key" =~ ^[0-9a-f]+$ && "$key" != "$ERLANGLY_SECRET_KEY" ]] || return 0
+  ERLANGLY_SECRET_KEY=$key
+  save_settings
+  say "Kept a copy of Erlangly's secret key in $CONF, for a server restored from Litestream: keep a copy of that file somewhere other than this server."
+}
+
+# On a new server, the secret key from the old one's settings goes into Erlangly's data before it first starts,
+# so it reads the passwords and secrets Litestream brings back. A key already there is kept. It goes in on
+# standard input, so it never shows in the list of running processes.
+seed_secret_key() {
+  [ -n "$ERLANGLY_SECRET_KEY" ] || return 0
+  printf '%s' "$ERLANGLY_SECRET_KEY" | docker run --rm -i -v "$VOLUME:/rails/storage" --entrypoint sh erlangly:current \
+    -c 'key=$(cat); [ -s storage/secret_key_base ] || (umask 077 && printf %s "$key" > storage/secret_key_base)' ||
+    fail "couldn't put the secret key from $CONF into Erlangly's data (above)"
 }
 
 # Pulls the release (or loads ERLANGLY_IMAGE_TAR) and tags it erlangly:new.
@@ -168,7 +238,7 @@ remove_container() {
 }
 
 start_container() {
-  local image=$1 published=(-p "$ERLANGLY_HTTP_PORT:80") tls=() litestream=() logs=()
+  local image=$1 published=(-p "$ERLANGLY_HTTP_PORT:80") tls=() litestream=() backups=() logs=()
   [ -n "$TLS_DOMAIN" ] && tls=(-p "$ERLANGLY_HTTPS_PORT:443" -e "TLS_DOMAIN=$TLS_DOMAIN")
   # Behind the customer's own HTTPS proxy: the proxy terminates TLS, and Erlangly takes its word for each
   # visitor's address when it connects from this server or from TRUSTED_PROXIES. Over IPv4 only: Docker
@@ -183,12 +253,14 @@ start_container() {
     export LITESTREAM_REPLICA_URL LITESTREAM_ACCESS_KEY_ID LITESTREAM_SECRET_ACCESS_KEY
     litestream=(-e LITESTREAM_REPLICA_URL -e LITESTREAM_ACCESS_KEY_ID -e LITESTREAM_SECRET_ACCESS_KEY)
   fi
+  [ -z "${ERLANGLY_DAILY_BACKUPS:-}" ] || backups+=(-e "ERLANGLY_DAILY_BACKUPS=$ERLANGLY_DAILY_BACKUPS")
+  [ -z "${ERLANGLY_WEEKLY_BACKUPS:-}" ] || backups+=(-e "ERLANGLY_WEEKLY_BACKUPS=$ERLANGLY_WEEKLY_BACKUPS")
   # Docker's usual log driver keeps the log forever, until it fills the disk: keep the newest 100 MB.
   # Other drivers (journald, a log shipper) have limits of their own and are left as the server has them.
   [ "$(docker info --format '{{.LoggingDriver}}' 2>/dev/null)" != json-file ] || logs=(--log-opt max-size=20m --log-opt max-file=5)
   remove_container
   docker run -d --name "$CONTAINER" --restart unless-stopped "${logs[@]}" \
-    "${published[@]}" "${tls[@]}" "${litestream[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
+    "${published[@]}" "${tls[@]}" "${litestream[@]}" "${backups[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
 }
 
 since() { awk -v started="$1" -v now="$(date +%s.%N)" 'BEGIN { printf "%.1f", now - started }'; }
@@ -226,14 +298,18 @@ cmd_install() {
   if docker container inspect "$CONTAINER" > /dev/null 2>&1; then
     fail "Erlangly is already installed. To change its settings (like TLS_DOMAIN), edit $CONF and run \`erlangly restart\`; for a new version, \`erlangly upgrade\`."
   fi
+  # install.sh said so before it started; run on its own (to install again over kept data, say), this says it.
+  [ -n "${ERLANGLY_INSTALL_STARTED:-}" ] || licence_agreement
   save_settings
   say "Downloading Erlangly…"
   fetch_image
   docker tag erlangly:new erlangly:current && docker rmi erlangly:new > /dev/null
+  seed_secret_key
   say "Starting Erlangly $(image_version erlangly:current)…"
   start_container erlangly:current
   wait_until_up 120 || { docker logs --tail 40 "$CONTAINER" >&2; fail "Erlangly didn't start; the log is above"; }
   say "Erlangly is running at $(url)  (installed in $(( $(date +%s) - ${ERLANGLY_INSTALL_STARTED:-$(date +%s)} )) s)"
+  keep_secret_key
   if [ -z "$TLS_DOMAIN" ] && [[ "$ERLANGLY_URL" != https://* ]]; then
     echo
     echo "Note: this is plain HTTP, so passwords cross the network unencrypted: use it only on a trusted network."
@@ -281,20 +357,35 @@ setup_link() {
   echo "$(url)$path"
 }
 
+# It exits with 1 when Erlangly isn't up or something needs looking at, for cron or a monitoring agent.
 cmd_status() {
   local state health
   state=$(docker inspect -f '{{.State.Status}}' "$CONTAINER" 2>/dev/null) || fail "Erlangly isn't installed"
   if [ "$state" = running ]; then up && state="up" || state="running, but not answering yet"; fi
   echo "Erlangly $(image_version erlangly:current): $state"
   echo "URL:     $(url)"
-  echo "Data:    docker volume $VOLUME ($(docker run --rm -v "$VOLUME:/data" --entrypoint du erlangly:current -sh /data | cut -f1))"
+  echo "Data:    docker volume $VOLUME, $(data_size)"
   [ -z "$LITESTREAM_REPLICA_URL" ] || echo "Copied:  ${LITESTREAM_REPLICA_URL%%\?*}, as it changes (Litestream)"
   if docker image inspect erlangly:previous > /dev/null 2>&1; then
     echo "Previous version $(image_version erlangly:previous) kept for \`erlangly rollback\`"
   fi
-  # Backups, background jobs, disk space, connections and Litestream copies, as Settings → System shows them.
-  # Only its answer: a version from before it (after a rollback) answers with bin/wfm's usage.
-  if [ "$state" = up ] && health=$(docker exec "$CONTAINER" bin/wfm health 2> /dev/null); then echo "$health"; fi
+  # Backups, background jobs, disk space, secrets, connections and Litestream copies, as Settings → System shows
+  # them, told apart by what bin/wfm health prints: it exits with 0 either way, as older erlangly commands took its
+  # failing for a version from before it. That (after a rollback) answers with bin/wfm's usage, which isn't shown.
+  [ "$state" = up ] || return 1
+  health=$(docker exec "$CONTAINER" bin/wfm health 2> /dev/null) || true
+  case $health in
+    Health:*) echo "$health" ;;
+    "Needs looking at:"*) echo "$health"; return 1 ;;
+  esac
+}
+
+# What the data takes on the disk, in all and in its databases, upgrade snapshots and nightly backups, and
+# how much of the disk is free. Read from the volume, so it answers while Erlangly is stopped too.
+data_size() {
+  docker run --rm -v "$VOLUME:/data" --entrypoint sh erlangly:current -c '
+    cd "$1" && size() { du -shc "$@" 2> /dev/null | tail -n 1 | cut -f1; }
+    echo "$(size .) ($(size ./*.sqlite3*) databases, $(size snapshots) upgrade snapshots, $(size backups) nightly backups), $(df -Ph . | awk "NR == 2 { print \$4 }") free on the disk"' sh /data
 }
 
 cmd_restart() {
@@ -303,6 +394,7 @@ cmd_restart() {
   start_container erlangly:current
   wait_until_up 120 || fail "Erlangly didn't come back up; see \`erlangly logs\`"
   say "Erlangly is up at $(url) ($(since "$started") s)"
+  keep_secret_key
 }
 
 # Before upgrading, the erlangly command brings itself up to date from get.erlangly.com (checked
@@ -328,21 +420,29 @@ update_self() {
 }
 
 cmd_upgrade() {
-  local from to older started began
+  local tag="" force="" argument from to older started began
   update_self "$@"
+  for argument; do
+    case $argument in
+      --force) force=1 ;;
+      -*) fail "Usage: erlangly upgrade [tag] [--force]" ;;
+      *) [ -z "$tag" ] || fail "Usage: erlangly upgrade [tag] [--force]"; tag=$argument ;;
+    esac
+  done
   started=$(date +%s.%N)
-  say "Downloading ${1:-the latest release}…"
-  fetch_image "${1:-}"
+  say "Downloading ${tag:-the latest release}…"
+  fetch_image "$tag"
   from=$(image_version erlangly:current) to=$(image_version erlangly:new)
   if [ "$(docker image inspect -f '{{.Id}}' erlangly:new)" = "$(docker image inspect -f '{{.Id}}' erlangly:current)" ]; then
     docker rmi erlangly:new > /dev/null; say "Erlangly $from is already the latest"; return
   fi
-  if [ -z "${1:-}" ] && older_version "$to" "$from"; then
+  if [ -z "$tag" ] && older_version "$to" "$from"; then
     docker rmi erlangly:new > /dev/null
     say "Erlangly $from is newer than the latest release ($to), so there's nothing to upgrade to. To go back to $to on purpose: erlangly upgrade $to"
     return
   fi
   check_updates_cover "$from" "$to"
+  [ -n "$force" ] || check_room_to_upgrade "$tag"
 
   say "Upgrading $from → $to (your data is snapshotted first)…"
   # This upgrade takes a snapshot of its own. A rollback by an older erlangly command leaves the
@@ -355,13 +455,32 @@ cmd_upgrade() {
   start_container erlangly:current
   if wait_until_up 180; then
     say "Erlangly $to is up at $(url) ($(since "$started") s). \`erlangly rollback\` goes back to $from."
+    keep_secret_key
   else
     docker logs --tail 40 "$CONTAINER" >&2 || true
     say "Erlangly $to didn't start (log above). Rolling back to $from…"
-    cmd_rollback "$began"
+    undo_failed_upgrade "$began"
     [ -z "$older" ] || docker tag "$older" erlangly:previous
     exit 1
   fi
+}
+
+# An upgrade snapshots the databases before it changes them, and a change can copy a table while it makes it: it
+# needs twice their size free beside them, or the snapshot or the change stops partway on a full disk. When the
+# sizes can't be measured, it goes ahead. $1 is the tag asked for, for the message.
+check_room_to_upgrade() {
+  local data free
+  { read -r data && read -r free; } < <(sizes) && [[ "$data$free" =~ ^[0-9]+$ ]] || return 0
+  (( free < 2 * data )) || return 0
+  docker rmi erlangly:new > /dev/null
+  fail "there isn't room to upgrade safely. It copies your data before it changes it, so it needs $(human_size $(( 2 * data ))) free on the disk Erlangly's data is on, and there's $(human_size "$free"). Free some space (docker system prune removes old images) and try again, or run \`erlangly upgrade ${1:+$1 }--force\` to go ahead anyway."
+}
+
+# In KB, measured in the data volume as the app sees it: the databases' size, the space free beside them, then the
+# size of each path named.
+sizes() {
+  docker run --rm -v "$VOLUME:/rails/storage" --entrypoint sh erlangly:current -c \
+    'du -ck storage/*.sqlite3* 2> /dev/null | tail -n 1 | cut -f 1; df -Pk storage | awk "NR == 2 { print \$4 }"; for path; do du -sk "$path" | cut -f 1; done' sh "$@"
 }
 
 # Is version $1 older than $2? Only for release numbers like 0.8.31 (not "dev" builds).
@@ -382,23 +501,95 @@ check_updates_cover() {
   fi
 }
 
-# Puts back the previous version and the newest whole snapshot from before this one. After an
-# upgrade that didn't start, $1 is when it began: only a snapshot it took will do, as an older one
-# would lose what was entered since (without one, it hadn't changed the data yet). If the snapshot
-# can't be put back, Erlangly stays stopped and the data stays as it is.
+# Goes back to the previous version, and to the data from just before the upgrade to this one (the snapshot that
+# upgrade took; without one, the data stays as it is). It says how old that data is and asks first (--yes doesn't,
+# for scripts), and saves the data as it is now in $BACKUPS, so nothing entered since the upgrade is lost for good.
 cmd_rollback() {
+  local yes="" argument current previous snapshot saved=""
+  for argument; do
+    case $argument in
+      --yes) yes=1 ;;
+      *) fail "Usage: erlangly rollback [--yes]" ;;
+    esac
+  done
   docker image inspect erlangly:previous > /dev/null 2>&1 || fail "there's no previous version to go back to"
-  local to snapshot
-  to=$(image_version erlangly:current)
+  current=$(image_version erlangly:current) previous=$(image_version erlangly:previous)
+  snapshot=$(snapshot_before "$current")
+  if [ -n "$snapshot" ]; then
+    saved="$BACKUPS/erlangly-$current-$(date -u +%Y%m%dT%H%M%SZ)-before-rollback.tar.gz"
+    echo "This goes back to Erlangly $previous and puts back your data from $(taken "$snapshot"), just before the upgrade to $current: anything entered since then is undone."
+    echo "What's there now is saved first, in $saved."
+    check_room_to_roll_back "$snapshot"
+  else
+    echo "This goes back to Erlangly $previous and keeps your data as it is: there's no snapshot from before $current."
+  fi
+  agreed "$yes" "Go back to Erlangly $previous?" || { echo "Nothing was changed."; exit 1; }
+
   remove_container
-  snapshot=$(docker run --rm -v "$VOLUME:/rails/storage" --entrypoint sh erlangly:previous -c \
-    "rm -rf storage/snapshots/*.partial; ls -1d storage/snapshots/*-to-$to 2>/dev/null | tail -n 1")
-  [[ -z "${1:-}" || "${snapshot##*/}" > "$1" ]] || snapshot=""
+  if [ -n "$saved" ]; then
+    say "Saving your data as it is now…"
+    if ! write_backup "$saved" docker run --rm -v "$VOLUME:/rails/storage" --entrypoint bin/backup erlangly:current; then
+      start_container erlangly:current
+      fail "couldn't save your data as it is now (above), so nothing was rolled back, and Erlangly $current is starting again"
+    fi
+  fi
+  roll_back "$snapshot"
+  [ -z "$saved" ] || echo "Your data from before going back is in $saved. To have it back, upgrade to $current again, then run \`erlangly restore $saved\`."
+}
+
+# After an upgrade that didn't start, which began at $1: goes back without asking. Only a snapshot that upgrade took
+# will do, as an older one would lose what was entered since (without one, it hadn't changed the data yet). Nobody
+# has used the new version, so there's nothing to save first.
+undo_failed_upgrade() {
+  local version snapshot
+  version=$(image_version erlangly:current)
+  remove_container
+  snapshot=$(snapshot_before "$version")
+  [[ "${snapshot##*/}" > "$1" ]] || snapshot=""
+  [ -n "$snapshot" ] || say "No snapshot from before $version; keeping the current data"
+  roll_back "$snapshot"
+}
+
+# The newest whole snapshot of the data from before version $1 (bin/snapshot names them <time>-<from>-to-<to>).
+snapshot_before() {
+  docker run --rm -v "$VOLUME:/rails/storage" --entrypoint sh erlangly:previous -c \
+    'ls -1d storage/snapshots/*-to-"$1" 2> /dev/null | tail -n 1' sh "$1"
+}
+
+# When snapshot $1 was taken (its name starts with the time, in UTC), in this server's time and saying which (servers
+# often keep UTC while the people running them don't), and how long ago.
+taken() {
+  local stamp=${1##*/} at ago
+  stamp=${stamp%%-*}
+  at=$(date -d "${stamp:0:4}-${stamp:4:2}-${stamp:6:2}T${stamp:9:2}:${stamp:11:2}:${stamp:13:2}Z" +%s 2> /dev/null) || { echo "$stamp"; return; }
+  ago=$(( $(date +%s) - at ))
+  if (( ago < 120 )); then ago="a minute ago"
+  elif (( ago < 2 * 3600 )); then ago="$(( ago / 60 )) minutes ago"
+  elif (( ago < 2 * 86400 )); then ago="$(( ago / 3600 )) hours ago"
+  else ago="$(( ago / 86400 )) days ago"; fi
+  echo "$(LC_ALL=C date -d "@$at" '+%a %-d %b %H:%M %Z'), $ago"
+}
+
+# Saving the data as it is now copies the databases (bin/backup), and putting back snapshot $1 copies it in before
+# the old data goes: room for both, on the disk the data is on. When the sizes can't be measured, it goes ahead.
+check_room_to_roll_back() {
+  local data free snapshot
+  { read -r data && read -r free && read -r snapshot; } < <(sizes "$1") && [[ "$data$free$snapshot" =~ ^[0-9]+$ ]] || return 0
+  (( free < data + snapshot )) || return 0
+  fail "there isn't room to go back safely. Saving your data as it is now and putting back the snapshot need $(human_size $(( data + snapshot ))) free on the disk Erlangly's data is on, and there's $(human_size "$free"). Free some space (docker system prune removes old images) and run it again. Nothing was changed."
+}
+
+# Puts back the previous version and, when there's one ($1), the snapshot of the data from before this version.
+# If the snapshot can't be put back, Erlangly stays stopped and its data stays as it is.
+roll_back() {
+  local snapshot=$1 version
+  version=$(image_version erlangly:current)
+  # Erlangly is stopped, so a snapshot still being written was cut short: it's never put back, and it only takes up
+  # room, often on a disk that's full already (the reason it was cut short), even when there's no snapshot to put back.
+  docker run --rm -v "$VOLUME:/rails/storage" --entrypoint sh erlangly:previous -c 'rm -rf storage/snapshots/*.partial' || true
   if [ -n "$snapshot" ]; then
     docker run --rm -v "$VOLUME:/rails/storage" --entrypoint bin/restore erlangly:previous "$snapshot" ||
-      fail "couldn't put back the data from before $to (above), so Erlangly is stopped and its data is as the upgrade left it. Once that's fixed (often by freeing disk space), run \`erlangly rollback\` again."
-  else
-    say "No snapshot from before $to; keeping the current data"
+      fail "couldn't put back the data from before $version (above), so Erlangly is stopped and its data is as it was. Once that's fixed (often by freeing disk space), run \`erlangly rollback\` again."
   fi
   docker run --rm -v "$VOLUME:/rails/storage" --entrypoint rm erlangly:previous -f storage/upgrading
   docker tag erlangly:previous erlangly:current && docker rmi erlangly:previous > /dev/null
@@ -409,11 +600,30 @@ cmd_rollback() {
 
 cmd_backup() {
   local directory=${1:-$BACKUPS} file
-  mkdir -p "$directory"
   file="$directory/erlangly-$(image_version erlangly:current)-$(date -u +%Y%m%dT%H%M%SZ).tar.gz"
-  docker exec "$CONTAINER" bin/backup > "$file" || { rm -f "$file"; fail "backup failed"; }
-  chmod 600 "$file"
+  write_backup "$file" docker exec "$CONTAINER" bin/backup || fail "backup failed"
   say "Backed up to $file ($(du -h "$file" | cut -f1))"
+}
+
+# Writes the backup a command ($2…) prints to file $1, readable by root only. It's $1.partial until it's whole, so
+# one cut short never passes for a backup. One stopped partway (Ctrl-C, the ssh session dropping, kill) leaves nothing
+# behind and fails. One killed outright (kill -9, the server going down) can't clean up after itself, so the next backup
+# into the same directory clears it away once it hasn't changed for an hour, as Erlangly does with its nightly backups.
+write_backup() {
+  local file=$1 stopped=""
+  shift
+  mkdir -p "$(dirname "$file")"
+  find "$(dirname "$file")" -maxdepth 1 -name 'erlangly-*.tar.gz.partial' -mmin +60 -delete || true
+  trap 'stopped=1' INT TERM HUP
+  if "$@" > "$file.partial" && [ -z "$stopped" ] && mv "$file.partial" "$file"; then
+    trap - INT TERM HUP
+    chmod 600 "$file"
+  else
+    trap - INT TERM HUP
+    rm -f "$file.partial"
+    [ -z "$stopped" ] || echo "The backup was stopped partway, so nothing was saved." >&2
+    return 1
+  fi
 }
 
 cmd_export() {
@@ -449,7 +659,7 @@ case "${1:-}" in
   *) printf 'erlangly: there'"'"'s no command "%s"\n\n' "$1" >&2; usage >&2; exit 1 ;;
 esac
 
-[ "$(id -u)" -eq 0 ] || exec sudo --preserve-env=LITESTREAM_REPLICA_URL,LITESTREAM_ACCESS_KEY_ID,LITESTREAM_SECRET_ACCESS_KEY,ERLANGLY_SOURCE,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_URL,TRUSTED_PROXIES,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_INSTALL_STARTED "$0" "$@"
+[ "$(id -u)" -eq 0 ] || exec sudo --preserve-env=LITESTREAM_REPLICA_URL,LITESTREAM_ACCESS_KEY_ID,LITESTREAM_SECRET_ACCESS_KEY,ERLANGLY_SOURCE,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_URL,TRUSTED_PROXIES,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_DAILY_BACKUPS,ERLANGLY_WEEKLY_BACKUPS,ERLANGLY_INSTALL_STARTED "$0" "$@"
 load_settings
 # Every command from here runs Docker. Without it, the first docker call failed with a message that
 # sent you the wrong way ("If the image is private…").
@@ -461,7 +671,7 @@ case "${1:-}" in
   logs)     shift; docker logs "$@" "$CONTAINER" ;;
   restart)  cmd_restart ;;
   upgrade)  shift; cmd_upgrade "$@" ;;
-  rollback) cmd_rollback ;;
+  rollback) shift; cmd_rollback "$@" ;;
   backup)   shift; cmd_backup "$@" ;;
   restore)  shift; cmd_restore "$@" ;;
   export)   shift; cmd_export "$@" ;;

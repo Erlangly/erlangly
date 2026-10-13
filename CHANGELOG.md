@@ -1,5 +1,65 @@
 # Changes
 
+## 0.8.110 (2026-10-12)
+- **Admins hear about problems.** When Settings → System says something needs looking at, each admin gets one email about it: not on every check while it lasts, and again only if it comes back after being put right for an hour. Nothing is sent until email is set up.
+- **Email that couldn't be sent says who it was for.** Settings → Email names the email and the address, and Settings → System names the last one for a day. Inviting many people at once no longer holds up other email: password resets, time-off answers and published schedules go first.
+- **Adherence after a long silence.** When an ACD connection that has sent nothing for 12 hours or more sends the states it kept, everyone on it is scored again for those intervals (a week back at most), not only the people the states are about. Importing or undoing a file of states does the same.
+- **Big volume batches.** A batch too big for the API (over 5,000 intervals or 2 MB) says how to split it: a week of one line of business at a time, with all its queues. The ACD and API guides show an example and the limits.
+- **A licence ends at midnight on your clock.** A key, a trial or a pay-once key's updates now end at midnight in your organisation's time zone, not UTC's, and Settings → Licence and its warnings count days the same way.
+- **Sign-in.** Signing in with SSO keeps the identity provider's details for an hour instead of fetching them each time (new signing keys are still picked up at once, and a test sign-in always reads them fresh). AI assistant apps can always register: at most 5,000 nobody has connected are kept, the oldest going first.
+- **Security.** Exports and import templates keep text that starts with = + - or @ as text, so a spreadsheet doesn't run it as a formula. Signing out, a password change or reset, or being made inactive ends that browser's live updates, and an expired session can't get them. Admins see a notice when Erlangly is used over plain HTTP at an address the internet can reach. The limit on password links can't be got round any more, and a sign-in form with a missing field says "Try another email address or password." instead of showing an error.
+- **The `erlangly` command** (from the next public release): a backup stopped partway leaves nothing behind and says so, and one killed outright is cleared by the next backup.
+- **Release checks** fail a release that takes more than 280 MiB of memory when idle.
+
+## 0.8.109 (2026-10-12)
+- **Less memory.** Erlangly now runs its background work (jobs and the ACD connectors) in one process beside the web server instead of five, so it takes about 150 MiB less memory once started. Pages stay as fast while schedules are generated or adherence is scored, because that work still runs apart from the web server.
+- **If the background process stops,** Erlangly starts it again within seconds. A job cut short by a restart or an upgrade goes back in line and runs again; a job running when the background process failed is marked failed, and Settings → System lists it.
+- **Release checks** now also check that background jobs run after a restart, and measure memory the same way each time.
+
+## 0.8.108 (2026-10-12)
+- **Nobody changes their own time off.** A supervisor or planner on the roster could change the dates or kind of their own approved time off on the Time off page, and it stayed approved. Changing it is deciding it again, so another supervisor now does it ("Change dates" shows only on other people's time off), and a time-off import no longer approves the importer's own.
+- **Swaps show only what's on offer.** Asking to swap for a shift that wasn't offered to you now says "Choose the shift you'd like in exchange", instead of saying whose shift it was. Accepting a swap asked of someone else answers "not found", as refusing one already did.
+- **Fixes.** Removing or changing a break that a labour rule needs shows the shift with the warning to acknowledge, instead of failing. Someone signed in who isn't on the roster is sent to My schedule when they acknowledge a schedule or answer a swap, instead of seeing an error.
+- **Faster pages on a big floor.** The week's schedule no longer slows down as time off piles up, and People, Time off, Exceptions and the week's adherence report show faster with hundreds of people.
+- **Checked every time.** Every page is now tried signed out and as each role to check that each role reaches only what it should, and the main pages are timed on a 500-person floor. Each release's check measures the image's size and the memory Erlangly uses once it has settled.
+
+## 0.8.107 (2026-10-12)
+- **Forecasts aren't thrown by outages.** A time with no contacts on a day that otherwise has them, when the other weeks had contacts then, is left out of that week's part of the forecast instead of counting as zero, and the forecast says which times were left out. The hour the clocks skip in spring is left out the same way.
+- **Leave days out of the history.** On a line's volume history, you can leave out a day that wasn't normal (an outage, a spike, a one-off event) and put it back later; forecasts made after that use the history without it.
+- **Repeated rows in a volume file count once.** When two exports overlap, a row repeated for the same line of business, interval and queue is counted once instead of twice, and the preview says what it found.
+
+## 0.8.106 (2026-10-12)
+- **Adherence catches up.** Each scoring run now also scores any intervals it missed (during a restart, say), and ACD states that arrive late are scored into the intervals they belong to. A state in a code nobody has mapped yet is kept and counted as unknown, rather than leaving the agent in their last state; once the code is mapped, those states are worked out again and the week is scored again. For the agent-state API, an unmapped code now answers `unmapped` and the state is kept (it was `invalid`, and refused).
+- **Changes in the middle of a week.** Generation now follows each day's lines of business, start date and contract: someone starting on a Wednesday gets shifts from Wednesday, someone moving from Billing to Tech on a Wednesday is planned on Tech from that day, and nobody gets shifts before they start or after they leave. A week that straddles two contracts is planned to their average by days.
+- **Very busy queues.** The agents needed on a queue with more than about 700 Erlangs in an interval were overstated by hundreds, and its service level showed as NaN. Erlang C now stays right at any volume, and an interval that would need more than 100,000 agents (in practice a typo) says so and asks you to check its contacts and handle time.
+
+## 0.8.105 (2026-10-12)
+- **After a restore, connections say what they need.** On a server restored without the old one's key, an ACD connection whose secret can't be read now says "Enter the secret again" on its page and under Settings → System, instead of failing; entering it keeps the connection and its agent links. With Litestream on, erlangly.conf keeps a copy of the key, so a server restored from the copy reads every secret (keep the file as safe as your backups).
+- **Monitoring.** The guide now says how to watch Erlangly: an uptime check on /up, or /up?deep=1, which answers 503 while something needs looking at (no details shown); `erlangly status` from cron, which now exits with 1 while something needs looking at or Erlangly isn't up; disk space; and the clock.
+
+## 0.8.104 (2026-10-12)
+- Everything in 0.8.103 (restarting and upgrading let work finish, a rollback asks first and keeps today's data, upgrades check for room, less disk), whose release check had a fault of its own: it said a rollback hadn't saved the data when it had. The check is fixed, and this release passes it.
+
+## 0.8.103 (2026-10-12)
+- **Restarting and upgrading let work finish.** `erlangly restart` and `erlangly upgrade` now stop Erlangly gently: anything running in the background (a schedule being generated, a backup, an email) gets time to finish or goes back in line, instead of being cut off.
+- **A rollback asks first, and keeps today's data.** `erlangly rollback` says how old the data it puts back is, saves what's there now (it names the file), and asks before it goes ahead; from a script, `erlangly rollback --yes`. The rollback after a failed upgrade still happens by itself.
+- **Upgrades check for room first.** An upgrade doesn't start without twice your data's size free on the disk, and says how much it needs (`--force` goes ahead anyway).
+- **Less disk.** Two upgrade snapshots are kept instead of five, and nightly backups keep the last 7 days and one for each of the 4 weeks before (`ERLANGLY_DAILY_BACKUPS` and `ERLANGLY_WEEKLY_BACKUPS` in erlangly.conf change that); exports are left out of backups. `erlangly status` and Settings → System show what the data, snapshots and backups take, and the install guide sizes the disk by number of agents.
+- **Release checks.** Every release is now checked the way customers upgrade: from the last public release, with its own installer, then a backup, a restore and a rollback, on both kinds of processor.
+
+## 0.8.102 (2026-10-11)
+- **The sample's agents log off while they're away.** With the sample loaded, someone given time off, or recorded as sick, late or absent, now shows logged off for that time, and in adherence, instead of "Aux"; they log back on when it ends. Approving one person's request no longer changes everyone else's simulated day.
+- **Supervisors are told only what they can do.** A time-off request lists its shifts without links to an editor supervisors can't open. The guides say a planner moves shifts and breaks and sets the alarm times. An AI assistant approving time off is told nothing is checked first, and an agent's Time off no longer says they won't be scheduled then.
+
+## 0.8.101 (2026-10-11)
+- **A password reset signs out everything.** Resetting a forgotten password (from the email, an admin's link or `erlangly reset-link`) now also revokes the person's API tokens and disconnects their AI assistants, as their account may have been someone else's for a while; the reset page and an email say so. A password change while signed in ends the person's other sessions and can revoke those too. Everyone gets an email when their password changes, once email is set up.
+- **Limits on what can be sent.** Requests to the API, MCP and sign-in for AI assistants are refused over 2 MB, and anything over 10 MB, with a plain message; imports up to their 5 MB still go through.
+- **Release safety.** Every release is now scanned for known vulnerabilities, and the core's own tests run with every change.
+
+## 0.8.100 (2026-10-11)
+- **The licence agreement comes with each copy.** Settings → Licence shows the licence agreement that came with your version (as the agreement says, that's the one that applies), and it opens from the setup page before anyone has signed in.
+- **Setting up says so.** The setup page says that setting up Erlangly means accepting its licence agreement, with a link, and records when; the installer and compose.yml give the agreement's address too.
+
 ## 0.8.99 (2026-10-11)
 - **Availability can run past midnight.** Someone available from 22:00 to 06:00 can say so: an end at or before the start means the next morning, shown as "22:00–06:00 (next day)", and generation gives people available at night their night shifts.
 - **A period's first morning counts the night before.** On a 24/7 floor, the people still on from the previous period's last night now count in a period's figures, coverage and "Even out breaks…", so its first hours no longer show short. Their hours still count in the period they started in.

@@ -9,6 +9,8 @@
 #   ERLANGLY_URL=https://wfm.example.com   the address people open, when your own HTTPS proxy is in front
 #   TRUSTED_PROXIES=192.168.1.10           that proxy's address, when it runs on another machine
 #   ERLANGLY_HTTP_PORT=8080      publish on another port (default 80)
+#   ERLANGLY_DAILY_BACKUPS=7, ERLANGLY_WEEKLY_BACKUPS=4   nightly backups kept: one a day for this
+#                                many days, then one a week for this many weeks before those
 #   ERLANGLY_IMAGE_TAR=file.tar  install from a saved image instead of the registry (offline, testing)
 #   ERLANGLY_REGISTRY_USER/_TOKEN  sign in to a private registry first (read-only token)
 #   LITESTREAM_REPLICA_URL=s3://bucket/path  copy the database off the server as it changes, with
@@ -32,6 +34,9 @@ main() {
   esac
 
   if [ "$(id -u)" -eq 0 ]; then sudo=""; else sudo="sudo"; command -v sudo > /dev/null || fail "run this as root"; fi
+
+  # Before anything's installed. The erlangly command doesn't say it again (ERLANGLY_INSTALL_STARTED is set).
+  echo "Erlangly is licensed under its licence agreement: https://erlangly.com/eula (by installing it you accept it)."
 
   # A new server installs its own updates in its first minutes, which holds the package manager: apt,
   # apt-get or dpkg running, unattended-upgrade itself, or the daily script running them. Not
@@ -82,7 +87,7 @@ main() {
   rm -f "$cli"
 
   if [ -n "$sudo" ]; then
-    exec sudo --preserve-env=LITESTREAM_REPLICA_URL,LITESTREAM_ACCESS_KEY_ID,LITESTREAM_SECRET_ACCESS_KEY,ERLANGLY_SOURCE,ERLANGLY_INSTALL_STARTED,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_URL,TRUSTED_PROXIES \
+    exec sudo --preserve-env=LITESTREAM_REPLICA_URL,LITESTREAM_ACCESS_KEY_ID,LITESTREAM_SECRET_ACCESS_KEY,ERLANGLY_SOURCE,ERLANGLY_INSTALL_STARTED,ERLANGLY_IMAGE_TAR,ERLANGLY_REGISTRY_USER,ERLANGLY_REGISTRY_TOKEN,ERLANGLY_IMAGE,ERLANGLY_TAG,ERLANGLY_HTTP_PORT,ERLANGLY_HTTPS_PORT,TLS_DOMAIN,ERLANGLY_URL,TRUSTED_PROXIES,ERLANGLY_DAILY_BACKUPS,ERLANGLY_WEEKLY_BACKUPS \
       /usr/local/bin/erlangly install
   fi
   exec /usr/local/bin/erlangly install
