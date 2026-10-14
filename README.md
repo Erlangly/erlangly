@@ -97,6 +97,8 @@ Erlangly is proprietary software from FrontLine Software Solutions Inc., license
 
 See [erlangly.com](https://erlangly.com) for pricing.
 
+Erlangly is built with open-source software, which keeps its own licences: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) lists each part and its licence, and the image carries the same file.
+
 ## Security
 
 Please report security problems privately: see [SECURITY.md](SECURITY.md).

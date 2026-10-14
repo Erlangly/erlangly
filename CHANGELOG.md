@@ -1,5 +1,65 @@
 # Changes
 
+## 0.8.123 (2026-10-14)
+- **Intraday: expected service level.** Where there's no measured service level (your ACD or volume file doesn't say how many were answered within target), Intraday now shows the service level Erlang C expects from the contacts that came, their handle time and the agents on the phones, for lines planned with Erlang C.
+
+## 0.8.122 (2026-10-14)
+- **Intraday: where the hours went.** A new **Hours** tab walks from the hours planned to the hours actually spent on the phones, step by step: less time away, exceptions and activities off the phone, less the time people weren't on the phones while scheduled on them, plus overtime and other time on the phones. What takes hours away is in red, what adds them in green.
+
+## 0.8.121 (2026-10-14)
+- **Intraday: adherence while scheduled on the phones.** Intraday now shows how much of the time people were scheduled on the phones they were in adherence, and how much out, by interval, by day and over the range, beside the agents needed and on the phones. It counts from this release on: intervals scored before it show a dash.
+
+## 0.8.120 (2026-10-13)
+- **Intraday: Zoom Contact Center's service level.** For a line of business connected to Zoom Contact Center, Erlangly now reads how many contacts were answered within each queue's own threshold, so Intraday shows its measured service level, and says when Zoom's threshold differs from the line's target. It needs one more optional permission on Zoom's side (`contact_center:read:queue:admin`); without it, contacts still come in as before.
+- **Intraday fits the page.** The Service tab's columns are grouped under Contacts, Handle time, Service level and Abandons, and both tabs fit beside the menu without scrolling sideways.
+
+## 0.8.119 (2026-10-13)
+- **Intraday: Amazon Connect's service level.** For a line of business connected to Amazon Connect, Erlangly now reads how many contacts were answered and abandoned within the line's own service target, so Intraday shows its measured service level, and its short abandons where the target leaves them out. It needs no new permission in AWS.
+
+## 0.8.118 (2026-10-13)
+- **Intraday: Genesys Cloud's service level.** For a line of business connected to Genesys Cloud, Erlangly now counts the contacts answered and abandoned within the line's own service target, so Intraday shows its measured service level, and its short abandons where the target leaves them out.
+
+## 0.8.117 (2026-10-13)
+- **Intraday: NICE CXone's service level.** For a line of business connected to NICE CXone, Erlangly now also reads how long each contact waited in the queue, and counts it against the line's own service target, so Intraday shows its measured service level, and its short abandons where the target leaves them out.
+
+## 0.8.116 (2026-10-13)
+- **Intraday: Twilio Flex's service level.** For a line of business connected to Twilio Flex, Erlangly now counts how long each call waited before it was answered or abandoned, against the line's own service target, so Intraday shows its measured service level, and its short abandons where the target leaves them out, without importing anything.
+
+## 0.8.115 (2026-10-13)
+- **Intraday: service level and answer rate.** Where your ACD or your volume file says how many contacts were answered, and how many within target, Intraday's **Service** tab shows the answer rate and the measured service level against the target, in red where it's under. A line's service target can now be measured over the contacts offered, the contacts answered, or the contacts offered less short abandons (Settings → Lines of business → the line). Connected ACDs already send the contacts answered; answered within target follows, connector by connector.
+- **The schedule by team.** On a draft's day and week, choose a team beside **Find** and **Sort** to see only its people, with everyone's coverage and figures. A team lead's own team says "(my team)".
+- **The API** gives Intraday's times in local time with their offset, like every other endpoint, and takes contacts answered and answered within target with volumes.
+- **What's new.** The update note and Settings → System link to the release notes on erlangly.com, and an update that fixes a security problem says so, so you know to install it soon.
+- **Licence notices.** Each copy of Erlangly carries the licences of the open-source software it's built with (`distribution/THIRD_PARTY_NOTICES.md`), also at erlangly.com/third-party-notices.
+
+## 0.8.114 (2026-10-13)
+- **Supervisors can schedule coaching, training and meetings where there's overage.** Planners turn it on for a line of business, with how many days ahead (3 unless changed): Settings → Lines of business → the line → Edit.
+  - **Schedule an activity…** on the schedule lets a supervisor choose the day, an activity off the phone (not breaks or lunch), how long, and who.
+  - Erlangly offers only the times when each person is on the phone, and the line keeps at least one agent more than it needs throughout.
+  - The activity goes on their shifts, and they're asked to look at their schedule again. Shift times, breaks and lunches stay as they are.
+
+## 0.8.113 (2026-10-13)
+- **Email and tickets: the first day of a forecast starts with the email already waiting.** For a line planned to its response target within opening hours, the email that came in before the forecast starts, and isn't due yet, now counts as waiting when the line opens. Where it hasn't come in yet, the published forecast's figure counts instead. The first day's agents needed are now as even across the open hours as every other day's, instead of ramping up from nothing.
+
+## 0.8.112 (2026-10-13)
+- **Intraday: how the day went against the plan.** A new **Intraday** page, for planners and supervisors, shows one line of business or all of them, for a day or up to 31 days.
+  - **Service:** the contacts forecast against the contacts that came, handle time and abandons.
+  - **Staffing:** the agents needed, scheduled and on the phones, and how busy they were.
+  - Each as a summary, then by day, by time of day across the days, and every interval.
+  - Agents on the phones come from your ACD's agent states. Erlangly fills in the states it already has, a day at a time, so earlier days appear over the next while. Service level comes next.
+- **The guides, in planning order.**
+  - **Scheduling:** set up shift patterns first.
+  - **Forecasting and staffing:** explains the two ways to get a forecast, made from your history or imported, with a new section on importing your volume history.
+
+## 0.8.111 (2026-10-13)
+- **Labour rules for four more countries.** Signed rule packs for Belize, Trinidad and Tobago, Guyana and Barbados, each with its public holidays for 2026 to 2028:
+  - **Belize:** overtime past 9 hours a day or 45 a week, 9 hours' rest between shifts and an hour's break once the day runs over 6 hours (both stop a schedule being published), and at most 6 days in a row.
+  - **Trinidad and Tobago:** overtime past 8 hours a day or 40 a week and a 45-minute meal within the first 4½ hours, for agents paid up to 1.5 times the minimum wage (the law covers only them); a site or person can be given "Shift work" (a paid 20-minute break instead) or "Paid over 1.5 times the minimum wage" (the holidays alone).
+  - **Guyana:** overtime past 40 hours a week.
+  - **Barbados:** the holidays; a retailer's own contact centre can be given "Shops Act", with its hours, rest, days in a row and meal.
+  - Holidays proclaimed each year (Eid, Divali and Deepavali, Phagwah, Youman Nabi) come with the dates announced so far; add later ones with **Add a holiday** under Settings → Labour rules when they're announced, until an update brings them.
+- **Settings → System doesn't fail** when a database file goes while it's being measured.
+
 ## 0.8.110 (2026-10-12)
 - **Admins hear about problems.** When Settings → System says something needs looking at, each admin gets one email about it: not on every check while it lasts, and again only if it comes back after being put right for an hour. Nothing is sent until email is set up.
 - **Email that couldn't be sent says who it was for.** Settings → Email names the email and the address, and Settings → System names the last one for a day. Inviting many people at once no longer holds up other email: password resets, time-off answers and published schedules go first.
