@@ -528,7 +528,7 @@ cmd_rollback() {
   remove_container
   if [ -n "$saved" ]; then
     say "Saving your data as it is now…"
-    if ! write_backup "$saved" docker run --rm -v "$VOLUME:/rails/storage" --entrypoint bin/backup erlangly:current; then
+    if ! write_whole backup "$saved" docker run --rm -v "$VOLUME:/rails/storage" --entrypoint bin/backup erlangly:current; then
       start_container erlangly:current
       fail "couldn't save your data as it is now (above), so nothing was rolled back, and Erlangly $current is starting again"
     fi
@@ -601,27 +601,28 @@ roll_back() {
 cmd_backup() {
   local directory=${1:-$BACKUPS} file
   file="$directory/erlangly-$(image_version erlangly:current)-$(date -u +%Y%m%dT%H%M%SZ).tar.gz"
-  write_backup "$file" docker exec "$CONTAINER" bin/backup || fail "backup failed"
+  write_whole backup "$file" docker exec "$CONTAINER" bin/backup || fail "backup failed"
   say "Backed up to $file ($(du -h "$file" | cut -f1))"
 }
 
-# Writes the backup a command ($2…) prints to file $1, readable by root only. It's $1.partial until it's whole, so
-# one cut short never passes for a backup. One stopped partway (Ctrl-C, the ssh session dropping, kill) leaves nothing
-# behind and fails. One killed outright (kill -9, the server going down) can't clean up after itself, so the next backup
-# into the same directory clears it away once it hasn't changed for an hour, as Erlangly does with its nightly backups.
-write_backup() {
-  local file=$1 stopped=""
-  shift
+# Writes the $1 (a backup or an export) a command ($3…) prints to file $2, readable by root only. It's $2.partial until
+# it's whole, so one cut short never passes for the real thing. One stopped partway (Ctrl-C, the ssh session dropping,
+# kill) leaves nothing behind and fails. One killed outright (kill -9, the server going down) can't clean up after
+# itself, so the next backup or export into the same directory clears it away once it hasn't changed for an hour, as
+# Erlangly does with its nightly backups.
+write_whole() {
+  local what=$1 file=$2 stopped=""
+  shift 2
   mkdir -p "$(dirname "$file")"
-  find "$(dirname "$file")" -maxdepth 1 -name 'erlangly-*.tar.gz.partial' -mmin +60 -delete || true
+  find "$(dirname "$file")" -maxdepth 1 -name 'erlangly-*.partial' -mmin +60 -delete || true
   trap 'stopped=1' INT TERM HUP
-  if "$@" > "$file.partial" && [ -z "$stopped" ] && mv "$file.partial" "$file"; then
+  if (umask 077 && "$@" > "$file.partial") && [ -z "$stopped" ] && mv "$file.partial" "$file"; then
     trap - INT TERM HUP
     chmod 600 "$file"
   else
     trap - INT TERM HUP
     rm -f "$file.partial"
-    [ -z "$stopped" ] || echo "The backup was stopped partway, so nothing was saved." >&2
+    [ -z "$stopped" ] || echo "The $what was stopped partway, so nothing was saved." >&2
     return 1
   fi
 }
@@ -629,11 +630,9 @@ write_backup() {
 cmd_export() {
   local directory=${1:-$BACKUPS} path file
   up || fail "Erlangly isn't running"
-  mkdir -p "$directory"
   path=$(docker exec "$CONTAINER" bin/wfm export) || fail "export failed"
   file="$directory/$(basename "$path")"
-  docker cp "$CONTAINER:$path" "$file" > /dev/null || fail "couldn't copy the export out of the container"
-  chmod 600 "$file"
+  write_whole export "$file" docker exec "$CONTAINER" cat "$path" || fail "export failed"
   say "Exported to $file ($(du -h "$file" | cut -f1))"
 }
 

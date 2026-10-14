@@ -1,5 +1,14 @@
 # Changes
 
+## 0.8.125 (2026-10-14)
+- **Five9: volumes and service level.** A Five9 connection can now read contacts, handle time, abandons and contacts answered, and answered within the line's own service target, per skill, from a Call Log report you set up in Five9 (its folder and name go on the connection's page). Forecasts get Five9's history, and Intraday its service level, without importing anything.
+
+## 0.8.124 (2026-10-14)
+- **Security. Secret links stay out of the log.** The links in invitation and password-reset emails no longer appear in Erlangly's log, so a log sent with a support request carries no working link. Thruster's own request log, which couldn't hide them, is off; Rails still logs every request.
+- **Sessions end on time.** Every hour Erlangly ends sessions that have run out, and those of people who have left, which also stops their live updates.
+- **`erlangly timeoff`** refuses to approve or decline the admin's own time off, as the pages do: another supervisor decides it.
+- **`erlangly export` stopped partway** leaves nothing behind and says so, like a backup; files being written are readable by root only.
+
 ## 0.8.123 (2026-10-14)
 - **Intraday: expected service level.** Where there's no measured service level (your ACD or volume file doesn't say how many were answered within target), Intraday now shows the service level Erlang C expects from the contacts that came, their handle time and the agents on the phones, for lines planned with Erlang C.
 
