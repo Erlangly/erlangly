@@ -373,7 +373,9 @@ cmd_status() {
   # them, told apart by what bin/wfm health prints: it exits with 0 either way, as older erlangly commands took its
   # failing for a version from before it. That (after a rollback) answers with bin/wfm's usage, which isn't shown.
   [ "$state" = up ] || return 1
-  health=$(docker exec "$CONTAINER" bin/wfm health 2> /dev/null) || true
+  # From its first line on: versions up to 0.8.139 printed their logs there too ("Rendered layout…" while naming an
+  # email that couldn't be sent), which hid what needs looking at and passed.
+  health=$(docker exec "$CONTAINER" bin/wfm health 2> /dev/null | sed -n '/^Health:/,$p; /^Needs looking at:/,$p') || true
   case $health in
     Health:*) echo "$health" ;;
     "Needs looking at:"*) echo "$health"; return 1 ;;

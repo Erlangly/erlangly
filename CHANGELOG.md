@@ -1,5 +1,111 @@
 # Changes
 
+## 0.8.154 (2026-10-15)
+- **Even out breaks goes back to where you were.** After evening out breaks, or cancelling, you're back on the schedule's day or week and filters you came from.
+- The release's own checks count only the agent states they send, not the sample's simulated ACD's, so they pass at any hour.
+
+## 0.8.153 (2026-10-15)
+- **A new install in the United States starts with federal labour law.** Setting up for the United States used to leave Labour rules at None, so nothing was checked and forecasts kept US public holidays in. It now starts with US federal law, as Canada starts with federal law; a site or person can be given a state. Installs already set up are unchanged: an admin can choose it under Settings → Organisation.
+
+## 0.8.152 (2026-10-15)
+- **Security:** the image's third-party notices list its Debian packages at the versions it has after their security fixes (curl, libcurl and liblzma), so the release's checks pass and it can be made public.
+
+## 0.8.151 (2026-10-15)
+- **The published schedule's coverage counts exceptions.** Approved exceptions count people off or on the phones, and people away on exceptions or time off approved since the schedule was generated use up the line's planned shrinkage first.
+
+## 0.8.150 (2026-10-15)
+- **Shift imports count against the licence.** A shift import is checked against the licence's agent limit, as generating a schedule is: over it, the preview says so and the import can't be applied.
+- **"Your schedule changed" leaves out days already over.** A change to a day that's already over where the person is (a correction for payroll, say) isn't emailed; the email covers today and later.
+- **No Beta badges on ACD connections.** Settings → Connections no longer marks the connectors as beta, as the website doesn't.
+- **Security:** the image takes Debian's security fixes on every release, including curl's (CVE-2026-8286, CVE-2026-8927, CVE-2026-92392), which earlier images still had.
+
+## 0.8.149 (2026-10-15)
+- **Cancel someone's time off.** Supervisors and planners can cancel a person's waiting or approved time off. The person is emailed, and adherence is scored again for any part that's already past.
+- **Change or remove a decided exception.** An approved or declined exception can be changed or removed, and adherence is scored again over the old and new times.
+- **Line adherence on Intraday.** A line's service target can set a line adherence goal, and Intraday's Staffing tab shows how the line did against it.
+
+## 0.8.148 (2026-10-15)
+- **Activities by the clock can sit back to back.** A pattern that lays out the day by the clock (training until 11:00, a break at 11:00, training from 11:15) now gets its breaks and lunch: activities at set times may touch. An activity a generated shift has no room for is named in a warning on the draft, instead of being left out without a word.
+
+## 0.8.147 (2026-10-15)
+- **Overrides and special days on the client's agents.** A forecast that staffs to the agents the client asks for now takes a planner's overrides and special days (closed, or scaled up or down), as a forecast of contacts does. Its download gains "Agents before override" as the last column.
+
+## 0.8.146 (2026-10-15)
+- **Scheduling an activity starts blank.** "Schedule an activity…" now starts with no activity chosen and 15 minutes, and looks for times only when you press Find times.
+
+## 0.8.145 (2026-10-15)
+- **Approved exceptions on the schedule.** The published schedule's day and week now draw approved exceptions over each person's row, as they do time off, so you can see who was off the phones and when. Coverage is unchanged.
+
+## 0.8.144 (2026-10-15)
+- **Shrinkage: termination and adherence.** Shrinkage plans gain Termination and Adherence categories in place of the combined "Other, termination and adherence" row, and Intraday's hours waterfall ends with the productive hours needed and how far over or short the floor is.
+
+## 0.8.143 (2026-10-15)
+- **Bring in the schedule you already have.** A new Shifts import makes a draft from a spreadsheet: one row per shift, with employee number, line of business, date, start and end, and optionally the breaks and other activities. A schedule downloaded from Erlangly goes back in unchanged. The preview says what's wrong with any row before anything changes. The draft is checked like a generated one, and a file for some lines of business replaces only those when it's used. Start it from a period's new-draft page, or Generate another draft → From a spreadsheet. Up to 12,000 shifts a file.
+- **Imports no longer hold up the rest of Erlangly while they're checked.** Previews of every kind now run before anything is saved, so background jobs and agent states keep flowing during a big import.
+- The schedule download writes "(paid)" for a paid activity of a kind that's usually unpaid, so it imports back exactly.
+
+## 0.8.142 (2026-10-15)
+- **Back to the wallboard after recording an exception.** An exception recorded from a name on the wallboard now returns you to the wallboard, with its line of business, team and view, when you save or cancel.
+
+## 0.8.141 (2026-10-15)
+- **Intraday's contacts difference is fair while the day is under way.** It now compares the contacts so far with the forecast up to the last interval that has actuals, not with the whole day's forecast.
+- **A booked activity tells the agent what changed.** When a supervisor schedules an activity for people on a published schedule, each gets the one "Your schedule changed" email, as they do for a planner's edit, instead of the general "schedule published" email.
+
+## 0.8.140 (2026-10-15)
+- **`erlangly status` shows what needs looking at again.** When an email couldn't be sent, Erlangly's own log lines came before the answer, so status said nothing about it and reported all well. It now lists the problem and exits with 1, for cron and monitoring.
+
+## 0.8.139 (2026-10-15)
+- **Time off requests open faster.** A waiting request's page, with its coverage if approved, now reads each day's schedule once. A day-long shift that started just after midnight on the night the clocks go forward (Chile, Cuba, Paraguay) no longer goes missing from the next day's schedule.
+
+## 0.8.138 (2026-10-14)
+- **Pattern sets: give a set to a whole group at once.** From a set's page, give it to everyone in a class of people at once, for a range of dates.
+
+## 0.8.137 (2026-10-14)
+- **Pattern sets: activities at set times.** A pattern's activity can now be held at a set time of day on chosen weekdays (a 10:00 team meeting on Tuesdays, say). Generation only offers shifts that hold it, and evening out breaks leaves it where it is.
+
+## 0.8.136 (2026-10-14)
+- **Forecasts with the agents the client needs.** Some contracts staff to the client's own forecast of agents rather than one worked out from contacts and handle time. A forecast's intervals can now carry the agents needed (imported or typed in, with a planner's override as for contacts); where they're given, Erlangly staffs to them and contacts become optional. The API's forecast intervals gain agents_from_client.
+
+## 0.8.135 (2026-10-14)
+- **Agents hear when their published shift changes.** When a planner adds, moves, edits or removes someone's published shift, or a break or activity on it, that person gets one "Your schedule changed" email a few minutes after the last edit, saying what each day was and what it is now.
+- **Supervisors see what's waiting on them.** The Requests menu shows how many time-off, swap and exception requests are waiting on you, and on mornings when something is, a 07:00 email lists them (turn it off under Your account). A time-off request now shows each day's coverage with and without the person, the stretches that would go short, and who else is off.
+- **Pattern sets.** Under Settings, make sets of shift patterns and give one to a person for a range of dates; while it holds, generation picks their shifts from the set.
+- **Tick people on the schedule to schedule an activity.** On a day that allows bookings, tick names on the schedule and "Schedule an activity…" brings them along, already ticked.
+
+## 0.8.134 (2026-10-14)
+- **Shrinkage against the plan in Intraday.** Staffing shows the agents needed with shrinkage and the planned and actual shrinkage; Hours gives each loss as a share of paid hours and a table of shrinkage against the plan by absence, termination, training, coaching and meetings, adherence and other. The download and the API's Intraday figures gain the same.
+
+## 0.8.133 (2026-10-14)
+- **Scheduling an activity: Select all, and who each time schedules.** Pick everyone listed in one click, and each time on offer says who it would schedule, with a Copy button.
+- **Availability, more easily.** Set someone's availability for several days at once, at any time of day, and for a range of dates.
+
+## 0.8.132 (2026-10-14)
+- **Exceptions for the whole shift.** Recording an exception, or telling your supervisor you're sick or late, now has a Whole shift box: tick it instead of typing the times, and the exception covers that day's shift from start to end.
+- **Intraday, only while contacts come.** Tick it on Service or Staffing and the tables start at the first interval with forecast or actual contacts and end at the last. Quiet intervals in between stay, so an outage still shows. The Intraday guide's picture shows the new names too.
+- **The sample's calls follow the forecast.** With the sample loaded, its simulated agents now take the calls that come in, about as many as the forecast says, instead of one call after another. An overstaffed interval answers what was forecast with agents waiting for calls, and a short one has callers waiting and hanging up, so Intraday's contacts, service level and abandons look like a real floor's.
+
+## 0.8.131 (2026-10-14)
+- **Back to the schedule as you left it.** After adding, editing or removing a shift, Cancel, Save and Remove take you back to the same week or day, line, team and search you were looking at.
+
+## 0.8.130 (2026-10-14)
+- **Intraday, after Gary's review.** Service shows answer rate and abandons before handle time, and adds occupancy. "On the phones" is now "Productive", and the Hours tab's steps are renamed to match, ending in "Productive hours". Pick a block of the day (From and To) to narrow every section of Service and Staffing; the download follows it.
+
+## 0.8.129 (2026-10-14)
+- **Download or print the schedule.** Beside a draft's or the published schedule's week or day, Download CSV gives every shift exactly as filtered (line of business, team, search): name, employee number, team, line, date, start and end in the schedule's time zone, paid hours, breaks, lunch and other activities, any time off over the shift, and whether it's published. Print puts the grid on landscape paper in black and white, with everyone in view, the days atop every page and no row split across pages.
+- **Download the adherence report, a forecast and Intraday.** Each page has a Download button that gives what it shows as a spreadsheet. Intraday keeps the expected service level in its own column, apart from the measured one.
+- **Filter the adherence report by team and line of business.** The total row says what it covers.
+- Printing any page now uses the paper's full width, without the sidebar.
+
+## 0.8.128 (2026-10-14)
+- **The sample floor behaves more like a real one.** With the sample loaded, some agents now don't show up, log in very late or leave early, so the wallboard, adherence and Intraday have something to show; and sample agents no longer stay signed in after a shift that ends at midnight.
+
+## 0.8.127 (2026-10-14)
+- **Scheduling coaching, training and meetings, easier.** Planners can schedule them too, not only supervisors. Choose a team to pick people from, see each person's available times beside their name, and when no time suits everyone Erlangly offers the time that suits the most. Afterwards you're back on the schedule at the same week, line of business and team.
+- **Intraday over a month is quicker.** The page for 31 days shows in about two thirds of the time it took.
+
+## 0.8.126 (2026-10-14)
+- **The sample keeps its contacts coming.** With the sample loaded, its simulated ACD now gives each interval's contacts, handle time, abandons and answered counts as the day goes, and the sample's history has answered counts too, so Intraday's service level and answer rate show on the sample's lines.
+
 ## 0.8.125 (2026-10-14)
 - **Five9: volumes and service level.** A Five9 connection can now read contacts, handle time, abandons and contacts answered, and answered within the line's own service target, per skill, from a Call Log report you set up in Five9 (its folder and name go on the connection's page). Forecasts get Five9's history, and Intraday its service level, without importing anything.
 
