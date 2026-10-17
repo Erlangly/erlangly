@@ -10,6 +10,8 @@ SOURCE=${ERLANGLY_SOURCE:-https://get.erlangly.com}
 CONTAINER=erlangly
 VOLUME=erlangly
 BACKUPS=/var/backups/erlangly
+LOCK=${ERLANGLY_LOCK:-/run/erlangly.lock} # in /run, where only root can write, unlike /run/lock on some systems
+LEAST_FREE_KB=2097152 # 2 GB: upgrades and backups need twice the databases' size free, and never less than this
 
 usage() {
   cat <<USAGE
@@ -19,7 +21,8 @@ Usage: erlangly <command>
   logs [-f]           Show the app's log (-f to follow it)
   restart             Restart Erlangly
   upgrade [tag]       Install the latest release (or a given tag); rolls back if it doesn't come up.
-                      It needs twice your data's size free on disk (--force goes ahead anyway)
+                      It keeps the version before for rollback and removes older ones. It needs twice
+                      the databases' size free on disk, and at least 2 GB (--force goes ahead anyway)
   rollback [--yes]    Go back to the previous version and the data from just before the upgrade.
                       It asks first (--yes doesn't), and saves your data as it is now in $BACKUPS
   backup [directory]  Save all data to a .tar.gz (default $BACKUPS)
@@ -31,6 +34,9 @@ Usage: erlangly <command>
   sso [off]           Signing in with your identity provider; off stops requiring it (if you're locked out)
   setup-link          The secret link for creating the first admin on a new install
   reset-link EMAIL    A link for someone to choose a new password (if you're locked out, say)
+
+  Upgrades, rollbacks, restores, backups and restarts run one at a time: one started while another
+  is running stops straight away, and says which is running.
 
   schedule [DATE] [--lob CODE] [--json]   Published shifts on a day (default today)
   volumes import FILE.csv                 Import volume history
@@ -55,9 +61,28 @@ agreed() {
   [[ "$answer" =~ ^[Yy]([Ee][Ss])?$ ]]
 }
 
-# A size in KB, in words: 640 KB, 87 MB, 2.4 GB.
+# A size in KB, in words: 640 KB, 87 MB, 2 GB, 2.4 GB.
 human_size() {
-  awk -v kb="$1" 'BEGIN { if (kb >= 1048576) printf "%.1f GB", kb / 1048576; else if (kb >= 1024) printf "%d MB", kb / 1024 + 0.5; else printf "%d KB", kb }'
+  awk -v kb="$1" 'BEGIN { if (kb >= 1048576) { gb = sprintf("%.1f", kb / 1048576); sub(/\.0$/, "", gb); printf "%s GB", gb }
+    else if (kb >= 1024) printf "%d MB", kb / 1024 + 0.5; else printf "%d KB", kb }'
+}
+
+# Upgrades, rollbacks, restores, backups and restarts stop and start Erlangly, or copy or replace its data, so they run
+# one at a time: a second one stops straight away and says what's running ($1 names this one, as "An upgrade"). The
+# lock is the kernel's (flock), held until this command ends however it ends, even killed outright; a command it runs,
+# like restore's restart, holds it already. Without flock (every Linux Erlangly installs on has it), they run as before.
+one_at_a_time() {
+  local running
+  [ -z "${locked:-}" ] || return 0
+  command -v flock > /dev/null || return 0
+  mkdir -p "$(dirname "$LOCK")"
+  exec 9>> "$LOCK"
+  if ! flock -n 9; then
+    running=$(cat "$LOCK" 2> /dev/null) || true
+    fail "${running:-Another upgrade, rollback, restore, backup or restart} is already running. Try again when it's finished."
+  fi
+  printf '%s\n' "$1" > "$LOCK"
+  locked=1
 }
 licence_agreement() { echo "Erlangly is licensed under its licence agreement: https://erlangly.com/eula (by installing it you accept it)."; }
 
@@ -295,6 +320,7 @@ url() {
 }
 
 cmd_install() {
+  local from to
   if docker container inspect "$CONTAINER" > /dev/null 2>&1; then
     fail "Erlangly is already installed. To change its settings (like TLS_DOMAIN), edit $CONF and run \`erlangly restart\`; for a new version, \`erlangly upgrade\`."
   fi
@@ -303,6 +329,10 @@ cmd_install() {
   save_settings
   say "Downloading Erlangly…"
   fetch_image
+  # Over an earlier install's data (its container removed, its volume kept), as an upgrade would be: unless it's the
+  # version that data is from.
+  from=$(data_version) to=$(image_version erlangly:new)
+  [ -z "$from" ] || [ "$from" = "$to" ] || check_updates_cover "$from" "$to" install
   docker tag erlangly:new erlangly:current && docker rmi erlangly:new > /dev/null
   seed_secret_key
   say "Starting Erlangly $(image_version erlangly:current)…"
@@ -330,7 +360,8 @@ setup_step() {
   local link refusal
   refusal=$(mktemp)
   if link=$(setup_link 2> "$refusal"); then
-    echo "Finish setting it up here (this link is secret, and works until you've created the first admin):"
+    echo "Finish setting it up here: the link creates the first admin, then Erlangly asks for a licence"
+    echo "(the free plan, a 30-day trial or a key). It's secret, and works until the first admin is created:"
     echo "  $link"
   elif grep -q "already set up" "$refusal"; then
     echo "It's already set up${LITESTREAM_REPLICA_URL:+, with its data back from ${LITESTREAM_REPLICA_URL%%\?*}}: sign in at $(url) as before."
@@ -392,6 +423,7 @@ data_size() {
 
 cmd_restart() {
   local started
+  one_at_a_time "A restart"
   started=$(date +%s.%N)
   start_container erlangly:current
   wait_until_up 120 || fail "Erlangly didn't come back up; see \`erlangly logs\`"
@@ -431,6 +463,8 @@ cmd_upgrade() {
       *) [ -z "$tag" ] || fail "Usage: erlangly upgrade [tag] [--force]"; tag=$argument ;;
     esac
   done
+  # Once the command is up to date: the one it updated to takes the lock (an older one had none to take).
+  one_at_a_time "An upgrade"
   started=$(date +%s.%N)
   say "Downloading ${tag:-the latest release}…"
   fetch_image "$tag"
@@ -443,7 +477,7 @@ cmd_upgrade() {
     say "Erlangly $from is newer than the latest release ($to), so there's nothing to upgrade to. To go back to $to on purpose: erlangly upgrade $to"
     return
   fi
-  check_updates_cover "$from" "$to"
+  check_updates_cover "$from" "$to" upgrade
   [ -n "$force" ] || check_room_to_upgrade "$tag"
 
   say "Upgrading $from → $to (your data is snapshotted first)…"
@@ -458,6 +492,7 @@ cmd_upgrade() {
   if wait_until_up 180; then
     say "Erlangly $to is up at $(url) ($(since "$started") s). \`erlangly rollback\` goes back to $from."
     keep_secret_key
+    remove_old_images || true
   else
     docker logs --tail 40 "$CONTAINER" >&2 || true
     say "Erlangly $to didn't start (log above). Rolling back to $from…"
@@ -467,15 +502,17 @@ cmd_upgrade() {
   fi
 }
 
-# An upgrade snapshots the databases before it changes them, and a change can copy a table while it makes it: it
-# needs twice their size free beside them, or the snapshot or the change stops partway on a full disk. When the
-# sizes can't be measured, it goes ahead. $1 is the tag asked for, for the message.
+# An upgrade snapshots the databases before it changes them, and a change can copy a table while it makes it, so it
+# needs room beside them for copies, or the snapshot or the change stops partway on a full disk: twice the databases'
+# size free, and never less than 2 GB. It's the rule Settings → System warns by (System::Disk), said in the same words.
+# When the sizes can't be measured, it goes ahead. $1 is the tag asked for, for the message.
 check_room_to_upgrade() {
-  local data free
-  { read -r data && read -r free; } < <(sizes) && [[ "$data$free" =~ ^[0-9]+$ ]] || return 0
-  (( free < 2 * data )) || return 0
+  local data free needed
+  { read -r data && read -r free; } < <(sizes) && [[ "$data" =~ ^[0-9]+$ && "$free" =~ ^[0-9]+$ ]] || return 0
+  needed=$(( 2 * data > LEAST_FREE_KB ? 2 * data : LEAST_FREE_KB ))
+  (( free < needed )) || return 0
   docker rmi erlangly:new > /dev/null
-  fail "there isn't room to upgrade safely. It copies your data before it changes it, so it needs $(human_size $(( 2 * data ))) free on the disk Erlangly's data is on, and there's $(human_size "$free"). Free some space (docker system prune removes old images) and try again, or run \`erlangly upgrade ${1:+$1 }--force\` to go ahead anyway."
+  fail "there isn't room to upgrade safely. Erlangly needs $(human_size "$needed") free: twice the size of its databases ($(human_size "$data")), and never less than $(human_size "$LEAST_FREE_KB"), so backups and upgrades have room to copy them. There's $(human_size "$free") free on the disk its data is on. Free some space and try again, or run \`erlangly upgrade ${1:+$1 }--force\` to go ahead anyway."
 }
 
 # In KB, measured in the data volume as the app sees it: the databases' size, the space free beside them, then the
@@ -485,22 +522,225 @@ sizes() {
     'du -ck storage/*.sqlite3* 2> /dev/null | tail -n 1 | cut -f 1; df -Pk storage | awk "NR == 2 { print \$4 }"; for path; do du -sk "$path" | cut -f 1; done' sh "$@"
 }
 
+# Once an upgrade is up, the release images it no longer needs go. It keeps the version now running and the one before
+# it, which is as far back as `erlangly rollback` goes: the images this command tagged erlangly:current and
+# erlangly:previous, told apart from the others by image ID. Never after an upgrade that failed, or a rollback. An image
+# also named something of your own is left alone, and one that can't go (a container still uses it, say) stays: the
+# upgrade is done either way, and it says so in a line.
+remove_old_images() {
+  local current previous id names removed=0 stayed=0 before after freed=""
+  current=$(docker image inspect -f '{{.Id}}' erlangly:current 2> /dev/null) &&
+    previous=$(docker image inspect -f '{{.Id}}' erlangly:previous 2> /dev/null) || return 0
+  [[ "$current" == sha256:* && "$previous" == sha256:* ]] || return 0
+  before=$(images_kb) || true
+  for id in $(release_images); do
+    [ "$id" != "$current" ] && [ "$id" != "$previous" ] || continue
+    names=$(image_names "$id") && only_release_names "$names" || continue
+    remove_image "$id" "$names"
+    if docker image inspect "$id" > /dev/null 2>&1; then stayed=$((stayed + 1)); else removed=$((removed + 1)); fi
+  done
+  (( removed + stayed > 0 )) || return 0
+  after=$(images_kb) || true
+  [[ "$before" =~ ^[0-9]+$ && "$after" =~ ^[0-9]+$ ]] && (( before > after )) && freed=" ($(human_size $(( before - after ))))"
+  if (( stayed == 0 )); then
+    say "Removed $(old_images "$removed")$freed."
+  elif (( removed == 0 )); then
+    say "Couldn't remove $(old_images "$stayed") (in use by a container? docker ps -a lists them)."
+  else
+    say "Removed $(old_images "$removed")$freed; $stayed more couldn't be removed (in use by a container? docker ps -a lists them)."
+  fi
+}
+
+old_images() { if [ "$1" = 1 ]; then echo "1 old Erlangly image"; else echo "$1 old Erlangly images"; fi; }
+
+# The IDs of Erlangly's release images on this server: those from where it downloads releases (ERLANGLY_IMAGE, and the
+# official image, for an install that moved to a mirror) that are labelled as Erlangly, as every release is. With --all:
+# in Docker's classic image store a release pulled by digest has no tag, and Docker 29 leaves those out of a plain list.
+release_images() {
+  local mirror=()
+  [ "$ERLANGLY_IMAGE" = "$OFFICIAL_IMAGE" ] || mirror=(--filter "reference=$ERLANGLY_IMAGE")
+  docker images --all --no-trunc --format '{{.ID}}' --filter "label=org.opencontainers.image.title=Erlangly" \
+    --filter "reference=$OFFICIAL_IMAGE" "${mirror[@]}" 2> /dev/null | sort -u
+}
+
+# Every name image $1 goes by, one a line: its tags, and its digests (a release pulled by digest has only that).
+image_names() {
+  docker image inspect -f '{{range .RepoTags}}{{println .}}{{end}}{{range .RepoDigests}}{{println .}}{{end}}' "$1" 2> /dev/null | sort -u
+}
+
+# Is every one of these names (one a line) in a repository Erlangly downloads releases from, rather than one of yours?
+only_release_names() {
+  local name
+  [ -n "$1" ] || return 1
+  for name in $1; do
+    case "$(repository_of "$name")" in "$OFFICIAL_IMAGE" | "$ERLANGLY_IMAGE") ;; *) return 1 ;; esac
+  done
+}
+
+# The repository an image name is in: ghcr.io/erlangly/erlangly, for ghcr.io/erlangly/erlangly@sha256:… or …:0.8.5.
+repository_of() {
+  local repository=${1%@*}
+  [[ "${repository##*/}" != *:* ]] || repository=${repository%:*}
+  echo "$repository"
+}
+
+# Removes image $1 by its ID, which takes all its names with it or changes nothing (when a container uses it, say), so
+# an image that stays is still found by its names next time. Docker won't while those names ($2) are in two
+# repositories, as when your mirror (ERLANGLY_IMAGE) had a release the official image had too: the mirror's go first.
+remove_image() {
+  local name
+  docker rmi --no-prune "$1" > /dev/null 2>&1 && return
+  [ "$ERLANGLY_IMAGE" != "$OFFICIAL_IMAGE" ] || return 0
+  for name in $2; do
+    [ "$(repository_of "$name")" != "$ERLANGLY_IMAGE" ] || docker rmi --no-prune "$name" > /dev/null 2>&1 || true
+  done
+  docker rmi --no-prune "$1" > /dev/null 2>&1 || true
+}
+
+# What Docker's images take on the disk, in KB, as `docker system df` counts it (a layer images share, once).
+images_kb() {
+  docker system df --format '{{.Type}} {{.Size}}' 2> /dev/null | awk '$1 == "Images" && match($2, /^[0-9.]+/) {
+    unit = substr($2, RLENGTH + 1); split("B kB MB GB TB", units, " ")
+    for (i = 1; i <= 5; i++) if (unit == units[i]) printf "%d\n", substr($2, 1, RLENGTH) * 1000 ^ (i - 1) / 1024 }'
+}
+
 # Is version $1 older than $2? Only for release numbers like 0.8.31 (not "dev" builds).
 older_version() {
   [[ "$1" =~ ^[0-9]+(\.[0-9]+)*$ && "$2" =~ ^[0-9]+(\.[0-9]+)*$ && "$1" != "$2" ]] &&
     [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -1)" = "$1" ]
 }
 
-# A pay-once licence covers releases up to its updates date. One released later isn't installed:
-# the current version keeps running.
+# A pay-once licence covers releases up to its Updates date. One released later isn't installed (erlangly:new goes), and
+# the version there keeps running. $1 is that version, $2 the one downloaded, and $3 what's installing it: upgrade, or
+# install (over an earlier install's data). A release from before 0.8.8 has no date, so there's nothing to compare. The
+# date is the licence key's as Erlangly checks it (updates_until). When Erlangly can't say, the date written in the key
+# counts, read straight from the data: a key that isn't genuine counts for nothing in Erlangly, so that date can only
+# ever say a release is covered. No key, or one without a date (yearly, trial), covers every release, so an install
+# without a pay-once key always upgrades, to get past a version that won't start, say. With no date to go by, it stops
+# and says what to do. --force doesn't skip it.
 check_updates_cover() {
-  local released until
+  local from=$1 to=$2 how=$3 released until written
   released=$(docker image inspect --format '{{ index .Config.Labels "com.erlangly.released-on" }}' erlangly:new 2>/dev/null || true)
-  until=$(up && docker exec "$CONTAINER" bin/wfm licence --updates-until 2>/dev/null || true)
-  if [[ -n "$released" && -n "$until" && "$released" > "$until" ]]; then
+  a_date "$released" || return 0
+  if until=$(updates_until); then
+    [[ -n "$until" && "$released" > "$until" ]] || return 0
     docker rmi erlangly:new > /dev/null
-    fail "Erlangly $2 came out on $released, after your licence's updates ended on $until. Renew Updates (see erlangly.com/docs/licence) to install it; you're still on $1."
+    fail "Erlangly $to came out on $released, after your licence's updates ended on $until, so it wasn't installed: $(still_on "$from" "$how"). $(what_updates_cover "$until" "$from" "$how")"
   fi
+  if written=$(written_updates_until) && [[ -z "$written" || ! "$released" > "$written" ]]; then return 0; fi
+  docker rmi erlangly:new > /dev/null
+  if [ -n "$written" ]; then
+    fail "Erlangly $to came out on $released, after $written, when your licence key says its updates ended, and Erlangly couldn't check the key. So $to wasn't installed: $(still_on "$from" "$how"). $(get_an_answer "$from" "$how") $(what_updates_cover "$written" "$from" "$how")"
+  fi
+  fail "couldn't tell whether your licence's updates cover Erlangly $to, which came out on $released: Erlangly couldn't check your licence key, and the key couldn't be read from its data either. So $to wasn't installed: $(still_on "$from" "$how"). $(get_an_answer "$from" "$how")"
+}
+
+# Is $1 a day, like 2027-09-30?
+a_date() { [[ "$1" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; }
+
+# The Updates date of the saved licence key, as Erlangly checks it (bin/wfm licence --updates-until, since 0.8.8): a
+# day, or nothing when no key limits updates. It asks Erlangly when it's up. When it isn't (stopped, crash-looping,
+# still starting, or its container removed to install again over its data), it runs the version installed, then the
+# one downloaded, on their own on the data. Only a day or nothing counts as an answer: a version from before 0.8.8 has
+# no `licence` command, and prints its usage. It fails when none could say.
+updates_until() {
+  local answer image images=(erlangly:new)
+  if up; then
+    answer=$(docker exec "$CONTAINER" bin/wfm licence --updates-until 2> /dev/null) && { [ -z "$answer" ] || a_date "$answer"; } &&
+      { echo "$answer"; return; }
+  elif docker image inspect erlangly:current > /dev/null 2>&1; then
+    images=(erlangly:current erlangly:new)
+  fi
+  for image in "${images[@]}"; do
+    answer=$(updates_until_in "$image") && { [ -z "$answer" ] || a_date "$answer"; } && { echo "$answer"; return; }
+  done
+  return 1
+}
+
+# Image $1's bin/wfm licence --updates-until, run on its own on Erlangly's data as the app runs: as its own user, with
+# the secret key in the data (SECRET_KEY_BASE_DUMMY only lets it start without one: nothing it reads is encrypted), and
+# with no network. It reads the database and changes nothing. Mounted read-only, SQLite couldn't open it once Erlangly
+# has stopped: it makes the index file readers share beside it.
+updates_until_in() {
+  docker run --rm --network none -v "$VOLUME:/rails/storage" -e SECRET_KEY_BASE_DUMMY=1 --entrypoint bin/wfm "$1" \
+    licence --updates-until 2> /dev/null
+}
+
+# The Updates date written in the saved licence key (ERLANGLY1.<payload>.<signature>, or ERLANGLY2. from activation on;
+# the payload base64url JSON), read straight from the database with sqlite3, without Erlangly and without checking the
+# key: a day, or nothing when there's no database, no key or no date in it. It fails when the database can't be read.
+written_updates_until() {
+  local written
+  written=$(docker run --rm -i --network none -v "$VOLUME:/rails/storage" --entrypoint sh erlangly:new -s 2> /dev/null <<'READ'
+set -eu
+database=storage/production.sqlite3
+[ -s "$database" ] || exit 0
+query() { sqlite3 -readonly -cmd '.timeout 5000' "$database" "$1"; }
+column=$(query "SELECT count(*) FROM pragma_table_info('organizations') WHERE name = 'licence_key'")
+[ "$column" = 1 ] || exit 0
+key=$(query "SELECT licence_key FROM organizations ORDER BY id LIMIT 1")
+payload=${key#ERLANGLY[12].}
+payload=${payload%%.*}
+case $(( ${#payload} % 4 )) in 2) payload="$payload==" ;; 3) payload="$payload=" ;; esac
+printf '%s' "$payload" | tr '_-' '/+' | base64 -d 2> /dev/null |
+  sed -n 's/.*"updates_until": *"\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)".*/\1/p'
+READ
+  ) || return 1
+  [ -z "$written" ] || a_date "$written" || return 1
+  echo "$written"
+}
+
+# Where things stand once check_updates_cover has stopped, for its messages. Installing over an earlier install's data,
+# nothing is running (its container was gone), so it says how to run the version the data is from again.
+still_on() {
+  if [ "$2" = install ]; then
+    echo "your data is as it was, from Erlangly $1. To run it again: $(install_command "$1" install)"
+  else
+    echo "you're still on $1"
+  fi
+}
+
+# What the Updates that ended on $1 cover, for check_updates_cover's messages: the newest release they do, from
+# get.erlangly.com's list, and how to install it, unless it's the version there ($2) or older.
+what_updates_cover() {
+  local covered version
+  covered=$(newest_release_by "$1") version=${covered%% *}
+  if [ -n "$covered" ] && [ "$version" != "$2" ] && ! older_version "$version" "$2"; then
+    echo "Your updates cover releases up to $version (${covered#* }): $(install_command "$version" "$3"). Renew Updates to get the latest: erlangly.com/docs/licence#pay-once"
+  elif [ -n "$covered" ] && [ "$version" = "$2" ]; then
+    echo "$2 is the newest release your updates cover. Renew Updates to get the latest: erlangly.com/docs/licence#pay-once"
+  else
+    echo "Renew Updates to install it: erlangly.com/docs/licence#pay-once"
+  fi
+}
+
+# The newest public release out by day $1, with its date ("0.8.165 2027-09-28"), from get.erlangly.com's list of
+# releases: version, digest and, since 0.8.163, the day a release made public came out (script/get/releases.sh: none
+# for a build that stayed on staging or failed its release checks, nor before 0.8.8). Nothing when it can't be told.
+newest_release_by() {
+  { curl -fsSL "$SOURCE/images" 2> /dev/null || true; } |
+    awk -v by="$1" '$3 ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/ && $3 <= by { print $1, $3 }' | sort -V | tail -n 1
+}
+
+# How to install version $1: by an upgrade, or by installing over an earlier install's data ($2).
+install_command() {
+  if [ "$2" = install ]; then echo "ERLANGLY_TAG=$1 erlangly install"; else echo "erlangly upgrade $1"; fi
+}
+
+# How to have Erlangly answer about the licence, for check_updates_cover's messages: on version $1, by $2 (installing
+# over an earlier install's data, still_on has said how to run $1 again).
+get_an_answer() {
+  if [ "$2" = install ]; then
+    echo "Once it's up, Erlangly can check the key: upgrade from there. If it won't start, \`erlangly restore\` a backup."
+  else
+    echo "Start Erlangly with \`erlangly restart\` and try again; if it won't start, \`erlangly restore\` a backup first."
+  fi
+}
+
+# The version of Erlangly an earlier install's data is from (it writes storage/version once it has set the data up), or
+# nothing on a new server: its data volume is new, or Litestream brings the data back only once Erlangly first starts.
+data_version() {
+  docker run --rm --network none -v "$VOLUME:/rails/storage" --entrypoint cat erlangly:new storage/version 2> /dev/null || true
 }
 
 # Goes back to the previous version, and to the data from just before the upgrade to this one (the snapshot that
@@ -514,6 +754,7 @@ cmd_rollback() {
       *) fail "Usage: erlangly rollback [--yes]" ;;
     esac
   done
+  one_at_a_time "A rollback"
   docker image inspect erlangly:previous > /dev/null 2>&1 || fail "there's no previous version to go back to"
   current=$(image_version erlangly:current) previous=$(image_version erlangly:previous)
   snapshot=$(snapshot_before "$current")
@@ -602,6 +843,7 @@ roll_back() {
 
 cmd_backup() {
   local directory=${1:-$BACKUPS} file
+  one_at_a_time "A backup"
   file="$directory/erlangly-$(image_version erlangly:current)-$(date -u +%Y%m%dT%H%M%SZ).tar.gz"
   write_whole backup "$file" docker exec "$CONTAINER" bin/backup || fail "backup failed"
   say "Backed up to $file ($(du -h "$file" | cut -f1))"
@@ -641,6 +883,7 @@ cmd_export() {
 cmd_restore() {
   local file=${1:?"Usage: erlangly restore <backup .tar.gz>"}
   [ -s "$file" ] || fail "no backup at $file"
+  one_at_a_time "A restore"
   say "Restoring $file (Erlangly stops meanwhile)…"
   docker stop -t 30 "$CONTAINER" > /dev/null
   if ! docker run --rm -i -v "$VOLUME:/rails/storage" --entrypoint bin/restore erlangly:current - < "$file"; then

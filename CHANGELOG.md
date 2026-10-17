@@ -1,5 +1,74 @@
 # Changes
 
+## 0.8.170 (2026-10-17)
+- **Licence activation is here.** This is the first public release with it (0.8.165 to 0.8.169 brought it in): every install runs on a licence activated for it, once, through your browser, and your server still never contacts us. A new install asks for its licence right after setup: the free plan, a 30-day trial or a key. Installs from before get 30 days' notice on every page for admins, then ask to be activated. erlangly.com/docs/licence says how it works, moving to another server included.
+- **The licence agreement is dated October 17, 2026.** It now says how activation works and what it sends us (§1 and §3), and that if our store ever closes for good, we'll publish a version that runs without activation.
+
+## 0.8.169 (2026-10-17)
+- **Setting up says what comes next.** First-run setup says a licence comes after your organisation and admin account, and goes straight to the activation screen. The installer's last lines say the same.
+- **Plainer licence messages.** A test copy at its 5 sign-ins says so ("A test copy lets 5 people sign in: it's for trying upgrades and training"), and people on the free plan are pointed to a paid licence rather than "a licence".
+
+## 0.8.168 (2026-10-17)
+- **Behind the scenes.** The release check no longer trips over the sample contact centre's own agent states when it runs while sample shifts are on.
+
+## 0.8.167 (2026-10-17)
+- **Backups don't trip over a write.** The nightly backup and the snapshot taken before each upgrade now wait a few seconds for a change being saved at that moment, instead of failing with "database is locked".
+
+## 0.8.166 (2026-10-17)
+- **Behind the scenes.** The release check says more when a step fails, and the image's security scan notes a new advisory in a library that Litestream (nightly backups) carries but never uses.
+
+## 0.8.165 (2026-10-17)
+- **Licences are activated.** Every install now runs on a licence activated for it, once: the free plan, a 30-day trial or a key you've bought. After setting up a new install, Erlangly asks you to choose one, and your browser takes it to store.erlangly.com and back; your server still never contacts us. With no internet where you are, you type a short code instead. A licence runs on one install at a time.
+- **30 days' notice for installs that already exist.** An install from before this release keeps working as it is for 30 days, with a line for admins on every page saying when, then asks to be activated. ACD and volume feeds keep coming in meanwhile.
+- **Moving to another server.** Settings → Licence → Remove the licence key frees it for another server, through the store; an install whose paid licence is removed carries on under the free plan.
+- **Test copies.** Paying customers can get a test licence for an install they use to try upgrades or train people: it says "Test copy" on every page, printout and export and on the wallboard, lets 5 people sign in and emails only them.
+- **Pay once covers the releases its Updates paid for.** A pay-once licence whose Updates ended before a release runs that release on the free plan; going back to an earlier release brings the licence back. Setting the server's clock back no longer keeps an ended licence working.
+
+## 0.8.164 (2026-10-17)
+- **Groundwork for licence activation.** Each release now carries its own release date inside Erlangly, and Erlangly can read the coming licence key format and activation codes. Nothing changes for installs yet: licence keys, trials and the free plan work as before.
+
+## 0.8.163 (2026-10-17)
+- **Upgrades check a pay-once licence even when Erlangly is stopped.** `erlangly upgrade` reads the licence's Updates date from the data itself when the app isn't answering, and `erlangly install` over existing data checks it too, so a release the licence doesn't cover isn't installed by mistake. A refusal names the newest release the licence covers. Free, yearly and trial installs upgrade as before, whether Erlangly is running or not.
+- **No offers you can't take.** When the newest release came out after a pay-once licence's Updates ended, admins see that, and which releases they can still install, instead of "Erlangly X is available".
+
+## 0.8.162 (2026-10-17)
+- **The licensee shows where everyone sees it.** With a licence key in, "Licensed to" and the organisation on the licence now sit at the bottom of the sidebar on every page (at the bottom of the page on phones), at the top right of the wallboard's TV view, and in the header of printed schedules. Nothing shows on the free plan.
+
+## 0.8.161 (2026-10-16)
+- **Refunded licence keys stop working.** Each release now carries the list of licence keys the store has revoked, and a revoked key stops working on installs from the release that lists it: the install carries on under the free plan, as the licence agreement says (section 1). The store revokes a key when its purchase is refunded.
+
+## 0.8.160 (2026-10-16)
+- **Security.** Thruster, the web server in front of Erlangly, is now built with Go 1.27.2 and its fixed network library, which close three denial-of-service bugs in Go's HTTP and TLS code (CVE-2026-78667, CVE-2026-78669 and CVE-2026-97031).
+- **Upgrades tidy up after themselves.** After a successful upgrade, `erlangly upgrade` keeps the new release and the previous one (for `erlangly rollback`), removes older Erlangly images, and says how much room that freed. Other images on the server are never touched.
+- **One disk rule.** Settings → System and `erlangly upgrade` both need twice the size of Erlangly's databases free, and never less than 2 GB, and say so in the same words.
+- **One at a time.** An upgrade, rollback, restore, backup or restart can't start while another is running: it stops straight away and says what's running.
+- **Agents needed on big floors.** When the occupancy cap decides the number, the agents needed is now exactly the workload divided by the cap, instead of sometimes the next whole agent up. On the busiest intervals of big floors, the requirement can come out one or two agents lower once a draft is generated again.
+- **"Even out breaks…" stays within the law.** Breaks it would move into a labour-rule violation stay where they were, and it says whose and why. That applies today under Belize's meal-break rule, and generation does the same wherever someone's law has a break rule that blocks publishing.
+- The third-party notices offer the source of the image's GPL and LGPL packages on request, for three years after each release.
+
+## 0.8.159 (2026-10-16)
+- **Your licence counts a schedule period's busiest day.** Generating a schedule counts the most people who can work on any one day of the period, instead of everyone across it, and someone who has left stops counting from their leaving date. So replacing a leaver mid-period no longer stops you generating at full seats. When a period is over the licence, the message names its busiest day.
+- **Security.** A password-reset or invitation link with a mistake in its address no longer writes its token to the log.
+- The guides say how the labour rule packs are kept current: each is checked against its official sources every quarter, and any change ships in the next release.
+
+## 0.8.158 (2026-10-16)
+- **Remove the licence key.** Settings → Licence has a "Remove the licence key" button for admins, for after a refund or when you move the key to another install. Erlangly then runs on the free plan, for up to 25 active agents. It asks first, and the audit trail records it.
+- When the saved licence key isn't valid, Settings → Licence now says so, instead of "No licence key yet".
+
+## 0.8.157 (2026-10-16)
+- **A draft says who a contract's daily limit leaves out.** When a contract's most hours a day rules out every shift a person's patterns could give them, the draft's warnings now name them, instead of leaving them out without a word.
+
+## 0.8.156 (2026-10-16)
+- **Generation keeps contract limits.** A generated schedule never puts someone past their contract's most hours a day (the lower of the contract's and the labour law's applies), and keeps their days off in a row together.
+- **Shift imports take two more layouts.** Besides one row per shift, a shift import now reads the wide layout (a shift's start with its breaks and lunch beside it) and Calabrio's segments layout (one row per activity), telling them apart by their columns.
+- **Changing a published schedule's breaks asks why.** Adding, changing or removing a break, lunch or other activity on a published schedule needs a reason, as changing a shift does, and it goes in the audit trail.
+- **Forecast accuracy for the days you're looking at.** Pick a week or a day on a forecast and "How it did" shows that period's accuracy as well as the whole forecast's.
+- **The guides match the software** on days in a row, a day wholly on time off, and shift swaps.
+- **The licence agreement is updated** (16 October 2026): who counts as an active agent, revoking refunded, leaked or shared keys, the free plan's updates, sanctions, open-source parts, and notices, transfer and severability. It applies to copies from this version on.
+
+## 0.8.155 (2026-10-16)
+- **Erlangly's own icon.** Browser tabs, bookmarks and phones' home screens show Erlangly's E instead of a red dot.
+
 ## 0.8.154 (2026-10-15)
 - **Even out breaks goes back to where you were.** After evening out breaks, or cancelling, you're back on the schedule's day or week and filters you came from.
 - The release's own checks count only the agent states they send, not the sample's simulated ACD's, so they pass at any hour.

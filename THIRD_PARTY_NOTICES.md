@@ -112,7 +112,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | stimulus-rails | 1.3.4 | MIT |
 | swd | 2.0.3 | MIT |
 | thor | 1.5.0 | MIT |
-| thruster | 0.1.26 | MIT |
+| thruster | 0.1.27 | MIT |
 | timeout | 0.6.1 | Ruby, BSD-2-Clause |
 | tsort | 0.2.0 | Ruby, BSD-2-Clause |
 | turbo-rails | 2.0.23 | MIT |
@@ -210,12 +210,12 @@ The JavaScript the app's pages load that isn't Erlangly's own (config/importmap.
 
 ## Programs
 
-Two Go programs: Litestream copies the database off the server when you set it up to, and Thruster, from the thruster gem, serves the app over HTTP and HTTPS. Each includes Go's runtime and standard library (BSD-3-Clause) and the Go modules listed under it, with their licence texts below.
+Two Go programs: Litestream copies the database off the server when you set it up to, and Thruster, from the thruster gem, serves the app over HTTP and HTTPS. The image builds Thruster from its source, at the gem's version, with a newer Go and golang.org/x/net than the gem's own build has. Each includes Go's runtime and standard library (BSD-3-Clause) and the Go modules listed under it, with their licence texts below.
 
 | Program | Version | Licence | Built with |
 |---|---|---|---|
 | Litestream | 0.5.17 | Apache-2.0 | go1.25.14 |
-| Thruster | 0.1.26 | MIT | go1.27.0 |
+| Thruster | 0.1.27 | MIT | go1.27.2 |
 
 ### Litestream's Go modules
 
@@ -323,10 +323,10 @@ Two Go programs: Litestream copies the database off the server when you set it u
 
 | Module | Version | Licence |
 |---|---|---|
-| github.com/klauspost/compress | v1.19.2 | BSD-3-Clause, Apache-2.0, MIT |
-| golang.org/x/crypto | v0.55.0 | BSD-3-Clause |
-| golang.org/x/net | v0.58.0 | BSD-3-Clause |
-| golang.org/x/text | v0.41.0 | BSD-3-Clause |
+| github.com/klauspost/compress | v1.20.0 | BSD-3-Clause, Apache-2.0, MIT |
+| golang.org/x/crypto | v0.57.0 | BSD-3-Clause |
+| golang.org/x/net | v0.60.0 | BSD-3-Clause |
+| golang.org/x/text | v0.42.0 | BSD-3-Clause |
 
 ## Fonts and icons
 
@@ -337,7 +337,7 @@ Two Go programs: Litestream copies the database off the server when you set it u
 
 ## Licence texts
 
-For action_text-trix 2.1.19, solid_cache 1.0.10, solid_queue 1.7.0 and thruster 0.1.26:
+For action_text-trix 2.1.19, solid_cache 1.0.10, solid_queue 1.7.0 and thruster 0.1.27:
 
 ```text
 Copyright (c) 37signals, LLC
@@ -7611,7 +7611,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-For github.com/klauspost/compress v1.18.0 and github.com/klauspost/compress v1.19.2:
+For github.com/klauspost/compress v1.18.0 and github.com/klauspost/compress v1.20.0:
 
 ```text
 Copyright (c) 2012 The Go Authors. All rights reserved.
@@ -8534,7 +8534,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-For golang.org/x/crypto v0.52.0, golang.org/x/crypto/x509roots/fallback v0.0.0-20260209214922-2f26647a795e, golang.org/x/net v0.55.0, golang.org/x/oauth2 v0.36.0, golang.org/x/sync v0.21.0, golang.org/x/sys v0.45.0, golang.org/x/text v0.39.0, golang.org/x/time v0.7.0, golang.org/x/crypto v0.55.0, golang.org/x/net v0.58.0, golang.org/x/text v0.41.0 and Go's runtime and standard library 1.25.14, 1.27.0:
+For golang.org/x/crypto v0.52.0, golang.org/x/crypto/x509roots/fallback v0.0.0-20260209214922-2f26647a795e, golang.org/x/net v0.55.0, golang.org/x/oauth2 v0.36.0, golang.org/x/sync v0.21.0, golang.org/x/sys v0.45.0, golang.org/x/text v0.39.0, golang.org/x/time v0.7.0, golang.org/x/crypto v0.57.0, golang.org/x/net v0.60.0, golang.org/x/text v0.42.0 and Go's runtime and standard library 1.25.14, 1.27.2:
 
 ```text
 Copyright 2009 The Go Authors.
@@ -10722,4 +10722,4 @@ mentioned below.
 
 ## Debian packages
 
-The image is built on the official Ruby image (ruby:4.0.7-slim), which is Debian. Each Debian package's copyright and licence are in the image, at `/usr/share/doc/<package>/copyright`, and `dpkg-query --show` in the container lists the packages. Their source, at these versions, is in Debian's archive (https://snapshot.debian.org). The copy of this file in the image lists them below, as it was built.
+The image is built on the official Ruby image (ruby:4.0.7-slim), which is Debian. Each Debian package's copyright and licence are in the image, at `/usr/share/doc/<package>/copyright`, and `dpkg-query --show` in the container lists the packages. Their source, at these versions, is in Debian's archive (https://snapshot.debian.org). For three years after each Erlangly release, we'll also give anyone the complete, machine-readable source of the GPL and LGPL packages in its image, at the versions it has, for no more than our cost of sending it: write to licences@erlangly.com with the release's version. The copy of this file in the image lists them below, as it was built.
