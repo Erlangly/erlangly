@@ -1,5 +1,24 @@
 # Changes
 
+## 0.8.178 (2026-10-18)
+- **AI assistants show Erlangly's icon.** ChatGPT and Claude showed a broken icon, or Rails' default one, for an Erlangly connection. Erlangly now serves its icon at the usual addresses and names it when an assistant connects.
+- **Two service targets for the same day: the one entered last counts**, for a line, a client or the organisation, everywhere targets are used (staffing, Intraday, forecasts, the ACD pulls). The line page marks the older one "Replaced by the one below". Shrinkage rates for the same category and day follow the same rule.
+- **Removing a service target says what applies instead**, from its day: the line's other target, the client's, the organisation's or the default. It used to always say the organisation's. The line page also shows a client's name as entered.
+
+## 0.8.177 (2026-10-18)
+- **Intraday opens faster over a month.** The month view reads every line's service targets in one go instead of once a day per line: about a third of the database work, the same numbers.
+
+## 0.8.176 (2026-10-18)
+- **AI assistants can use the newest MCP version.** Erlangly now speaks MCP 2026-07-28 (which claude.ai asks for first) alongside 2025-11-25 and earlier, so an assistant no longer has to fall back to an older version when it connects. Assistants already connected keep working as before.
+
+## 0.8.175 (2026-10-18)
+- **Connecting Claude works on more servers.** When an AI app connects, Erlangly reads the app's own description from each of its addresses in turn, IPv4 first, so a server with an IPv6 address but no IPv6 route (as Tailscale gives every machine) no longer fails with "couldn't read the app's document". Every address must be public, and why a fetch failed now goes in the log.
+- **The audit trail says what made a change.** A change made through the API or by a connected AI assistant now says so in the audit export: the assistant's name, or the personal token's, and whether an assistant made it over MCP.
+
+## 0.8.174 (2026-10-18)
+- **Connecting an assistant right after signing in works.** If Erlangly asked you to sign in with your password while you connected ChatGPT or Claude, pressing Allow did nothing; now it takes you back to the assistant, connected.
+- **Where you are stays out of Erlangly's log.** ChatGPT sends the city, region and country of the person asking with every request; Erlangly's log no longer writes them down.
+
 ## 0.8.173 (2026-10-18)
 - **Test copies made safely.** `sudo erlangly restore --copy <backup>` makes a test copy from a backup of your live install: the copy gets its own identity, takes off the licence, switches its ACD connections off and sends no email until you give it its own address, then asks for your test licence's key. A plain restore stays as it is, for moving to a new server. Pasting a test licence's key on the live install is refused.
 - **What the free plan asks for.** Activating the free plan asks for your organisation's name, a work email and your country (a personal address is set up by hand: write to us). Installs from before 0.8.165 get 30 days' notice, then nobody can use Erlangly until an admin activates it.
