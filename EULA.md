@@ -19,7 +19,7 @@ Your plan's agent limit is for your whole organisation: if you run Erlangly on m
 
 **Activation.** Each install needs an activated licence, the free plan included: you activate it in Erlangly, which opens our store in your browser. A licence works on the one install it's activated on. To move it to another install, deactivate it first, or ask us to release an install that no longer runs; you may move a licence three times a year yourself, and more with our help. A trial can't be moved. With a paid licence, we'll give you a test licence on request, for as long as the paid licence runs (for pay once, while its Updates run), for one more install that you use only to try upgrades or train people. It covers the same number of agents, lets 5 people sign in, sends email only to them, and is marked as a test copy. If we ever close our store for good, we'll publish a version of Erlangly that runs without activation, so your licence can still be installed and moved.
 
-We may revoke a licence key that has been refunded, or that has been published or leaked, straight away; if your key leaked through no fault of yours, we'll send you a replacement first. A key that's shared or used against this agreement we revoke only after notice and 30 days to fix it, as in section 9. Erlangly stops accepting a revoked key from its next version, and the install carries on under the free plan.
+We may revoke a licence key that has been refunded, or that has been published or leaked, straight away; if your key leaked through no fault of yours, we'll send you a replacement first. A key that's shared or used against this agreement we revoke only after notice and 30 days to fix it, as in section 9. Erlangly stops accepting a revoked key from its next version. A revoked paid key leaves its install on the free plan. A revoked free, trial or test key stops working, and the install asks to be activated again.
 
 ## 2. What you may not do
 
@@ -85,7 +85,7 @@ Nothing in sections 7 and 8 limits liability that the law doesn't allow to be li
 
 ## 9. Ending the agreement
 
-You can stop using Erlangly at any time. We can end your licence if you break this agreement and don't fix it within 30 days of our notice. Revoking a key under section 1 doesn't end the agreement: the install carries on under the free plan.
+You can stop using Erlangly at any time. We can end your licence if you break this agreement and don't fix it within 30 days of our notice. Revoking a paid key doesn't end the agreement.
 
 When a paid plan ends (it runs out, you cancel it, or it's refunded), your install carries on under the free plan. If we end your licence because you broke this agreement, you must stop using Erlangly. Either way, you keep your data, and you can export it first.
 
@@ -100,4 +100,4 @@ When a paid plan ends (it runs out, you cancel it, or it's refunded), your insta
 - **What lasts:** sections 3, 7, 8 and 10, and anything owed, still apply after this agreement ends.
 - **Contact:** FrontLine Software Solutions Inc., 30 Hummingbird St., Charlottetown, PE C1E 0B2, Canada; legal@erlangly.com.
 
-Last updated: October 17, 2026.
+Last updated: October 18, 2026.

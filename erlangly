@@ -12,6 +12,7 @@ VOLUME=erlangly
 BACKUPS=/var/backups/erlangly
 LOCK=${ERLANGLY_LOCK:-/run/erlangly.lock} # in /run, where only root can write, unlike /run/lock on some systems
 LEAST_FREE_KB=2097152 # 2 GB: upgrades and backups need twice the databases' size free, and never less than this
+ACTIVATION_SINCE=0.8.165 # the first release whose installs are activated at the store
 
 usage() {
   cat <<USAGE
@@ -27,6 +28,10 @@ Usage: erlangly <command>
                       It asks first (--yes doesn't), and saves your data as it is now in $BACKUPS
   backup [directory]  Save all data to a .tar.gz (default $BACKUPS)
   restore <file>      Replace all data with a backup (stops Erlangly while it restores)
+  restore --copy <file>
+                      Make this server a test copy of the install the backup is from, for a test licence: its
+                      own install id, no licence or address and its ACD connections off, so it never runs as
+                      that install
   export [directory]  All your data as CSV files in a .zip, to take elsewhere (default $BACKUPS)
   version             Show the installed version
   help                This list
@@ -762,6 +767,7 @@ cmd_rollback() {
     saved="$BACKUPS/erlangly-$current-$(date -u +%Y%m%dT%H%M%SZ)-before-rollback.tar.gz"
     echo "This goes back to Erlangly $previous and puts back your data from $(taken "$snapshot"), just before the upgrade to $current: anything entered since then is undone."
     echo "What's there now is saved first, in $saved."
+    before_activation "$previous" "$current"
     check_room_to_roll_back "$snapshot"
   else
     echo "This goes back to Erlangly $previous and keeps your data as it is: there's no snapshot from before $current."
@@ -778,6 +784,15 @@ cmd_rollback() {
   fi
   roll_back "$snapshot"
   [ -z "$saved" ] || echo "Your data from before going back is in $saved. To have it back, upgrade to $current again, then run \`erlangly restore $saved\`."
+}
+
+# Going back from $2 to $1, a release from before licence activation, with the data from before it: the install's
+# activation goes with it, and the next upgrade asks for it again. The install keeps its id when the server kept it
+# outside the databases (storage/install_id), as an upgrade to activation does now. One that upgraded before that has
+# no such file and gets another id, so the store finds its licence on "another install": its own, under the old id.
+before_activation() {
+  older_version "$1" "$ACTIVATION_SINCE" && ! older_version "$2" "$ACTIVATION_SINCE" || return 0
+  echo "Erlangly $1 is from before licences were activated, and so is that data. Once you upgrade again, activate Erlangly again under Settings → Licence, with the key from your email. If store.erlangly.com says the licence is in use on another install at this server's own address, free it at store.erlangly.com/move, then activate it here."
 }
 
 # After an upgrade that didn't start, which began at $1: goes back without asking. Only a snapshot that upgrade took
@@ -880,17 +895,30 @@ cmd_export() {
   say "Exported to $file ($(du -h "$file" | cut -f1))"
 }
 
+# Puts back a backup. Moving to a new server, the install keeps its id, so its licence stays activated on it. With
+# --copy, the backup is another install's, made into a test copy of it before Erlangly starts on it (bin/restore,
+# bin/docker-entrypoint): this server's install id (or a new one), no licence key, no address for emails and its ACD
+# connections switched off, so the copy starts on the activation screen, emails no one, and never takes the place of
+# the install it came from.
 cmd_restore() {
-  local file=${1:?"Usage: erlangly restore <backup .tar.gz>"}
+  local copy=() file
+  [ "${1:-}" != --copy ] || { copy=(--copy); shift; }
+  file=${1:?"Usage: erlangly restore [--copy] <backup .tar.gz>"}
   [ -s "$file" ] || fail "no backup at $file"
   one_at_a_time "A restore"
-  say "Restoring $file (Erlangly stops meanwhile)…"
+  say "Restoring $file${copy:+ as a test copy} (Erlangly stops meanwhile)…"
   docker stop -t 30 "$CONTAINER" > /dev/null
-  if ! docker run --rm -i -v "$VOLUME:/rails/storage" --entrypoint bin/restore erlangly:current - < "$file"; then
+  if ! docker run --rm -i -v "$VOLUME:/rails/storage" --entrypoint bin/restore erlangly:current "${copy[@]}" - < "$file"; then
     cmd_restart
     fail "nothing was restored from $file (above), so Erlangly carries on with the data it had"
   fi
   cmd_restart
+  [ -z "${copy:-}" ] || cat <<COPY
+This server is a test copy of the install the backup is from, with an install id of its own. It isn't activated, so it
+emails the floor nothing: sign in as one of its admins and activate your test licence's key. It has no address for
+emails either, so it emails no one until you set its own under Settings → Email. Its ACD connections are switched
+off: switch on only those meant for testing, under Settings → Connections.
+COPY
 }
 
 # Help, and a command that doesn't exist, without asking for sudo first. -h or --help anywhere is help

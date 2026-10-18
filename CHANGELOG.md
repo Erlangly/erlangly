@@ -1,5 +1,17 @@
 # Changes
 
+## 0.8.173 (2026-10-18)
+- **Test copies made safely.** `sudo erlangly restore --copy <backup>` makes a test copy from a backup of your live install: the copy gets its own identity, takes off the licence, switches its ACD connections off and sends no email until you give it its own address, then asks for your test licence's key. A plain restore stays as it is, for moving to a new server. Pasting a test licence's key on the live install is refused.
+- **What the free plan asks for.** Activating the free plan asks for your organisation's name, a work email and your country (a personal address is set up by hand: write to us). Installs from before 0.8.165 get 30 days' notice, then nobody can use Erlangly until an admin activates it.
+- **Clearer warnings before a trial or test licence ends:** admins see that the install will ask for a licence, and the health check warns a week ahead.
+- **Removing a key when the store can't be reached:** the activation screen offers codes to activate or remove it, for a browser with no internet.
+- **An ended trial's key is refused before it goes to the store**, and a rollback across 0.8.165 keeps the install's id.
+- **The licence agreement is dated October 18, 2026:** a revoked paid key leaves its install on the free plan; a revoked free, trial or test key stops working, and the install asks to be activated again.
+
+## 0.8.172 (2026-10-17)
+- **One more revoked licence key.** This release lists a key the store has revoked since 0.8.170, so it stops working on installs from this release, which carry on under the free plan (the licence agreement, section 1).
+- **AI assistants describe approved time off correctly.** When Claude or another assistant approves time off, Erlangly now tells it what that does: the person's shifts stay, with the time off shown over them, so there's nothing to clear; they stop counting toward coverage while it lasts, and on a published schedule what's needed falls too, within the line's planned shrinkage. Before, assistants could tell you to cover or clear the shift.
+
 ## 0.8.170 (2026-10-17)
 - **Licence activation is here.** This is the first public release with it (0.8.165 to 0.8.169 brought it in): every install runs on a licence activated for it, once, through your browser, and your server still never contacts us. A new install asks for its licence right after setup: the free plan, a 30-day trial or a key. Installs from before get 30 days' notice on every page for admins, then ask to be activated. erlangly.com/docs/licence says how it works, moving to another server included.
 - **The licence agreement is dated October 17, 2026.** It now says how activation works and what it sends us (§1 and §3), and that if our store ever closes for good, we'll publish a version that runs without activation.
