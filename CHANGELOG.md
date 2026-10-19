@@ -1,5 +1,12 @@
 # Changes
 
+## 0.8.183 (2026-10-19)
+- **Intraday's expected service level is right when you plan in 30-minute intervals.** It counted only the first quarter hour of agents' time in each 30-minute interval, about halving the agents behind the figure (64% shown where the agents on shift would reach about 100%). Both quarter hours now count.
+
+## 0.8.182 (2026-10-19)
+- **Forms keep a choice that's switched off.** Saving a person, team, line of business, shift, break, exception, break rule or ACD queue used to quietly change a site, team, lead, client, line or activity that had been switched off, because the form didn't offer it. It's now offered, marked "(switched off)" ("(deactivated)" for a lead), and stays unless you pick another. A shift pattern keeps the lines it's on that are switched off.
+- **A forecast override is in the audit trail.** Overriding or removing an override on a forecast's intervals writes one entry: the intervals, each figure from → to, and the note.
+
 ## 0.8.181 (2026-10-19)
 - **The audit trail records more settings.** Changes to activity and exception types, time-off types, ACD state mappings, a forecast's special days, the days left out of a line's history, which shift patterns a line uses, the patterns in a pattern set, a shift pattern's break and activity rules, and saved wallboard views are now recorded, with plain-language lines on the audit page.
 - **Built-in types and ACD codes don't fill the audit trail.** A new install's built-in activity and time-off types, and the ACD codes Erlangly maps by itself, go in without a line each. An ACD that sends a blank state code no longer stops a connection being made.
