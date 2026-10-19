@@ -1,5 +1,17 @@
 # Changes
 
+## 0.8.181 (2026-10-19)
+- **The audit trail records more settings.** Changes to activity and exception types, time-off types, ACD state mappings, a forecast's special days, the days left out of a line's history, which shift patterns a line uses, the patterns in a pattern set, a shift pattern's break and activity rules, and saved wallboard views are now recorded, with plain-language lines on the audit page.
+- **Built-in types and ACD codes don't fill the audit trail.** A new install's built-in activity and time-off types, and the ACD codes Erlangly maps by itself, go in without a line each. An ACD that sends a blank state code no longer stops a connection being made.
+
+## 0.8.180 (2026-10-19)
+- **The audit trail, in Erlangly.** Admins can read it in Settings → Audit trail. Newest first, every entry says what was done in plain words, when, by whom, and whether it came through an AI assistant or a personal token. Open an entry to see each field before and after, and the reason if one was given. You can filter by person, by how the change was made, by kind of record and by date. The export still has everything.
+- **A site's seats are for your reference.** The Seats field on a site now says schedules don't check it. It used to say they'd warn when more people were on shift than there were seats.
+
+## 0.8.179 (2026-10-19)
+- **Removals are in the audit trail.** Removing a shift, a break or anything else Erlangly records now leaves an entry: what was removed, who removed it, when, and on a published schedule, the reason they gave. Before, a removal left no trace. Things removed along with something bigger, like the shifts of a deleted schedule, are covered by that one entry.
+- **Less personal data in the audit trail.** It records that a sign-in was linked to an SSO account without keeping the account's ID, and it leaves out an ACD connection's diagnostics.
+
 ## 0.8.178 (2026-10-18)
 - **AI assistants show Erlangly's icon.** ChatGPT and Claude showed a broken icon, or Rails' default one, for an Erlangly connection. Erlangly now serves its icon at the usual addresses and names it when an assistant connects.
 - **Two service targets for the same day: the one entered last counts**, for a line, a client or the organisation, everywhere targets are used (staffing, Intraday, forecasts, the ACD pulls). The line page marks the older one "Replaced by the one below". Shrinkage rates for the same category and day follow the same rule.
