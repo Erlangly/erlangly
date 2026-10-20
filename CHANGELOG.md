@@ -1,5 +1,16 @@
 # Changes
 
+## 0.8.185 (2026-10-20)
+- **Agents to keep spare, per line.** When supervisors book an activity, each line of business keeps the number of agents spare on the phone that its planners set, from 0 to 20. It's 1 for every line until you change it, as before.
+- **Hours short and over, also in FTE.** The schedule's Short and Over notes and Intraday's Short and Over row add the figure in FTE: "3 FTE" for a day, "10 FTE days" over several. Set the hours in an FTE day under Settings → Organisation (7.5 to start with).
+- **An adherence grace period.** Under Settings → Organisation, choose 0 to 10 minutes. For that long after each change in the schedule, a state that suits what came before still counts as adherent, and at a shift's start any state counts, for a late login. The wallboard follows it. It's 0 to start with, which scores exactly as before.
+
+## 0.8.184 (2026-10-19)
+- **Swaps leave training alone.** A shift with training, a meeting or any other activity besides breaks can't be swapped: it isn't offered, and if something is booked on it after the swap was asked, accepting or approving the swap says why and stops. Breaks and lunches always go with their shift when a swap is made, including ones moved by hand, which used to be deleted.
+- **Voluntary time off shows its coverage.** A waiting VTO opens a page with "Coverage if approved", as time off does, before you approve it. Sick, absent and late calls still approve in one click.
+- **Choose who decides requests.** In Settings → Organisation, for time off, swaps and exceptions agents report: any supervisor or planner (as before), the person's team lead or a planner, or planners only. The waiting lists, counts and morning email follow it, and a refusal says who decides.
+- **Swap rules.** In Settings → Organisation: how many days apart two swapped shifts can be (3 as before), how many hours before the earlier shift swaps close (0 as before), and whether a swap that passes every check approves itself when it's accepted (off as before). A swap that approved itself says so in the audit trail.
+
 ## 0.8.183 (2026-10-19)
 - **Intraday's expected service level is right when you plan in 30-minute intervals.** It counted only the first quarter hour of agents' time in each 30-minute interval, about halving the agents behind the figure (64% shown where the agents on shift would reach about 100%). Both quarter hours now count.
 
