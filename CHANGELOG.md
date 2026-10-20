@@ -1,5 +1,12 @@
 # Changes
 
+## 0.8.190 (2026-10-20)
+- **More of Canada and the US.** The Canada pack now checks every province: daily and weekly overtime, the shortest shift, rest between shifts and days in a row where the province sets them, and meal breaks. Manitoba, Saskatchewan, Nova Scotia, New Brunswick, and Newfoundland and Labrador get their public holidays. The US pack adds six states' rules. The labour rules page has a table for each.
+- **Upgrading keeps working when a rule pack drops a rule you changed.** If an admin had loosened or tightened a rule that a newer pack no longer has, installing the pack used to fail. The change now goes with the rule, and the audit trail keeps both.
+
+## 0.8.189 (2026-10-20)
+- **Groundwork for limiting planners and supervisors to their own clients.** Nothing changes yet for anyone: an admin can't limit a user until the work is finished in a later release.
+
 ## 0.8.188 (2026-10-20)
 - **Labour rules for India.** A new rule pack covers the Labour Codes (OSH Code) by default, plus eight states where contact centres work: Delhi, Haryana, Karnataka, Maharashtra, Tamil Nadu, Telangana, Uttar Pradesh and West Bengal. It checks each state's daily and weekly hours, its rest interval and its weekly rest, and has each state's public holidays for shops and establishments. Every rule warns; none blocks. Choose it under Settings → Organisation or on a site.
 
