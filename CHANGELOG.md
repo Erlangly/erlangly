@@ -1,5 +1,16 @@
 # Changes
 
+## 0.8.188 (2026-10-20)
+- **Labour rules for India.** A new rule pack covers the Labour Codes (OSH Code) by default, plus eight states where contact centres work: Delhi, Haryana, Karnataka, Maharashtra, Tamil Nadu, Telangana, Uttar Pradesh and West Bengal. It checks each state's daily and weekly hours, its rest interval and its weekly rest, and has each state's public holidays for shops and establishments. Every rule warns; none blocks. Choose it under Settings → Organisation or on a site.
+
+## 0.8.187 (2026-10-20)
+- **A shift stays on its schedule's client.** Adding or moving a shift by hand onto a line of business that belongs to a different client than the schedule's is refused, with a message naming both.
+- **The API asks which client when a line's code is shared.** When two clients each have a line with the same code, `lob=CODE` now answers 422 and names them, rather than picking one. Add `client=` (the client's code or ID), or use the line's ID. Codes only one client has work as before, and the AI assistant tools take `client` too.
+- **Volumes sent with a personal token are in the audit trail**, under the person whose token it is.
+
+## 0.8.186 (2026-10-20)
+- **Weekly FTE over several days.** Hours short and over across several days now show as full-time people's worth: the hours divided by the hours in an FTE week for each 7 days, so a week's 75 hours short reads "2 FTE". A single day still divides by the hours in an FTE day. Set Hours in an FTE week under Settings → Organisation (37.5 to start with; one to seven times the hours in an FTE day). "FTE days" are gone.
+
 ## 0.8.185 (2026-10-20)
 - **Agents to keep spare, per line.** When supervisors book an activity, each line of business keeps the number of agents spare on the phone that its planners set, from 0 to 20. It's 1 for every line until you change it, as before.
 - **Hours short and over, also in FTE.** The schedule's Short and Over notes and Intraday's Short and Over row add the figure in FTE: "3 FTE" for a day, "10 FTE days" over several. Set the hours in an FTE day under Settings → Organisation (7.5 to start with).
