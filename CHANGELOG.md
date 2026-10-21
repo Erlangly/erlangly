@@ -1,5 +1,14 @@
 # Changes
 
+## 0.8.192 (2026-10-20)
+- **Labour rules for Kenya.** A new rule pack follows the Regulation of Wages (General) Order and the Employment Act: overtime past 52 hours a week (60 for night work), the two-week overtime limit, and a rest day in every seven, all as warnings. It has Kenya's public holidays, with a holiday on a Sunday moving to the Monday, and 2026's Eids as gazetted. Choose it under Settings → Organisation or on a site; for people who work nights, choose Kenya's "Night work" as their labour rules.
+
+## 0.8.191 (2026-10-20)
+- **Limit planners and supervisors to their own clients.** On an install that serves several clients, an admin can choose which clients each planner and supervisor sees, under Settings → Users → the person → Clients this person sees. Everyone starts on All clients, so nothing changes until an admin limits someone.
+- **What a limited user sees.** Only their clients' schedules, forecasts, people, requests, wallboard, Intraday, adherence, imports and downloads, and the same through the API and connected AI assistants. Anything of another client answers as if it didn't exist, and nothing names it. Someone limited to one client sees no client names at all.
+- **People who work for two clients.** Both clients' staff see them. Their shifts for the other client show as an unnamed "Another client" block, and their contract, availability and other person-wide details can only be changed by a planner who sees all their clients. Any supervisor who sees them can still decide their time off.
+- **Shared settings.** Sites, teams, exception and time-off types, pattern sets, labour rules, holidays and wallboard alarms are shared by every client, so only admins and planners who see every client change them. A line's own settings stay with its client's planners.
+
 ## 0.8.190 (2026-10-20)
 - **More of Canada and the US.** The Canada pack now checks every province: daily and weekly overtime, the shortest shift, rest between shifts and days in a row where the province sets them, and meal breaks. Manitoba, Saskatchewan, Nova Scotia, New Brunswick, and Newfoundland and Labrador get their public holidays. The US pack adds six states' rules. The labour rules page has a table for each.
 - **Upgrading keeps working when a rule pack drops a rule you changed.** If an admin had loosened or tightened a rule that a newer pack no longer has, installing the pack used to fail. The change now goes with the rule, and the audit trail keeps both.
