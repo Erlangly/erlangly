@@ -59,6 +59,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | jbuilder | 2.15.1 | MIT |
 | json | 3.0.2 | Ruby |
 | json-jwt | 1.17.2 | MIT |
+| jwt | 3.3.0 | MIT |
 | kamal | 2.12.0 | MIT |
 | logger | 1.7.0 | Ruby, BSD-2-Clause |
 | loofah | 2.25.2 | MIT |
@@ -78,6 +79,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | nio4r | 2.7.5 | MIT, BSD-2-Clause |
 | nokogiri | 1.19.4 | MIT |
 | openid_connect | 2.5.0 | MIT |
+| openssl | 4.0.2 | Ruby, BSD-2-Clause |
 | ostruct | 0.6.3 | Ruby, BSD-2-Clause |
 | pp | 0.6.4 | Ruby, BSD-2-Clause |
 | prettyprint | 0.2.0 | Ruby, BSD-2-Clause |
@@ -120,6 +122,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | uri | 1.1.1 | Ruby, BSD-2-Clause |
 | useragent | 0.16.11 | MIT |
 | validate_url | 1.0.15 | MIT |
+| web-push | 3.1.0 | MIT |
 | webfinger | 2.1.3 | MIT |
 | websocket-driver | 0.8.2 | Apache-2.0 |
 | websocket-extensions | 0.1.5 | Apache-2.0 |
@@ -541,7 +544,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For base64 0.3.0, date 3.5.1, drb 2.2.3, erb 6.0.7, io-console 0.9.4, irb 1.18.0, json 3.0.2, logger 1.7.0, net-http 0.9.1, net-imap 0.6.7, net-pop 0.1.2, net-protocol 0.4.0, ostruct 0.6.3, pp 0.6.4, prettyprint 0.2.0, racc 1.8.1, reline 0.7.0, securerandom 0.4.1, timeout 0.6.1, tsort 0.2.0, uri 1.1.1 and Ruby 4.0.7:
+For base64 0.3.0, date 3.5.1, drb 2.2.3, erb 6.0.7, io-console 0.9.4, irb 1.18.0, json 3.0.2, logger 1.7.0, net-http 0.9.1, net-imap 0.6.7, net-pop 0.1.2, net-protocol 0.4.0, openssl 4.0.2, ostruct 0.6.3, pp 0.6.4, prettyprint 0.2.0, racc 1.8.1, reline 0.7.0, securerandom 0.4.1, timeout 0.6.1, tsort 0.2.0, uri 1.1.1 and Ruby 4.0.7:
 
 ```text
 Copyright (C) 1993-2013 Yukihiro Matsumoto. All rights reserved.
@@ -755,7 +758,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For bigdecimal 4.1.3, json 3.0.2 and reline 0.7.0:
+For bigdecimal 4.1.3, json 3.0.2, openssl 4.0.2 and reline 0.7.0:
 
 ```text
 Ruby is copyrighted free software by Yukihiro Matsumoto <matz@netlab.jp>.
@@ -1376,6 +1379,18 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
+
+For jwt 3.3.0:
+
+```text
+Copyright (c) 2011 Jeff Lindsay
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
 For kamal 2.12.0:
@@ -5703,6 +5718,32 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
+
+For web-push 3.1.0:
+
+```text
+Copyright (c) 2016 Hiroyuki Sakuraba
+Copyright (c) 2022-2025 Marco Colli, Pushpad (https://pushpad.xyz)
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
 For webfinger 2.1.3:

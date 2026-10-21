@@ -1,5 +1,24 @@
 # Changes
 
+## 0.8.197 (2026-10-21)
+0.8.196 wasn't released: its image didn't build. Everything listed under it comes in 0.8.197, and also:
+- **Labour-rule issues read on the schedule's clock.** Someone working in another time zone from the schedule now has their issues dated and timed as the grid shows their shifts, and shifts on a period's first and last days are checked for them too.
+- **The United States' rule pack gives every state the federal holidays** (2026.10.3), as days many people have off, which forecasts leave out of their history. Federal law doesn't make private employers give them.
+- The guides say when a supervisor's activity is checked against labour rules.
+
+## 0.8.196 (2026-10-21)
+- **Notifications.** A bell beside your name shows what's new, live, with a Notifications page listing it: your schedule published, changed or withdrawn, swaps asked and decided, time off decided or cancelled. Emails still go as before.
+- **Notifications on your phone or computer.** Turn them on from My schedule or Your account. Erlangly can now be installed from the browser; on an iPhone it needs adding to the Home Screen first (iOS 16.4 or later). A lock screen shows only what happened, with your own dates, times and activities and a colleague's first name. Pushes travel encrypted through Apple's, Google's, Mozilla's or Microsoft's push service, which can't read them. An admin can turn them off under Settings → Notifications, which also lists the hosts your firewall must allow.
+- **A tab left in the background for 5 minutes lets go of its live connection,** and catches up the moment you look at it again, unless you were in the middle of typing.
+- **Forms say what to fix instead of coming back blank:** time off that ends before it starts, a schedule shift over 16 hours or with nobody chosen, a connection named too like another, and a labour rule loosened without a reason, which also keeps what you typed.
+- Booking an activity that can't be saved now says why, instead of failing with an error page.
+
+## 0.8.195 (2026-10-21)
+- **Each kind of exception can count the moment an agent reports it** (Settings → Exceptions), instead of waiting for approval. It still shows on Waiting, marked Counted, for a supervisor to note, change or remove. New installs count sickness this way; upgraded installs keep everything waiting until you choose.
+- **Evening out breaks** now leaves a break where it is if moving it would add a labour-law warning, as well as one that blocks publishing.
+- **A person's page shows their labour rules,** and whether they come from their site or the default. The people import has an optional labour rules column, by name or code.
+- Canada's and the United States' federal labour rules are named without repeating the country.
+
 ## 0.8.194 (2026-10-21)
 - **Security.** Erlangly's built-in web front (Thruster) is rebuilt with Go 1.27.3, which fixes CVE-2026-111943 in Go's certificate checks. Two new findings in the bundled Litestream (CVE-2026-111943 and CVE-2026-63209) don't reach how Erlangly uses it, and wait for Litestream's next release.
 - **A software bill of materials with every release** (from 0.8.193, which wasn't released): an SBOM for each image, in CycloneDX format, on get.erlangly.com beside the installer.
