@@ -28,6 +28,8 @@ Without either, Erlangly serves plain HTTP, so passwords and API tokens cross th
 
 To read the installer before running it, check it against the published checksums: `curl -fsSLO https://get.erlangly.com/install.sh && curl -fsSL https://get.erlangly.com/SHA256SUMS | sha256sum -c --ignore-missing`. The `erlangly` command then downloads Erlangly by the image digest listed for each release at [get.erlangly.com/images](https://get.erlangly.com/images), never just by its tag.
 
+Each release comes with a software bill of materials (SBOM) of its images, in CycloneDX format: `erlangly-<version>-amd64.cdx.json` and `erlangly-<version>-arm64.cdx.json` at get.erlangly.com, for the latest release, with their checksums in SHA256SUMS.
+
 Prefer Docker Compose? [`compose.yml`](compose.yml) runs the same container.
 
 ## Run it

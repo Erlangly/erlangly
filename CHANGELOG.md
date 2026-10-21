@@ -1,5 +1,12 @@
 # Changes
 
+## 0.8.194 (2026-10-21)
+- **Security.** Erlangly's built-in web front (Thruster) is rebuilt with Go 1.27.3, which fixes CVE-2026-111943 in Go's certificate checks. Two new findings in the bundled Litestream (CVE-2026-111943 and CVE-2026-63209) don't reach how Erlangly uses it, and wait for Litestream's next release.
+- **A software bill of materials with every release** (from 0.8.193, which wasn't released): an SBOM for each image, in CycloneDX format, on get.erlangly.com beside the installer.
+
+## 0.8.193 (2026-10-21)
+- **A software bill of materials with every release.** Each release now comes with an SBOM for each image, in CycloneDX format: every Debian package, Ruby gem, Go module and Rust crate inside Erlangly, with its version and licence, so your security team can check it against new vulnerabilities themselves. They're on get.erlangly.com beside the installer, listed in SHA256SUMS.
+
 ## 0.8.192 (2026-10-20)
 - **Labour rules for Kenya.** A new rule pack follows the Regulation of Wages (General) Order and the Employment Act: overtime past 52 hours a week (60 for night work), the two-week overtime limit, and a rest day in every seven, all as warnings. It has Kenya's public holidays, with a holiday on a Sunday moving to the Monday, and 2026's Eids as gazetted. Choose it under Settings → Organisation or on a site; for people who work nights, choose Kenya's "Night work" as their labour rules.
 

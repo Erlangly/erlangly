@@ -205,7 +205,7 @@ The JavaScript the app's pages load that isn't Erlangly's own (config/importmap.
 | File | Imported as | From | Licence |
 |---|---|---|---|
 | turbo.min.js | @hotwired/turbo-rails | turbo-rails 2.0.23 gem: Turbo 8.0.23 Copyright © 2026 37signals LLC | MIT |
-| stimulus.min.js | @hotwired/stimulus | stimulus-rails 1.3.4 gem | MIT |
+| stimulus.min.js | @hotwired/stimulus | stimulus-rails 1.3.4 gem: Stimulus 3.2.2 Copyright © 2023 Basecamp, LLC | MIT |
 | stimulus-loading.js | @hotwired/stimulus-loading | stimulus-rails 1.3.4 gem | MIT |
 
 ## Programs
@@ -215,7 +215,7 @@ Two Go programs: Litestream copies the database off the server when you set it u
 | Program | Version | Licence | Built with |
 |---|---|---|---|
 | Litestream | 0.5.17 | Apache-2.0 | go1.25.14 |
-| Thruster | 0.1.27 | MIT | go1.27.2 |
+| Thruster | 0.1.27 | MIT | go1.27.3 |
 
 ### Litestream's Go modules
 
@@ -8534,7 +8534,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-For golang.org/x/crypto v0.52.0, golang.org/x/crypto/x509roots/fallback v0.0.0-20260209214922-2f26647a795e, golang.org/x/net v0.55.0, golang.org/x/oauth2 v0.36.0, golang.org/x/sync v0.21.0, golang.org/x/sys v0.45.0, golang.org/x/text v0.39.0, golang.org/x/time v0.7.0, golang.org/x/crypto v0.57.0, golang.org/x/net v0.60.0, golang.org/x/text v0.42.0 and Go's runtime and standard library 1.25.14, 1.27.2:
+For golang.org/x/crypto v0.52.0, golang.org/x/crypto/x509roots/fallback v0.0.0-20260209214922-2f26647a795e, golang.org/x/net v0.55.0, golang.org/x/oauth2 v0.36.0, golang.org/x/sync v0.21.0, golang.org/x/sys v0.45.0, golang.org/x/text v0.39.0, golang.org/x/time v0.7.0, golang.org/x/crypto v0.57.0, golang.org/x/net v0.60.0, golang.org/x/text v0.42.0 and Go's runtime and standard library 1.25.14, 1.27.3:
 
 ```text
 Copyright 2009 The Go Authors.
