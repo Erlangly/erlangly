@@ -1,5 +1,9 @@
 # Changes
 
+## 0.8.198 (2026-10-22)
+- **Ontario overtime is counted by the week only, past 44 hours,** as the Employment Standards Act sets it (Canada rule pack 2026.10.3). Ontario shifts over 8 hours no longer warn of daily overtime. If you'd already changed Ontario's overtime rule under Settings → Labour rules, your change keeps the old 8 hours a day until you edit or remove it.
+- The labour rules guide says what isn't checked for Ontario: averaging agreements, and the limits on hours of work a day and a week.
+
 ## 0.8.197 (2026-10-21)
 0.8.196 wasn't released: its image didn't build. Everything listed under it comes in 0.8.197, and also:
 - **Labour-rule issues read on the schedule's clock.** Someone working in another time zone from the schedule now has their issues dated and timed as the grid shows their shifts, and shifts on a period's first and last days are checked for them too.
