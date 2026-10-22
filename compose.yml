@@ -1,5 +1,5 @@
 # Erlangly with Docker Compose: the same container `erlangly install` runs.
-# Erlangly is licensed under its licence agreement: https://erlangly.com/eula (by installing it you accept it).
+# Erlangly is licensed under its license agreement: https://erlangly.com/eula (by installing it you accept it).
 #
 #   docker compose up -d                 then open the setup link from (it creates the first admin;
 #                                        then Erlangly asks you to activate the free plan, a trial or your key):

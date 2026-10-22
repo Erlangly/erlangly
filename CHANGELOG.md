@@ -1,5 +1,28 @@
 # Changes
 
+## 0.8.206 (2026-10-22)
+- **Supervisors and planners type an exception's times as the schedule shows them:** in the time zone of the agent's line of business that day, or in the agent's own zone if they tick the box for it. Where the two zones differ, the Exceptions list and an exception's page show both times. An agent's own form is unchanged.
+- The morning email about waiting requests gives exception times as the Exceptions list does.
+
+## 0.8.205 (2026-10-22)
+0.8.204 wasn't released: a browser test failed on the release's own check, not Erlangly itself. Everything listed under it comes in 0.8.205.
+
+## 0.8.204 (2026-10-22)
+- **Erlangly is in US English.** Screens, emails, notifications, the `erlangly` command and the guides say labor, organization, center, license and canceled, and dates put the month first ("Mon, Nov 3"). Settings → Labour rules is now **Settings → Labor rules**, Organisation is **Organization**, and Licence is **License**. Laws and holidays keep their own names, such as Canada's Labour Day and India's Labour Codes.
+- The labor rules guide is now at erlangly.com/docs/labor-rules; its old address leads there.
+- The people import takes "labor law" and "labor rules" columns, as well as the old "labour" ones.
+
+## 0.8.203 (2026-10-22)
+- **Leaving a day out of Volume history keeps you on that day,** instead of going back to the week.
+- **The hour that comes twice when the clocks go back is marked** in Volume history's and a forecast's day tables, with each one's time zone (01:00 ADT, then 01:00 AST).
+- **The forecast and history charts are readable on a phone:** larger labels, every few hours or each week's first day.
+
+## 0.8.202 (2026-10-22)
+- **Volume history shows what came in.** Pick some days to see their contacts as one chart, starting on the last week anything came in, or open a single day for its intervals, contacts and handle time, and leave it out of forecasts in one click. The banner about days with too few contacts links to each of them.
+
+## 0.8.201 (2026-10-22)
+- **A shift's activities are only planned ones.** Adding an exception, such as Overtime or Sick, to a shift in a draft or a schedule is refused, with a pointer to record it under Exceptions instead, where overtime can run before or after the shift. Exceptions already on a shift keep their type and can still be edited.
+
 ## 0.8.200 (2026-10-22)
 - **Forecasts leave out history that didn't fully come in.** A day with under a tenth of the contacts its weekday usually has is marked *Too few contacts* on the volume history page and isn't used: older weeks stand in for it, and the forecast names the day. If a day's volumes are incomplete, import them again.
 - **The forecast chart keeps every day its width.** A day with no contacts shows as an empty day, instead of the days around it closing up over it.

@@ -36,7 +36,7 @@ main() {
   if [ "$(id -u)" -eq 0 ]; then sudo=""; else sudo="sudo"; command -v sudo > /dev/null || fail "run this as root"; fi
 
   # Before anything's installed. The erlangly command doesn't say it again (ERLANGLY_INSTALL_STARTED is set).
-  echo "Erlangly is licensed under its licence agreement: https://erlangly.com/eula (by installing it you accept it)."
+  echo "Erlangly is licensed under its license agreement: https://erlangly.com/eula (by installing it you accept it)."
 
   # A new server installs its own updates in its first minutes, which holds the package manager: apt,
   # apt-get or dpkg running, unattended-upgrade itself, or the daily script running them. Not

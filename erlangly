@@ -29,8 +29,8 @@ Usage: erlangly <command>
   backup [directory]  Save all data to a .tar.gz (default $BACKUPS)
   restore <file>      Replace all data with a backup (stops Erlangly while it restores)
   restore --copy <file>
-                      Make this server a test copy of the install the backup is from, for a test licence: its
-                      own install id, no licence or address and its ACD connections off, so it never runs as
+                      Make this server a test copy of the install the backup is from, for a test license: its
+                      own install id, no license or address and its ACD connections off, so it never runs as
                       that install
   export [directory]  All your data as CSV files in a .zip, to take elsewhere (default $BACKUPS)
   version             Show the installed version
@@ -89,7 +89,7 @@ one_at_a_time() {
   printf '%s\n' "$1" > "$LOCK"
   locked=1
 }
-licence_agreement() { echo "Erlangly is licensed under its licence agreement: https://erlangly.com/eula (by installing it you accept it)."; }
+licence_agreement() { echo "Erlangly is licensed under its license agreement: https://erlangly.com/eula (by installing it you accept it)."; }
 
 # Reads the settings file as KEY=value lines (it's never run as a script), keeping only known keys.
 load_settings() {
@@ -365,7 +365,7 @@ setup_step() {
   local link refusal
   refusal=$(mktemp)
   if link=$(setup_link 2> "$refusal"); then
-    echo "Finish setting it up here: the link creates the first admin, then Erlangly asks for a licence"
+    echo "Finish setting it up here: the link creates the first admin, then Erlangly asks for a license"
     echo "(the free plan, a 30-day trial or a key). It's secret, and works until the first admin is created:"
     echo "  $link"
   elif grep -q "already set up" "$refusal"; then
@@ -630,14 +630,14 @@ check_updates_cover() {
   if until=$(updates_until); then
     [[ -n "$until" && "$released" > "$until" ]] || return 0
     docker rmi erlangly:new > /dev/null
-    fail "Erlangly $to came out on $released, after your licence's updates ended on $until, so it wasn't installed: $(still_on "$from" "$how"). $(what_updates_cover "$until" "$from" "$how")"
+    fail "Erlangly $to came out on $released, after your license's updates ended on $until, so it wasn't installed: $(still_on "$from" "$how"). $(what_updates_cover "$until" "$from" "$how")"
   fi
   if written=$(written_updates_until) && [[ -z "$written" || ! "$released" > "$written" ]]; then return 0; fi
   docker rmi erlangly:new > /dev/null
   if [ -n "$written" ]; then
-    fail "Erlangly $to came out on $released, after $written, when your licence key says its updates ended, and Erlangly couldn't check the key. So $to wasn't installed: $(still_on "$from" "$how"). $(get_an_answer "$from" "$how") $(what_updates_cover "$written" "$from" "$how")"
+    fail "Erlangly $to came out on $released, after $written, when your license key says its updates ended, and Erlangly couldn't check the key. So $to wasn't installed: $(still_on "$from" "$how"). $(get_an_answer "$from" "$how") $(what_updates_cover "$written" "$from" "$how")"
   fi
-  fail "couldn't tell whether your licence's updates cover Erlangly $to, which came out on $released: Erlangly couldn't check your licence key, and the key couldn't be read from its data either. So $to wasn't installed: $(still_on "$from" "$how"). $(get_an_answer "$from" "$how")"
+  fail "couldn't tell whether your license's updates cover Erlangly $to, which came out on $released: Erlangly couldn't check your license key, and the key couldn't be read from its data either. So $to wasn't installed: $(still_on "$from" "$how"). $(get_an_answer "$from" "$how")"
 }
 
 # Is $1 a day, like 2027-09-30?
@@ -792,7 +792,7 @@ cmd_rollback() {
 # no such file and gets another id, so the store finds its licence on "another install": its own, under the old id.
 before_activation() {
   older_version "$1" "$ACTIVATION_SINCE" && ! older_version "$2" "$ACTIVATION_SINCE" || return 0
-  echo "Erlangly $1 is from before licences were activated, and so is that data. Once you upgrade again, activate Erlangly again under Settings → Licence, with the key from your email. If store.erlangly.com says the licence is in use on another install at this server's own address, free it at store.erlangly.com/move, then activate it here."
+  echo "Erlangly $1 is from before licenses were activated, and so is that data. Once you upgrade again, activate Erlangly again under Settings → License, with the key from your email. If store.erlangly.com says the license is in use on another install at this server's own address, free it at store.erlangly.com/move, then activate it here."
 }
 
 # After an upgrade that didn't start, which began at $1: goes back without asking. Only a snapshot that upgrade took
@@ -825,7 +825,7 @@ taken() {
   elif (( ago < 2 * 3600 )); then ago="$(( ago / 60 )) minutes ago"
   elif (( ago < 2 * 86400 )); then ago="$(( ago / 3600 )) hours ago"
   else ago="$(( ago / 86400 )) days ago"; fi
-  echo "$(LC_ALL=C date -d "@$at" '+%a %-d %b %H:%M %Z'), $ago"
+  echo "$(LC_ALL=C date -d "@$at" '+%a, %b %-d, %H:%M %Z'), $ago"
 }
 
 # Saving the data as it is now copies the databases (bin/backup), and putting back snapshot $1 copies it in before
@@ -915,7 +915,7 @@ cmd_restore() {
   cmd_restart
   [ -z "${copy:-}" ] || cat <<COPY
 This server is a test copy of the install the backup is from, with an install id of its own. It isn't activated, so it
-emails the floor nothing: sign in as one of its admins and activate your test licence's key. It has no address for
+emails the floor nothing: sign in as one of its admins and activate your test license's key. It has no address for
 emails either, so it emails no one until you set its own under Settings → Email. Its ACD connections are switched
 off: switch on only those meant for testing, under Settings → Connections.
 COPY
