@@ -1,5 +1,13 @@
 # Changes
 
+## 0.8.200 (2026-10-22)
+- **Forecasts leave out history that didn't fully come in.** A day with under a tenth of the contacts its weekday usually has is marked *Too few contacts* on the volume history page and isn't used: older weeks stand in for it, and the forecast names the day. If a day's volumes are incomplete, import them again.
+- **The forecast chart keeps every day its width.** A day with no contacts shows as an empty day, instead of the days around it closing up over it.
+
+## 0.8.199 (2026-10-22)
+- **13 more US states in the labour rules** (United States rule pack 2026.10.4): Connecticut, Delaware, Kentucky, Maine, Nevada, New Hampshire, North Dakota, Oregon, Rhode Island, Tennessee and West Virginia, with their own meal and rest break rules, and Nebraska and Vermont, whose laws set nothing to check for an office. Nevada also warns of daily overtime past 8 hours, which its law sets only for people paid under 1.5 times its minimum wage: an admin can turn it off under Settings → Labour rules. Connecticut warns of a seventh day in a row. Every state with a meal or rest break law of its own is now in the pack, and every rule warns.
+- The labour rules guide lists each new state's rules, and what isn't checked: when in the shift a meal falls in Oregon, Connecticut, Delaware, Kentucky and Tennessee, and where small crews or a written agreement mean the law doesn't apply.
+
 ## 0.8.198 (2026-10-22)
 - **Ontario overtime is counted by the week only, past 44 hours,** as the Employment Standards Act sets it (Canada rule pack 2026.10.3). Ontario shifts over 8 hours no longer warn of daily overtime. If you'd already changed Ontario's overtime rule under Settings → Labour rules, your change keeps the old 8 hours a day until you edit or remove it.
 - The labour rules guide says what isn't checked for Ontario: averaging agreements, and the limits on hours of work a day and a week.
