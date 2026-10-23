@@ -1,5 +1,47 @@
 # Changes
 
+## 0.8.216 (2026-10-23)
+- **Divali 2026 is in Trinidad and Tobago's holidays:** Monday, November 9, as Legal Notice 832 of 2026 proclaims it. It comes in Trinidad and Tobago's rule pack 2026.10.2, where each rule and holiday also links to its official text under Settings → Labor rules.
+
+## 0.8.215 (2026-10-23)
+0.8.214 wasn't released: its own check was cancelled by a later change to the website, not by a problem in Erlangly itself. Everything listed under it comes in 0.8.215.
+
+## 0.8.214 (2026-10-23)
+- **A change to a labor rule is checked before it's saved.** A number the checks can't use, such as a blank, a negative, more than a day or a week holds, or 0 where it doesn't mean "none", is refused with what to enter. So a change can no longer stop the checks or switch a rule off by accident. Upgrading repairs changes saved before, and the audit trail records each repair.
+- **One person's labor-rule issue no longer hides another's** in edits, swaps and takeovers. **Making an issue worse counts as new:** less rest than before asks again, or is refused where the rule blocks.
+- **A change is checked against the schedules either side, any client's.** That covers rest before next week's first shift, a run of days into next week, and weeks that cross the edge. Those schedules' labor rules are brought up to date afterwards.
+- **Nobody can be put on two overlapping shifts,** whether by a hand edit in a draft for some lines of business or people, by using or adding a draft, or by a takeover or a swap. The refusal names everyone affected and both shifts.
+- **A swap approves itself only when it adds no labor-law warning or violation for either person.** That includes an issue a shift already had, since it's new for whoever takes it.
+- **Settings → Labor rules links each rule's citation and each holiday to its official text,** where the rule pack names one. A new **All** view shows every jurisdiction's rules and holidays, read-only where nobody uses them.
+- The audit trail's **Open the labor rule** works for changes made here, and the issues table's **Open** goes to the shift in its own schedule.
+
+## 0.8.213 (2026-10-23)
+- **A shift's page says what the shift is while a change to it is refused or waits to be confirmed,** instead of showing the times, line of business or reason just typed as if they were saved. The form keeps what was typed, to fix or confirm. A break's or activity's own page does the same.
+
+## 0.8.212 (2026-10-22)
+- **"The Philippines" and "the United States" in sentences:** adding or removing a holiday, a holiday already on that day, and saving a labor rule now say "a holiday in the Philippines" and "for the United States (federal)".
+- **Settings → Labor rules says what a change does:** a rule set to warn says "Warns here instead of blocking publishing", rather than repeating its unchanged hours, and a change that alters nothing shown says "Changed here".
+
+## 0.8.211 (2026-10-22)
+- **Ontario's 8 hours of rest between shifts is owed only when the two shifts come to more than 13 hours of work,** as the Employment Standards Act sets it (s.18(3); Canada rule pack 2026.10.4). Schedules with less rest between two shorter shifts no longer stop at publishing. If you'd changed Ontario's rule under Settings → Labor rules, your change stays as it was.
+
+## 0.8.210 (2026-10-22)
+0.8.209 wasn't released: its own check failed on a test, not on Erlangly itself. Everything listed under it comes in 0.8.210.
+
+## 0.8.209 (2026-10-22)
+- **An exception keeps the time zone it was recorded against,** so the Exceptions list, its page and its change form show it as it was typed, also for people who work lines in different time zones. Times typed in the agent's own zone still show beneath it, as "their time".
+- **"In their own time zone" stays ticked** however quickly you pick a person or change the day.
+
+## 0.8.208 (2026-10-22)
+- **The exception form's time zone note updates as soon as you pick a person,** and a tick in "in their own time zone" no longer comes undone when it does.
+- **An exception's time in the agent's own zone reads "their time"** and names its day when that falls on another. The morning email puts it and "counted already" in one set of parentheses.
+
+## 0.8.207 (2026-10-22)
+- **A supervisor's exception form names the time zone for the person and day picked,** as you pick them, and keeps "in their own time zone" ticked as you change them.
+- **An exception needs both its times, or Whole shift:** leaving one out is refused, instead of making a 24-hour exception.
+- **Exceptions that run a day or more show their end day,** including over the night the clocks change.
+- **The morning email gives an exception's time in the agent's own zone too,** where it differs from the schedule's.
+
 ## 0.8.206 (2026-10-22)
 - **Supervisors and planners type an exception's times as the schedule shows them:** in the time zone of the agent's line of business that day, or in the agent's own zone if they tick the box for it. Where the two zones differ, the Exceptions list and an exception's page show both times. An agent's own form is unchanged.
 - The morning email about waiting requests gives exception times as the Exceptions list does.
