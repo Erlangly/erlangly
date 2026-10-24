@@ -27,6 +27,8 @@ services:
     #   (behind your own proxy, publish the port for it alone, like "127.0.0.1:8095:80", on Docker's usual network)
     volumes:
       - erlangly:/rails/storage
+    networks:
+      - erlangly
     # Docker keeps a container's log forever by default, until it fills the disk: keep the newest 100 MB.
     logging:
       driver: json-file
@@ -36,3 +38,14 @@ services:
 
 volumes:
   erlangly:
+
+# A network of its own with IPv6, so visitors over IPv6 reach Erlangly with their own address rather than as if from this
+# server (Docker 27 and later), as `erlangly install` runs it. Take out enable_ipv6 and the ipam where Docker has no IPv6,
+# or where this server takes its own IPv6 address from its router's advertisements with accept_ra=1 (Docker turns on IPv6
+# forwarding, which stops that). A second Erlangly on this server needs another subnet, like fd5e:4b6a:2f3a::/64.
+networks:
+  erlangly:
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: fd5e:4b6a:2f39::/64

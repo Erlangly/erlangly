@@ -48,6 +48,9 @@ erlangly restore <file>      Replace all data with a backup
 erlangly version             Show the installed version
 erlangly setup-link          The secret link for creating the first admin on a new install
 erlangly reset-link EMAIL    A link for someone to choose a new password (locked out, and no email)
+erlangly two-factor [reset EMAIL]
+                             Who signs in with a code from an authenticator app; reset clears someone's,
+                             for a lost phone and recovery codes
 erlangly licence             The plan, activation, agents and updates this install is licensed for
 
 erlangly schedule [DATE]     Published shifts on a day (--lob CODE, --json)

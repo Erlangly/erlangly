@@ -9,6 +9,8 @@ OFFICIAL_IMAGE=ghcr.io/erlangly/erlangly
 SOURCE=${ERLANGLY_SOURCE:-https://get.erlangly.com}
 CONTAINER=erlangly
 VOLUME=erlangly
+NETWORK=erlangly
+IPV6_CONF=/proc/sys/net/ipv6/conf
 BACKUPS=/var/backups/erlangly
 LOCK=${ERLANGLY_LOCK:-/run/erlangly.lock} # in /run, where only root can write, unlike /run/lock on some systems
 LEAST_FREE_KB=2097152 # 2 GB: upgrades and backups need twice the databases' size free, and never less than this
@@ -39,6 +41,9 @@ Usage: erlangly <command>
   sso [off]           Signing in with your identity provider; off stops requiring it (if you're locked out)
   setup-link          The secret link for creating the first admin on a new install
   reset-link EMAIL    A link for someone to choose a new password (if you're locked out, say)
+  two-factor [reset EMAIL]
+                      Who signs in with a code from an authenticator app; reset clears someone's, for a
+                      lost phone and recovery codes, and signs them out
 
   Upgrades, rollbacks, restores, backups and restarts run one at a time: one started while another
   is running stops straight away, and says which is running.
@@ -259,6 +264,42 @@ image_version() {
   docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$1" 2>/dev/null || echo unknown
 }
 
+# Visitors over IPv6 keep their own address (Serge, 2026-10-24, from #621's review): on Docker's usual network there's
+# no IPv6, so Docker hands each IPv6 connection on as if it came from this server, and every IPv6 visitor counted as one
+# for sign-in limits and the audit trail. On a network of its own with IPv6 (a private range), Docker 27 and later pass
+# their real addresses through. Without IPv6 in Docker, it's made IPv4 alone, as before. Erlangly still believes a
+# proxy's word only from this server's IPv4 networks (config/application.rb), so nothing new is believed.
+ensure_network() {
+  docker network inspect "$NETWORK" > /dev/null 2>&1 && return 0
+  if ! has_ipv6_route; then
+    : # no IPv6 here to pass through, so nothing for Docker to change on this server (Serge, 2026-10-24)
+  elif learns_ipv6_from_its_router; then
+    say "Erlangly's network is made without IPv6, so visitors over IPv6 look as if they come from this server: this server takes its own IPv6 address from its router's advertisements (accept_ra=1), which Docker's IPv6 would stop."
+  elif docker network create --ipv6 --subnet fd5e:4b6a:2f39::/64 "$NETWORK" > /dev/null 2>&1; then
+    return 0
+  fi
+  docker network create "$NETWORK" > /dev/null || fail "Docker couldn't make a network for Erlangly (above)"
+}
+
+# Docker turns on IPv6 forwarding for a network with IPv6, and a server that forwards IPv6 stops taking its router's
+# advertisements where the kernel takes them itself (accept_ra=1): its own IPv6 address and route lapse within hours,
+# and the server drops off IPv6 (from #627's review). Where its IPv6 route came that way, and forwarding is off, Erlangly's
+# network gets no IPv6. Servers whose network manager (systemd-networkd, NetworkManager) takes them aren't affected.
+# Whether this server reaches anywhere over IPv6 at all: a default IPv6 route. Without one, IPv6 visitors can't reach it
+# either, and Docker's IPv6 would only turn on forwarding for nothing.
+has_ipv6_route() {
+  [ -n "$(ip -6 route show default 2> /dev/null)" ]
+}
+
+learns_ipv6_from_its_router() {
+  local device
+  [ "$(cat "$IPV6_CONF/all/forwarding" 2> /dev/null)" = 0 ] || return 1
+  for device in $(ip -6 route show default proto ra 2> /dev/null | awk '{ for (i = 1; i < NF; i++) if ($i == "dev") print $(i + 1) }'); do
+    [ "$(cat "$IPV6_CONF/$device/accept_ra" 2> /dev/null)" != 1 ] || return 0
+  done
+  return 1
+}
+
 # Stops Erlangly and removes its container. It stops cleanly first, within 30 seconds: requests finish, and a
 # background job still running after Solid Queue's 5 seconds (a schedule being generated, say) goes back in the
 # queue, to run again once it's up. Removing it outright killed them partway, and they were never finished.
@@ -288,8 +329,9 @@ start_container() {
   # Docker's usual log driver keeps the log forever, until it fills the disk: keep the newest 100 MB.
   # Other drivers (journald, a log shipper) have limits of their own and are left as the server has them.
   [ "$(docker info --format '{{.LoggingDriver}}' 2>/dev/null)" != json-file ] || logs=(--log-opt max-size=20m --log-opt max-file=5)
+  ensure_network # first: if Docker can't make it, Erlangly carries on as it was
   remove_container
-  docker run -d --name "$CONTAINER" --restart unless-stopped "${logs[@]}" \
+  docker run -d --name "$CONTAINER" --network "$NETWORK" --restart unless-stopped "${logs[@]}" \
     "${published[@]}" "${tls[@]}" "${litestream[@]}" "${backups[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
 }
 
@@ -404,6 +446,13 @@ cmd_status() {
   [ -z "$LITESTREAM_REPLICA_URL" ] || echo "Copied:  ${LITESTREAM_REPLICA_URL%%\?*}, as it changes (Litestream)"
   if docker image inspect erlangly:previous > /dev/null 2>&1; then
     echo "Previous version $(image_version erlangly:previous) kept for \`erlangly rollback\`"
+  fi
+  # Codes from authenticator apps are worked out from the time, so signing in with one needs the server's clock
+  # within half a minute (planning/29_Two_Step_Sign_In.md §10). A warning: it doesn't fail the status. Where Debian or
+  # Ubuntu has no time service, timedatectl can't turn one on.
+  if command -v timedatectl > /dev/null 2>&1 && [ "$(timedatectl show -p NTPSynchronized --value 2> /dev/null)" = no ]; then
+    echo "Clock:   the server's clock isn't kept in time, so codes from authenticator apps may be refused." \
+      "Keep it in time with: sudo timedatectl set-ntp true (if that says NTP isn't supported, first: sudo apt install systemd-timesyncd)"
   fi
   # Backups, background jobs, disk space, secrets, connections and Litestream copies, as Settings → System shows
   # them, told apart by what bin/wfm health prints: it exits with 0 either way, as older erlangly commands took its
@@ -927,7 +976,7 @@ for argument; do case $argument in -h | --help) usage; exit 0 ;; esac; done
 case "${1:-}" in
   "" | help | -h | --help) usage; exit 0 ;;
   install | status | logs | restart | upgrade | rollback | backup | restore | export | version | --version | setup-link | reset-link | \
-    schedule | timeoff | licence | sso | volumes) ;;
+    schedule | timeoff | licence | sso | two-factor | volumes) ;;
   *) printf 'erlangly: there'"'"'s no command "%s"\n\n' "$1" >&2; usage >&2; exit 1 ;;
 esac
 
@@ -961,7 +1010,7 @@ case "${1:-}" in
     echo "$(url)$path"
     echo "  It works once, for 15 minutes. Erlangly keeps a note of it in the audit trail." >&2
     private_address_note || true ;;
-  schedule|timeoff|licence|sso)
+  schedule|timeoff|licence|sso|two-factor)
     up || fail "Erlangly isn't running"
     [ ! -t 2 ] || printf 'Asking Erlangly (a few seconds)…\n' >&2
     docker exec "$CONTAINER" bin/wfm "$@" ;;

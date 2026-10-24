@@ -1,5 +1,137 @@
 # Changes
 
+## 0.8.235 (2026-10-24)
+- **Loosening sign-in security takes your own code, and every admin is emailed, you too.** That covers:
+  - asking less of two-factor authentication;
+  - stopping SSO being required, turning SSO off, changing how it connects, or adding break-glass admins;
+  - changing Settings → Email or the app's address.
+- **When SSO becomes required for someone,** their old authenticator app and recovery codes are cleared, and the audit trail says so.
+- **An invitation link is shown once, on request,** and is recorded in the audit trail, like a password reset link.
+- **IPv6 visitors are seen by their own address,** for sign-in limits and the audit trail. That applies on servers that have IPv6 of their own; others are unchanged.
+
+## 0.8.234 (2026-10-24)
+- **Everyone signs in once after this upgrade,** wallboard TVs included: sign each TV in again.
+  - Signing in now gives each browser a random token. Restoring a backup or rolling back an upgrade can no longer leave a browser signed in as someone else.
+- **Notifications on Firefox:** when Firefox gives a device a new push address, the device's person is emailed. Only Firefox's own push service is accepted for this.
+- **What's shown once stays shown once.** Recovery codes, a new API token, the setup key and a password reset link don't come back when you go Back.
+- **Break-glass sign-in emails** give the time of the sign-in.
+
+## 0.8.233 (2026-10-24)
+- **The guides cover two-factor authentication:**
+  - setting it up, the code and recovery codes;
+  - remembered devices, moving it to a new phone, and turning it off;
+  - an admin's reset and `erlangly two-factor reset`;
+  - Settings → Sign-in, and the emails that always come.
+- **Installing and getting started** now set up the first admin's two-factor authentication before choosing a license, as the app does.
+
+## 0.8.232 (2026-10-24)
+- **Two-step sign-in is now called two-factor authentication,** everywhere you read it: Settings → Sign-in, the sign-in pages, Your account, the emails and the audit trail.
+- **The server command is `erlangly two-factor`,** listing who uses it, and `erlangly two-factor reset EMAIL` to reset someone's.
+
+## 0.8.231 (2026-10-24)
+- **Only an admin who types a code from their own app, or the server, can reset someone's two-factor authentication.**
+  - An admin signed in with SSO is shown how to get it done instead.
+  - A reset also turns off the person's API tokens and AI assistants, and the emails say which.
+- **Showing someone's password reset link is in the audit trail.**
+  - The link appears once, on that person's page only.
+  - It isn't offered for people who sign in with SSO, nor for your own account.
+- **Invitation and password reset links stop working when an admin changes the person's email address.** The old address is told about the change, unless the person never signed in.
+- **Asking less of two-factor authentication in Settings → Sign-in takes your own code, and the other admins are emailed.** That covers everyone back to admins only, or remembering devices longer.
+- **"Don't ask for a code on this device" isn't offered after a recovery code.**
+- **Wrong passwords typed in Your account go in the audit trail,** and count with sign-in's tries.
+- **A wallboard TV whose session is turned away reloads to the sign-in pages,** rather than showing old numbers.
+- **Remembered devices get a new token each time they're recognized.** Address limits count IPv6 visitors by network.
+
+## 0.8.230 (2026-10-24)
+- **A browser's notifications follow whoever signs in on it.**
+  - If your session ran out and you sign in again, your device carries on, and signing out turns it off. It's no longer listed twice when you turn notifications on again.
+  - On a computer people share under one account, the last person's notifications stop there when someone else signs in.
+- **Signing out also clears the notifications a device is still showing.**
+
+## 0.8.229 (2026-10-24)
+- **An admin can reset someone's two-factor authentication** when they've lost their phone and their recovery codes. It's on the person's page, and the admin confirms with their own code.
+  - It clears the key, the recovery codes and any remembered devices, and signs the person out everywhere. Their notifications stop on every device.
+  - The person and the other admins are emailed.
+  - At their next sign-in, someone who must use two-factor authentication sets it up again.
+- **From the server, `erlangly two-factor reset EMAIL`** does the same, for the last admin, or when no admin can help. `erlangly two-factor` lists who uses two-factor authentication, and who must but hasn't set it up.
+- **Your account shows two-factor authentication's state at a glance,** a green "On" or a red "Off". The button reads "Manage two-factor authentication" once it's on.
+
+## 0.8.228 (2026-10-24)
+- **The morning summary's "Decide them on Requests" marks your "requests are waiting" notification read,** as the Right away email's button does.
+- **Tapping ✕ on a notification that has just gone** opens your Notifications page saying "That's no longer there.", instead of an error page.
+- **"That's no longer there." shows in the calm blue banner,** not the green one, since nothing was done.
+- **Going Back to a page no longer shows its message again,** such as "Saved." or "That's no longer there.".
+
+## 0.8.227 (2026-10-24)
+- **Two-factor authentication can be asked of everyone.**
+  - Settings → Sign-in has a Two-factor authentication card: admins always, or everyone who signs in with an Erlangly password.
+  - Someone who must, and hasn't set it up, does it at their next page.
+- **A device of your own can skip the code for a while,** for 7, 30 or 90 days, or never. It's 30 by default, set in Settings → Sign-in.
+  - Tick "Don't ask for a code on this device" on the code page. The password is still needed.
+  - Your account lists these devices, with Forget.
+- **Changes to two-factor authentication are emailed and need your password.**
+  - You're emailed when it's set up, moved or turned off on your account.
+  - Moving it or turning it off takes your password as well as a code.
+  - Setting it up asks for your password before it shows the key.
+- **Wrong codes go in the audit trail,** and using up the tries is emailed.
+- **Notifications stay on through two-factor authentication.**
+  - Going back from the code page, or setting up or moving two-factor authentication, no longer turns notifications off on the device you're using.
+  - That device is no longer listed twice under Your devices.
+  - Setting it up or moving it turns notifications off on your other devices, as a new password does.
+- **A notification that's gone opens your Notifications page** with "That's no longer there." instead of an error. That covers a swap that expired or a request already decided, whether you tap it on your phone or follow it from an email.
+- **The "requests are waiting on you" email's button marks that notification read,** so the next new request emails you again.
+- **Resting the pointer on a notification no longer marks it read.**
+
+## 0.8.226 (2026-10-24)
+- **Staff have one "requests waiting on you" notification that keeps itself up to date.**
+  - It says how many requests are waiting and from whom ("Time off: Priya, Sam. Swap: Ana and Lee."), and opens Requests.
+  - A new request makes it new again, decisions update it quietly, and it goes once nothing's waiting.
+  - You can have it come to your devices, or emailed right away. By default it's in the morning email.
+- **The morning email becomes the morning summary,** at 07:00 in each person's own time zone.
+  - It lists what's waiting on you, plus what's new and unread since yesterday morning in the groups you chose to have summarized.
+  - Agents can choose it for their schedule, swaps and time off.
+  - Nothing is sent on a morning with nothing to say.
+- **Swaps:** answering one at the moment it expires, or as someone else answers it, changes nothing and says where the swap stands.
+
+## 0.8.225 (2026-10-24)
+0.8.224 wasn't released. Its checks couldn't start because of a leftover lock on the build machine, not because of a problem in Erlangly itself. Everything listed under it comes in 0.8.225.
+
+## 0.8.224 (2026-10-24)
+- **Two-factor authentication for admins.** An admin who signs in with a password also enters a code from an authenticator app, such as Google Authenticator, Microsoft Authenticator, 1Password, Bitwarden or Authy.
+  - At their next page, Erlangly asks them to set it up and shows recovery codes to keep.
+  - Anyone else who signs in with a password can turn it on under Your account.
+  - People who sign in with single sign-on aren't affected.
+- **Security.** Sign-in codes, recovery codes and authenticator keys are never in the exports.
+
+## 0.8.223 (2026-10-24)
+- **Agents are told about their swaps:** when a colleague says no, when the person who asked cancels, and when a swap expires. Answering a swap clears its "would like to swap" notification.
+- **Agents are told when what they reported is approved or declined** by someone else, and when a supervisor enters time off or records an exception for them.
+- **These follow each person's Notification settings.** By default they're emailed as they happen, like the others.
+- **Admins hear "Erlangly needs looking at" on their Notifications page and devices too,** even before email is set up. It says only how many things need looking at; the details are on Settings → System.
+- **Fixed days off read in words** in the audit trail, and on the draft: "1 person with a fixed day off, picked in this draft".
+
+## 0.8.222 (2026-10-24)
+- **One fixed day off a week.** A line of business, or a pattern set, can keep each person's days off to one fixed weekday.
+  - Generation never plans that day.
+  - A planner can set the day on a person's page, or with a `fixed_day_off` column in a people import. Where nobody has, generation picks the day that costs the least coverage, and keeps it once the draft is used.
+  - Days off together go next to the fixed day.
+  - The draft says how many people have a fixed day off, and names anyone it leaves short of their contract's days.
+
+## 0.8.221 (2026-10-24)
+- **Choose what Erlangly tells you, under Your account → Notification settings.**
+  - For your schedule, swaps and time off, choose whether each comes to your devices and by email.
+  - Supervisors choose whether the morning email about waiting requests comes.
+  - Each device has **Send a test**.
+  - The page says plainly whether notifications are on for the device you're using, and if not, why.
+  - Every notification email links to the page.
+- **After you turn on notifications on a device, Erlangly offers once to stop the emails** about your shifts, swaps and time off. They'll still come to your devices and your Notifications page.
+- **The Notifications page shows what's new for you first,** above what you've already seen. ✕ marks one as read without opening it.
+- **People made inactive, and people who have left, no longer get emails** about shifts, swaps or time off.
+- **Start times close together, refined.**
+  - A draft taking over in the middle of a week counts the shifts the schedule keeps that week, so the limit holds across the whole week.
+  - Starts are measured round the clock, so 23:30 and 00:30 are an hour apart.
+  - A day planned again inside the limit is weighed again against the person's other days.
+
 ## 0.8.220 (2026-10-23)
 - **Start times close together.**
   - A line of business, or a pattern set, can say "Start times in a week vary by at most _ hours". Generation keeps each person's starts within that window, on their own clock.
