@@ -1,5 +1,73 @@
 # Changes
 
+## 0.8.220 (2026-10-23)
+- **Start times close together.**
+  - A line of business, or a pattern set, can say "Start times in a week vary by at most _ hours". Generation keeps each person's starts within that window, on their own clock.
+  - A day whose best shift starts outside the window is planned again inside it, rather than dropped.
+  - A pattern set's limit replaces the person's lines' while they have it. Otherwise the smallest of their lines' limits applies.
+  - The draft names anyone the limit left short of their contract's hours.
+
+## 0.8.219 (2026-10-23)
+- **Approved overtime counts in the labor checks.**
+  - Overtime next to a shift counts with it: in its hours, in the stretch since the last break, and in the rest after it.
+  - Overtime on its own, as on a day off, counts by itself.
+- **Overtime still to come is checked when it's recorded, approved or changed.**
+  - A rule that blocks refuses it, and warnings ask you to choose **Approve anyway**.
+  - An agent's own overtime that would add an issue waits for a supervisor.
+- **A shift under approved time off is left out of the checks.** Time off over part of a shift comes off its hours.
+- **Removing a shift is checked like any other change.** The checks also look as far either side of a schedule as your longest days-in-a-row rule reaches.
+- **Generation looks at the shifts people already have.**
+  - A period's last week keeps days in a row within the limit, counting into the next period.
+  - A weekly cap counts the hours worked elsewhere that week.
+  - A draft taking over in the middle of a week starts nobody during a shift the schedule keeps, or within the rest after it.
+- **Break rules see back-to-back shifts as one stretch of work,** so splitting a shift in two no longer escapes a meal rule.
+- **Rule packs can now say three new things,** and Settings → Labor rules shows them:
+  - rest is owed only between working days;
+  - rest is owed only between a day shift and a night shift, as in Panama;
+  - overtime leaves breaks out.
+
+## 0.8.218 (2026-10-23)
+- **Labor rules: the review's first round of rule packs.** Each rule and holiday links to its official text under Settings → Labor rules.
+  - **United States (2026.10.5):**
+    - Alaska's daily overtime past 8 hours, which makes 32 states.
+    - The seventh day in a row in California and Massachusetts, and the shortest shift in Rhode Island (3 hours) and New Hampshire (2 hours), all as warnings.
+  - **Canada (2026.10.5):**
+    - Days in a row warn under federal law and in Ontario and Manitoba.
+    - Five hours of work without a meal warns under federal law and in Saskatchewan.
+    - British Columbia's shortest shift is 2 hours, and Prince Edward Island's overtime starts past 44 hours.
+    - New Year's Day or Christmas on a weekend is listed on its date and on the next weekday in Ontario, British Columbia, Quebec, Alberta and Prince Edward Island.
+  - **Jamaica (2026.10.2):** overtime past 40 hours a week, as the minimum wage law sets it. The daily and rest limits the law doesn't set are gone.
+  - **Panama (2026.10.2):** more than 3 hours of overtime a day blocks publishing, and more than 9 a week warns. A holiday on a Sunday is listed with its Monday.
+  - **India (2026.10.2):**
+    - Uttar Pradesh follows its new rules: overtime past 8 hours a day or 48 a week, and at most 10 hours a day.
+    - Holi 2026 in Uttar Pradesh is on March 4.
+    - West Bengal allows an 11-hour day.
+  - **Barbados, Guyana, Kenya and the Philippines (2026.10.2):** official sources, and corrected citations.
+- **Installing these packs checks the changes you've made to their rules again,** as 0.8.217 describes. Settings → Labor rules says what each update did.
+- **A change you made to a labor rule follows the pack's warn-or-block setting where you didn't change it,** as it already follows the numbers you didn't change. Only a setting you changed is kept.
+- **Renewing Updates when a rule pack's file is damaged** saves the key, installs the other packs, and says which one wasn't installed. You used to get an error page instead.
+- **Settings → Labor rules** says "Turned off here (by …)" without the word "disabled". In a country Erlangly has no rules for, it says so.
+- **Security.** Erlangly now runs on Ruby 4.0.9. It fixes bugs in Ruby's regular expression engine that GitLab found could be used to run code on its servers (CVE-2026-89078, CVE-2026-93577, CVE-2026-97229 and CVE-2026-110264).
+
+## 0.8.217 (2026-10-23)
+- **The labor checks count breaks, rest and clock changes right.**
+  - A late second meal is found even after an unpaid first one, under California's, Massachusetts' and India's rules.
+  - A lunch entered twice counts once, and rest runs from the latest shift end.
+  - The nights the clocks change count as long as they really are.
+  - Issues read in hours and minutes, such as "Only 7 h 59 min rest…" or "A shift with 11 h of work needs 2 meal breaks of 30 minutes, and has 1: the second is due by 10 h".
+- **An error inside the checks no longer lets a change through unchecked.** The change is refused, and generation stops at once and says why.
+- **A change to a labor rule keeps only the numbers you changed,** and follows the rule pack's updates for the rest.
+  - When an update touches a rule changed here, Settings → Labor rules says what it did, until an admin dismisses the notice.
+  - A number you'd set looser takes the pack's, if the update changed it.
+  - A rule the pack drops stays as you changed it, until an admin dismisses it.
+- **In Canada and the US, Start here asks you to choose your labor rules** while the organization is on federal law.
+- **Where no labor rules apply,** as in Mexico, Colombia, the Dominican Republic or the Bahamas, setup and the checks say so.
+- **Changing a person's or a site's labor rules can carry a reason,** which the audit trail keeps. A site checked against another country's rules says so.
+- **Renewing Updates on a pay-once license installs the rule packs held back** while Updates had ended, right away.
+- **A swap's labor issues name whose they are and the day,** and a refused swap names the line of business.
+- **People imports take a `labor_rules` column.** The guides and erlangly.com now say only what the checks do.
+- **Security.** Rails's HTML sanitizer now uses crass 1.0.8, which fixes a way bad URLs could get CSS past it (GHSA-pq4g-8rxf-4g29).
+
 ## 0.8.216 (2026-10-23)
 - **Divali 2026 is in Trinidad and Tobago's holidays:** Monday, November 9, as Legal Notice 832 of 2026 proclaims it. It comes in Trinidad and Tobago's rule pack 2026.10.2, where each rule and holiday also links to its official text under Settings → Labor rules.
 

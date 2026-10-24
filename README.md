@@ -1,6 +1,6 @@
 # Erlangly
 
-Workforce management for contact centers: forecasting, Erlang C staffing, schedule generation that follows labor law, time off and shift swaps, adherence and a live wallboard. It runs on your own server, as one Docker container.
+Workforce management for contact centers: forecasting, Erlang C staffing, schedule generation with every schedule checked against labor law, time off and shift swaps, adherence and a live wallboard. It runs on your own server, as one Docker container.
 
 ## Install
 
