@@ -1,5 +1,18 @@
 # Changes
 
+## 0.8.238 (2026-10-24)
+- **Making a personal API token takes your code,** or your password if you don't use two-factor authentication. If you must sign in with SSO, it takes neither.
+- **Showing an admin's invitation link emails every admin,** as a reset link does.
+- **The guides say which admin changes take your code** and email every admin: making or promoting an admin, a role change out of SSO or two-factor authentication, another admin's reset link, and an admin's email change.
+
+## 0.8.237 (2026-10-24)
+- **Showing another admin's password reset link, or changing an admin's email address, takes your own code,** and every admin is emailed. A browser left signed in can no longer be used to take over an admin's account.
+
+## 0.8.236 (2026-10-24)
+- **Making someone an admin takes your own code,** and every admin is emailed, the new one too. That covers inviting or promoting an admin, letting an inactive admin sign in again, and showing an admin's invitation link.
+- **A role change that takes someone out of required SSO or two-factor authentication takes your code too,** and every admin is emailed.
+- **Forms that take a code check everything else first,** so a mistake elsewhere on the form doesn't use up your code. A change that's refused leaves everything as it was.
+
 ## 0.8.235 (2026-10-24)
 - **Loosening sign-in security takes your own code, and every admin is emailed, you too.** That covers:
   - asking less of two-factor authentication;
