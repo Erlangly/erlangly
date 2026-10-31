@@ -1,9 +1,17 @@
 # Changes
 
+## 0.8.267 (2026-10-31)
+- **Settings → Integrations** now says integrations can import people, as well as time off and balances, and that webhooks tell your systems what changed. The Personal details ability now mentions balances, and Settings → Time off now mentions what your HR system calls each kind of time off.
+- **The API's answer to a missing, expired or revoked token** now says where both kinds are made: a personal token under Your account, an integration's under Settings → Integrations.
+- **The Automating Erlangly guide:** its nightly HR sync no longer sends a leaver's Attrition time off to HR as leave. It also corrects the webhook retry timings and what each event carries, names imports, and gives the dates a balance can have.
+
+## 0.8.266 (2026-10-31)
 - The adherence report and the hours report answer faster over long stretches: adherence by client or line of business, and split by client, no longer looks up each interval's shift. Two months of a 500-person floor by client now take about 0.8 s, down from 1.4 s.
 
+## 0.8.265 (2026-10-30)
 - Webhooks, push notifications and AI assistants' app details now read at most 64 KB back from the other end, headers included, so a server that answers without end can't hold memory. They never go through a proxy set on the server, so they always connect to the address Erlangly checked.
 
+## 0.8.264 (2026-10-30)
 - Time off imported from an HR system can name each kind of leave as HR does, in an hr_type column (or a "Leave type" column), once Settings → Time off says which kind each HR name is, as balances already could.
 - Settings → Time off now lists HR systems that only sent time off, so their names can be set there.
 - For integrations, `/api/v1/me` now says which HR system the integration imports from (`hr_source`).
