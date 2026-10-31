@@ -1,5 +1,145 @@
 # Changes
 
+- The adherence report and the hours report answer faster over long stretches: adherence by client or line of business, and split by client, no longer looks up each interval's shift. Two months of a 500-person floor by client now take about 0.8 s, down from 1.4 s.
+
+- Webhooks, push notifications and AI assistants' app details now read at most 64 KB back from the other end, headers included, so a server that answers without end can't hold memory. They never go through a proxy set on the server, so they always connect to the address Erlangly checked.
+
+- Time off imported from an HR system can name each kind of leave as HR does, in an hr_type column (or a "Leave type" column), once Settings → Time off says which kind each HR name is, as balances already could.
+- Settings → Time off now lists HR systems that only sent time off, so their names can be set there.
+- For integrations, `/api/v1/me` now says which HR system the integration imports from (`hr_source`).
+- The Automating Erlangly guide's nightly sync now reads that HR system from `/me` and sends HR's own leave names.
+
+## 0.8.263 (2026-10-30)
+- **A guide to automating Erlangly** (Docs → Automating Erlangly), for IT teams: getting a token and keeping it safe, a nightly sync with your HR system (people, leave and balances, with the whole script), hours for payroll and adherence for billing, reacting to webhooks (a door-badge example), and the server's commands. Every example was run against Erlangly.
+- **The API reference, the security page and the security questionnaire** now say integrations can import people, time off and balances as well as read, what an HR import keeps and for how long, and how webhooks reach only the addresses you allow.
+
+## 0.8.262 (2026-10-30)
+- **Webhooks, under Settings → Integrations:** Erlangly tells your other systems when something changes, so they needn't keep asking. Choose an address, the events (shifts changed, time off decided or canceled, an exception decided, a person added, changed or leaving) and, if you like, only some clients. Each event carries ids, never personal details, and is signed so the receiver can check it came from you; a retry keeps the same id.
+- **Only public addresses,** checked when saved and at every send, and never the server's own or its networks. A self-hosted server can allow private ranges with `erlangly webhooks allow`, and trust an internal certificate authority with `erlangly webhooks ca`. Redirects aren't followed and answers aren't read.
+- **A webhook that keeps failing for 3 days is switched off,** and admins are told; switched on again, it catches up. Adding or changing one asks you to confirm who you are, and every admin is emailed.
+
+## 0.8.261 (2026-10-30)
+- **People from your HR system:** joiners, changes and leavers through the API (`/api/v1/imports`, kind people), `erlangly people import` or an integration allowed to import people, matched by employee number, with your license's seats kept. Up to 1,000 people a file: send only who changed, or split it.
+- **Leavers go through the leaving flow** on HR's date, with their schedule kept to the end of that week or only to HR's date, as Settings → Organization says. The same date again changes nothing; a new date is recorded as staying, then leaving again; someone HR shows as back is back. The spreadsheet import takes a leaving date too.
+- **A guard against a broken HR file:** one that would make more than 10% of your active people leave or go inactive is refused unless sent again with force.
+- **Imports go in a few people at a time,** so live adherence never waits on them, and a time-off or balance import that stopped partway now knows exactly which rows it still has to do.
+
+## 0.8.260 (2026-10-29)
+- **Add your own activities and exceptions,** under Settings → Activities and Settings → Exceptions: a name, a code (made from the name if you leave it empty) and what it counts as. Your own can be switched off and on again; the built-in ones stay. Switching off an activity a shift pattern still places says which patterns to change.
+- **Time-off balances from your HR system,** read-only: imported through the API, `erlangly balances import` or an integration allowed to import time off and balances, in hours, as of a date. Each import replaces the balances it carries; an older file never replaces a newer balance. Each HR system's names for kinds of time off are set once under Settings → Time off.
+- **Balances show where time off is asked for and decided:** "Vacation: 32 h left, as of Oct 23", and to whoever decides, what was approved here since, by its hours, or its days if not yet scheduled. They never stop a request. Staff who decide someone's time off see them on their page, and the API gives them as a personal detail.
+- **The server's import commands** take the admin's own rows too; the app and the API still don't.
+
+## 0.8.259 (2026-10-29)
+- **Billable for one client or one line of business,** where it differs: Settings → Activities and Settings → Exceptions have "Different for a client or line of business". A line's setting comes first, then its client's, then the activity's. Staff limited to some clients see and set only theirs.
+- **Each activity keeps what was billable when it was scheduled,** so a change applies to time scheduled from then on. Time still to come is worked out again when its shift moves to another line, or its line to another client; past months never change. Overtime outside a shift that names no line follows the person's nearest shift that day.
+
+## 0.8.258 (2026-10-29)
+- **Choose what each activity counts as,** under Settings → Activities: on the phones, training, coaching or admin (0.8.257's change, which didn't reach staging). Each scheduled activity keeps what it counted as when it was scheduled; generate a draft again to have it follow.
+- **Leave booked in your HR system comes into Erlangly,** through the API (`/api/v1/imports`), `erlangly timeoff import` or the spreadsheet import's new HR columns. Each record carries the HR system's own ID, so sending a file again updates or cancels what it sent before rather than copying it; leave comes in approved, and agents are told, except about leave that's all in the past or on the first full load. Undoing an import puts back what it changed. Large files go in 500 rows at a time, so live adherence never waits.
+- **HR learns what Erlangly approved:** `/api/v1/time_off_requests` lists it, with its HR reference, and HR can record its own ID on it, so its next import matches it.
+- **HR files are kept small:** only the columns Erlangly reads are kept, the file is cleared after a week, and each import is one line in the audit trail.
+- **Integrations can be allowed to import time off,** under Settings → Integrations, named for their HR system.
+
+## 0.8.257 (2026-10-29)
+- **Choose what each activity counts as,** under Settings → Activities: on the phones, training, coaching or admin. Nesting, say, can now be training on an install set up before it was. Each scheduled activity keeps what it counted as when it was scheduled, so a change applies to what's scheduled from then on; generate a draft again to have it follow.
+
+## 0.8.256 (2026-10-29)
+- **Integration tokens, under Settings → Integrations,** for syncs that run for years: each belongs to the organization, not a person, so it keeps working when the admin who made it leaves. Choose its clients and whether it reads personal details; it can't sign in, isn't listed under Users, isn't told anything and doesn't count against your license's logins. It lasts up to a year, and admins are emailed a week before it ends.
+- **Making, changing or renewing one asks you to confirm who you are:** your password again, with your two-step code if you use one, or a fresh single sign-on. Every admin is emailed when one is made, changed, renewed or revoked.
+- **An integration can only call what it's allowed to:** reading, for now; anything else is refused. AI assistants can't use one, and each has its own rate limit.
+
+## 0.8.255 (2026-10-29)
+- **Hours for a pay period,** at `/api/v1/hours` and `erlangly hours` on the server: each person's scheduled minutes for up to 62 days, as payroll scripts need them. Paid minutes scheduled (billable and not), overtime (outside a shift too), unpaid exceptions, paid and unpaid time off by type, minutes on holidays, and minutes in adherence for scorecards. These are the schedule's figures, to compare with your time clock, never hours worked.
+- **Your script chooses how a night shift counts:** all on the day it starts (as the schedule shows it), or split at midnight. Split by client, each client gets its shifts' minutes; overtime outside a shift goes to the line it names, else to the client of the person's nearest shift that day. Time off goes to no client.
+- **AI assistants can read hours** for a pay period too.
+
+## 0.8.254 (2026-10-29)
+- **Pay fields for payroll scripts.** Each shift in `/api/v1/shifts` gives its paid minutes scheduled, and its paid and unpaid time-off minutes. These are the schedule's figures, to compare with your time clock, never hours worked. Time off counts as time off, whatever it covers; unpaid exceptions aren't paid; overtime counts once, up to the person's next shift. `erlangly schedule --json` and AI assistants give the same.
+- **Time off gives its minutes on each day** in `/api/v1/time_off_requests`: the shift it covers that day. A day off counts nothing.
+- **Integrations reading only what's changed** now also see shifts whose time off or exceptions changed.
+
+## 0.8.253 (2026-10-29)
+- **Payroll and billing scripts get more from the API.** Each shift in `/api/v1/shifts` names its client and says whether approved time off covers all or part of it, so a day off isn't counted as worked; `erlangly schedule --json` says the same.
+- **A new exceptions endpoint,** `/api/v1/exceptions`, lists approved exceptions (overtime outside a shift included) with whether each is paid, billable and counts as absence, and can return only what's changed since the last read. A reason shows only with personal details.
+- **A new holidays endpoint,** `/api/v1/holidays`, gives the holidays in force, or one person's.
+- **Time off says whether it's paid** in `/api/v1/time_off_requests`.
+- **AI assistants can list exceptions and holidays.**
+- **Renaming a client, or changing whether a type is paid or counts as absence,** now shows up for integrations that read only what's changed.
+
+## 0.8.252 (2026-10-29)
+- **Activities and exceptions can be marked not billable,** for time the client doesn't pay for, like your own PCI training. Settings → Activities and Settings → Exceptions set it; everything starts billable. Each activity keeps the setting it was scheduled with, so changing it later never changes a month you've already reported.
+- **A Training report** (from the Adherence page) shows training by client, line of business and type: billable or not, planned, and done, with a download. Done is training that has passed and wasn't replaced by an exception or time off.
+- **The Hours report** (Intraday → Hours) marks time that isn't billable, and its download has a Billable column.
+- **The shifts API** says whether each activity is billable.
+
+## 0.8.251 (2026-10-28)
+- **Activity and time-off types have a "Counts as absence" setting,** separate from shrinkage, for points and bonuses in other systems. Sick time counts by default. The API and exports carry it, and the adherence download and API give each person's absences.
+- **Overtime outside a shift can name the line of business it was for,** and keeps that line's client, as shifts do, so moving a line later never changes past adherence by client. The time follows that line's own exception settings. Exceptions inside a shift stay on the shift's line.
+- **Staff who see only some clients** see which client and line such overtime was for, and can't change it to another client's line.
+- **Nesting is off the phones by default, and supervisors can book it,** on new installs; existing installs keep their settings.
+- **The adherence API stays fast** when split by client with named overtime.
+
+## 0.8.250 (2026-10-28)
+- **0.8.249's changes, released.** 0.8.249 stopped at its security scan, on a flaw in the backup tool's Go library (CVE-2026-56857) that affects only Windows. Erlangly runs on Linux, so it can't be exploited there; the scan now lets it through until a fixed backup tool ships.
+
+## 0.8.249 (2026-10-28)
+- **A shift pattern works between an earliest start and a latest end,** instead of a latest start. Each shift length starts no later than the latest end less its length, so a 6-hour shift doesn't run past where you want the day to stop. The end can be the next day, for evening and night patterns.
+  - On upgrade, each existing pattern's latest end is its latest start plus its longest length, so every shift it allowed is still allowed. In a pattern with several lengths, shorter shifts may now start later than before.
+- **A shared or loaned agent's shifts for another client name that client and its line,** for supervisors and planners who see only some clients: in the schedule, in clash messages, and on time-off requests. Nothing else about the other client is shown.
+- **Each line of business can handle an exception type its own way:** whether a report counts at once or waits for review, and its own auto-approve limit. Lines without their own settings use the exception type's, as before.
+- **A planned move of a line of business shows on the line's page and its forecasts:** which schedule its shifts go into, what would stop the move as things stand, and, once the day has passed without it, that it hasn't moved yet. People who don't see the new client aren't told its name.
+
+## 0.8.248 (2026-10-27)
+- **A line of business can move to another client from a day you choose,** instead of only once it's empty. The line's page plans the move and can cancel it. On the morning of that day, where the line works, the move happens:
+  - Its people carry on with it for the new client.
+  - Its shifts from that day to the end of the published schedule move to the new client's schedule as they are.
+  - Later schedules and drafts lose the line's shifts, and both clients' schedules are flagged to generate again.
+  - Days already worked stay with the old client, for billing and adherence.
+  - Agents who lose a published shift are told. Planners are told if a move can't go through, or goes through late.
+- **Before saving, the form lists what's different between the two clients** (service targets, shrinkage), and the line keeps its time zone.
+
+## 0.8.247 (2026-10-27)
+- **Labor-rule warnings are grouped by rule.** A schedule's Labor rules section, and the page before publishing, now show one row for each rule broken instead of one for each shift.
+  - Each row gives the rule and where it applies, how many shifts and people, and the law it comes from.
+  - Open a row to see the people affected, with their days, each opening that shift.
+  - When most of a rule's warnings come from one or two shift patterns, the row names them, with a link to change them.
+- **The section follows the schedule's filters:** the week or day, line of business, team and search. It says what's left out, and anything that stops publishing is always mentioned.
+
+## 0.8.246 (2026-10-27)
+- **Under the hood: the rest of the staffing figures now come from the same library** as the free Erlang C calculator coming to erlangly.com: the model for each channel, the peak, agent hours and how figures are rounded. Every figure Erlangly works out and shows stays exactly the same, checked against sample days worked out before the change.
+
+## 0.8.245 (2026-10-27)
+- **Under the hood: Erlangly's staffing maths is now a library of its own,** ready for the free Erlang C calculator coming to erlangly.com. Every figure Erlangly works out stays exactly the same.
+
+## 0.8.244 (2026-10-27)
+- **An integration is told to read everything again when an admin changes its user's clients or role.** The change log's cursor carries what the user sees, so nothing is quietly missed.
+
+## 0.8.243 (2026-10-26)
+- **Integrations for staff limited to some clients hear when someone starts or stops being visible to them,** with their time off. That includes 90 days after their last assignment there ends.
+- **Renaming a line of business, an activity type or a time-off type** shows up in the changes.
+- **The change log's cursors are signed.** Cursors from 0.8.242 ask for one full read again.
+
+## 0.8.242 (2026-10-26)
+- **Integrations can ask for only what changed.** `after=` on the shifts, time off and people APIs gives the changes since a cursor, removals included, a page of 500 at a time.
+  - It covers published shifts and swaps, exceptions, time off, and people (with their teams, sites, contracts and availability).
+  - A full read gives the cursor to start from.
+
+## 0.8.241 (2026-10-26)
+- **Each shift keeps the client it was worked for,** so adherence by client stays right after a line of business moves to another client. Existing shifts take the client of their schedule.
+- **A line of business can move to another client only when it's empty:** nobody assigned to it, and no shifts still to come. Its form says what to reassign first.
+- **Faster adherence reports** for a person's time across clients.
+- **Security.** net-ssh 7.3.8 replaces 7.3.3, which had new advisories. It's used only for deploying, not by the running app.
+
+## 0.8.240 (2026-10-26)
+- **Adherence by client, for billing and pay.**
+  - The adherence API groups by client, and splits each person's or team's time by client or line.
+  - It filters by client, line, team or person.
+  - Each row adds minutes in adherence and productive minutes.
+- **`/intraday`** adds answered in target and the contacts its service level counts, so a client's service level adds up across its lines.
+- **The Adherence download** has a Client column where clients are shown, with each person's rows split by client and listed by name.
+- **Behavior change:** the adherence API answers 400 to an unknown `by=`, where it used to fall back to by person.
+
 ## 0.8.239 (2026-10-26)
 - **Security.** A browser left signed in can no longer connect an AI assistant without your code or password, and an admin needs their own code to make a new token for a contact center connection.
 - **Allowing an AI assistant** (Claude, ChatGPT) to act as you takes your code, or your password if you don't use two-factor authentication. If you must sign in with SSO, it takes neither.

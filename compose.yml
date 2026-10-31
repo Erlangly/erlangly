@@ -24,6 +24,8 @@ services:
     #   TRUSTED_PROXIES: "192.168.1.10"  # and, if that proxy runs on another machine, its address
     #   ERLANGLY_DAILY_BACKUPS: "7"   # nightly backups kept in the volume: one a day for this many days
     #   ERLANGLY_WEEKLY_BACKUPS: "4"  # then one a week for this many weeks before those
+    #   WEBHOOK_HOST_ADDRESSES: "203.0.113.10 2001:db8::10"  # this server's own addresses (hostname -I), which webhooks never reach
+    #   WEBHOOK_PRIVATE_RANGES: "10.20.0.0/16"  # private ranges webhooks may reach, no wider than /16 (the erlangly command checks them)
     #   (behind your own proxy, publish the port for it alone, like "127.0.0.1:8095:80", on Docker's usual network)
     volumes:
       - erlangly:/rails/storage

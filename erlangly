@@ -4,7 +4,8 @@
 set -euo pipefail
 umask 077 # backups and settings hold secrets: nobody else on the server may read them, even while they're written
 
-CONF=/etc/erlangly/erlangly.conf
+CONF=${ERLANGLY_CONF:-/etc/erlangly/erlangly.conf}
+WEBHOOK_CA_COPY=${CONF%/*}/webhook-ca.pem # where `erlangly webhooks ca` keeps the certificate the container reads
 OFFICIAL_IMAGE=ghcr.io/erlangly/erlangly
 SOURCE=${ERLANGLY_SOURCE:-https://get.erlangly.com}
 CONTAINER=erlangly
@@ -49,13 +50,30 @@ Usage: erlangly <command>
   is running stops straight away, and says which is running.
 
   schedule [DATE] [--lob CODE] [--json]   Published shifts on a day (default today)
+  hours FROM TO [--split client] [--days split] [--csv]
+                                          Each person's scheduled minutes for a pay period
   volumes import FILE.csv                 Import volume history
   timeoff [--all]                         Time off waiting for a decision (--all: coming up)
   timeoff approve|decline ID [NOTE]       Decide a time-off request
+  timeoff import FILE.csv [--source NAME] [--yes]
+                                          Import time off booked in an HR system: previews it, imports with --yes
+  balances import FILE.csv --source NAME [--yes]
+                                          Import time-off balances from an HR system, in hours
+  people import FILE.csv [--source NAME] [--force] [--yes]
+                                          Import people from an HR system, joiners and leavers
+
+  webhooks                                Webhooks, and the private ranges and certificate authority they may use
+  webhooks allow RANGE                    Let webhooks reach a private range on your network, like 10.20.0.0/16, for an
+                                          internal system. Inside 10/8, 172.16/12, 192.168/16, 100.64/10
+                                          or fc00::/7, no wider than /16 (/48), and never this server's own addresses.
+                                          Only public addresses otherwise. It restarts Erlangly, and it's in the audit trail
+  webhooks disallow RANGE                 Stop webhooks reaching it (restarts Erlangly; in the audit trail)
+  webhooks ca FILE.pem|off                Trust your internal certificate authority for webhooks, besides the system's
+                                          (restarts Erlangly; in the audit trail)
 
 Settings: $CONF (TLS_DOMAIN, ERLANGLY_URL, TRUSTED_PROXIES, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE,
           LITESTREAM_REPLICA_URL, LITESTREAM_ACCESS_KEY_ID, LITESTREAM_SECRET_ACCESS_KEY,
-          ERLANGLY_DAILY_BACKUPS, ERLANGLY_WEEKLY_BACKUPS)
+          ERLANGLY_DAILY_BACKUPS, ERLANGLY_WEEKLY_BACKUPS, WEBHOOK_PRIVATE_RANGES, WEBHOOK_CA_FILE)
 USAGE
 }
 
@@ -106,7 +124,7 @@ load_settings() {
         # later `erlangly upgrade` reinstall it (installs from before 0.8.33 still have it in their settings).
         ERLANGLY_IMAGE | ERLANGLY_HTTP_PORT | ERLANGLY_HTTPS_PORT | TLS_DOMAIN | ERLANGLY_URL | TRUSTED_PROXIES | \
           LITESTREAM_REPLICA_URL | LITESTREAM_ACCESS_KEY_ID | LITESTREAM_SECRET_ACCESS_KEY | \
-          ERLANGLY_DAILY_BACKUPS | ERLANGLY_WEEKLY_BACKUPS | ERLANGLY_SECRET_KEY) printf -v "$key" '%s' "$value" ;;
+          ERLANGLY_DAILY_BACKUPS | ERLANGLY_WEEKLY_BACKUPS | ERLANGLY_SECRET_KEY | WEBHOOK_PRIVATE_RANGES | WEBHOOK_CA_FILE) printf -v "$key" '%s' "$value" ;;
       esac
     done < "$CONF"
   fi
@@ -124,6 +142,8 @@ load_settings() {
   ERLANGLY_DAILY_BACKUPS=${ERLANGLY_DAILY_BACKUPS:-}
   ERLANGLY_WEEKLY_BACKUPS=${ERLANGLY_WEEKLY_BACKUPS:-}
   ERLANGLY_SECRET_KEY=${ERLANGLY_SECRET_KEY:-}
+  WEBHOOK_PRIVATE_RANGES=${WEBHOOK_PRIVATE_RANGES:-}
+  WEBHOOK_CA_FILE=${WEBHOOK_CA_FILE:-}
   check_settings
 }
 
@@ -144,6 +164,12 @@ check_settings() {
   [[ "$ERLANGLY_DAILY_BACKUPS" =~ ^([1-9][0-9]{0,2})?$ ]] || fail "ERLANGLY_DAILY_BACKUPS should be how many days to keep a nightly backup for, from 1 to 999 (7 if it's empty)"
   [[ "$ERLANGLY_WEEKLY_BACKUPS" =~ ^([0-9]{1,3})?$ ]] || fail "ERLANGLY_WEEKLY_BACKUPS should be how many weeks to keep one nightly backup a week for, from 0 to 999 (4 if it's empty)"
   [[ "$ERLANGLY_SECRET_KEY" =~ ^[0-9a-f]*$ ]] || fail "ERLANGLY_SECRET_KEY isn't the key Erlangly made: copy it as it is in the old server's $CONF"
+  local ranges range
+  IFS=', ' read -r -a ranges <<< "$WEBHOOK_PRIVATE_RANGES"
+  for range in "${ranges[@]}"; do
+    proxy_address "$range" || fail "WEBHOOK_PRIVATE_RANGES should be ranges like 10.20.0.0/16 (several separated by commas), set with erlangly webhooks allow, not: $range"
+  done
+  [[ -z "$WEBHOOK_CA_FILE" || "$WEBHOOK_CA_FILE" =~ ^/[A-Za-z0-9._/-]+$ ]] || fail "WEBHOOK_CA_FILE should be the path of a certificate, set with erlangly webhooks ca FILE.pem"
 }
 
 # An address for TRUSTED_PROXIES, or a range no wider than /16 (IPv4) or /48 (IPv6).
@@ -185,6 +211,11 @@ LITESTREAM_SECRET_ACCESS_KEY=$LITESTREAM_SECRET_ACCESS_KEY
 # Nightly backups kept on this server: one a day for this many days (7 if empty), then one a week for this many weeks before those (4 if empty).
 ERLANGLY_DAILY_BACKUPS=$ERLANGLY_DAILY_BACKUPS
 ERLANGLY_WEEKLY_BACKUPS=$ERLANGLY_WEEKLY_BACKUPS
+# Private ranges webhooks may reach besides public addresses, and an internal certificate authority they trust besides
+# the system's. Set them with \`erlangly webhooks allow\` and \`erlangly webhooks ca\`, which check them and note them in
+# the audit trail.
+WEBHOOK_PRIVATE_RANGES=$WEBHOOK_PRIVATE_RANGES
+WEBHOOK_CA_FILE=$WEBHOOK_CA_FILE
 SETTINGS
   if [ -n "$ERLANGLY_SECRET_KEY" ]; then
     cat <<SETTINGS
@@ -309,7 +340,7 @@ remove_container() {
 }
 
 start_container() {
-  local image=$1 published=(-p "$ERLANGLY_HTTP_PORT:80") tls=() litestream=() backups=() logs=()
+  local image=$1 published=(-p "$ERLANGLY_HTTP_PORT:80") tls=() litestream=() backups=() logs=() webhooks=()
   [ -n "$TLS_DOMAIN" ] && tls=(-p "$ERLANGLY_HTTPS_PORT:443" -e "TLS_DOMAIN=$TLS_DOMAIN")
   # Behind the customer's own HTTPS proxy: the proxy terminates TLS, and Erlangly takes its word for each
   # visitor's address when it connects from this server or from TRUSTED_PROXIES. Over IPv4 only: Docker
@@ -326,13 +357,102 @@ start_container() {
   fi
   [ -z "${ERLANGLY_DAILY_BACKUPS:-}" ] || backups+=(-e "ERLANGLY_DAILY_BACKUPS=$ERLANGLY_DAILY_BACKUPS")
   [ -z "${ERLANGLY_WEEKLY_BACKUPS:-}" ] || backups+=(-e "ERLANGLY_WEEKLY_BACKUPS=$ERLANGLY_WEEKLY_BACKUPS")
+  # Webhooks (planning/30 C2): this server's own addresses as they are now, which the app can't see from its container
+  # and never sends to; the private ranges the operator allowed; and their certificate authority, read-only.
+  webhooks=(-e "WEBHOOK_HOST_ADDRESSES=$(host_addresses)")
+  [ -z "${WEBHOOK_PRIVATE_RANGES:-}" ] || webhooks+=(-e "WEBHOOK_PRIVATE_RANGES=$WEBHOOK_PRIVATE_RANGES")
+  [ -z "${WEBHOOK_CA_FILE:-}" ] || [ ! -r "$WEBHOOK_CA_FILE" ] ||
+    webhooks+=(-v "$WEBHOOK_CA_FILE:/etc/erlangly/webhook-ca.pem:ro" -e "WEBHOOK_CA_FILE=/etc/erlangly/webhook-ca.pem")
   # Docker's usual log driver keeps the log forever, until it fills the disk: keep the newest 100 MB.
   # Other drivers (journald, a log shipper) have limits of their own and are left as the server has them.
   [ "$(docker info --format '{{.LoggingDriver}}' 2>/dev/null)" != json-file ] || logs=(--log-opt max-size=20m --log-opt max-file=5)
   ensure_network # first: if Docker can't make it, Erlangly carries on as it was
   remove_container
   docker run -d --name "$CONTAINER" --network "$NETWORK" --restart unless-stopped "${logs[@]}" \
-    "${published[@]}" "${tls[@]}" "${litestream[@]}" "${backups[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
+    "${published[@]}" "${tls[@]}" "${litestream[@]}" "${backups[@]}" "${webhooks[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
+}
+
+# This server's addresses, IPv4 and IPv6, one line: webhooks never reach them, nor a range holding one. From ip, or
+# hostname -I on a server without it; none if neither answers, which never stops a start, upgrade or rollback.
+host_addresses() {
+  local listed addresses
+  if command -v ip > /dev/null; then
+    listed=$(ip -o addr show 2> /dev/null | awk '$3 == "inet" || $3 == "inet6" { sub(/\/.*/, "", $4); print $4 }') || listed=
+  else
+    listed=$(hostname -I 2> /dev/null) || listed=
+  fi
+  read -r -d '' -a addresses <<< "$listed" || true
+  printf '%s' "${addresses[*]}"
+}
+
+# `erlangly webhooks`: what webhooks may reach besides public addresses (planning/30 C2, IG-16). Only the server's
+# operator can widen it, here, never an admin in the app. Each change is checked by Erlangly, saved, applied by a
+# restart and noted in the audit trail, by "The server command".
+cmd_webhooks() {
+  case "${1:-}" in
+    "" | status)
+      up || fail "Erlangly isn't running"
+      docker exec "$CONTAINER" bin/wfm webhooks ;;
+    allow) webhooks_allow "${2:-}" ;;
+    disallow) webhooks_disallow "${2:-}" ;;
+    ca) webhooks_ca "${2:-}" ;;
+    *) fail "Usage: erlangly webhooks [allow RANGE | disallow RANGE | ca FILE.pem | ca off]" ;;
+  esac
+}
+
+webhooks_allow() {
+  local range ranges
+  [ -n "$1" ] || fail "Usage: erlangly webhooks allow RANGE, like 10.20.0.0/16"
+  up || fail "Erlangly isn't running"
+  # shellcheck disable=SC2046 # one argument an address
+  range=$(docker exec "$CONTAINER" bin/wfm webhooks check-range "$1" $(host_addresses)) || exit 1
+  IFS=', ' read -r -a ranges <<< "$WEBHOOK_PRIVATE_RANGES"
+  if printf '%s\n' "${ranges[@]}" | grep -qxF "$range"; then say "Webhooks may already reach $range."; return; fi
+  WEBHOOK_PRIVATE_RANGES=$(printf '%s\n' "${ranges[@]}" "$range" | sed '/^$/d' | paste -sd, -)
+  save_settings
+  cmd_restart
+  docker exec "$CONTAINER" bin/wfm webhooks audit allowed "$range" > /dev/null || say "Couldn't note it in the audit trail (above)."
+  say "Webhooks may reach $range now. Plain http is allowed there with a warning: https, with your certificate authority (erlangly webhooks ca), is better."
+}
+
+webhooks_disallow() {
+  local ranges kept
+  [ -n "$1" ] || fail "Usage: erlangly webhooks disallow RANGE, as erlangly webhooks lists it"
+  IFS=', ' read -r -a ranges <<< "$WEBHOOK_PRIVATE_RANGES"
+  printf '%s\n' "${ranges[@]}" | grep -qxF "$1" || fail "$1 isn't allowed, so there's nothing to stop. Allowed: ${WEBHOOK_PRIVATE_RANGES:-none}"
+  kept=$(printf '%s\n' "${ranges[@]}" | grep -vxF "$1" | sed '/^$/d' | paste -sd, -) || true
+  WEBHOOK_PRIVATE_RANGES=$kept
+  save_settings
+  cmd_restart
+  docker exec "$CONTAINER" bin/wfm webhooks audit disallowed "$1" > /dev/null || say "Couldn't note it in the audit trail (above)."
+  say "Webhooks no longer reach $1. Any webhook there fails from now on, and is turned off after 3 days."
+}
+
+# A copy of the certificate goes beside the settings, for root to change and the container to read.
+webhooks_ca() {
+  local subject
+  [ -n "$1" ] || fail "Usage: erlangly webhooks ca FILE.pem, or erlangly webhooks ca off"
+  up || fail "Erlangly isn't running"
+  if [ "$1" = off ]; then
+    [ -n "$WEBHOOK_CA_FILE" ] || { say "No certificate authority is trusted for webhooks besides the system's."; return; }
+    WEBHOOK_CA_FILE=
+    save_settings
+    rm -f "$WEBHOOK_CA_COPY"
+    cmd_restart
+    docker exec "$CONTAINER" bin/wfm webhooks audit no-ca > /dev/null || say "Couldn't note it in the audit trail (above)."
+    say "Webhooks trust the system's certificate authorities only."
+    return
+  fi
+  [ -r "$1" ] || fail "can't read $1"
+  subject=$(docker exec -i "$CONTAINER" bin/wfm webhooks check-ca < "$1" | paste -sd ';' -) || exit 1
+  [ -n "$subject" ] || exit 1
+  mkdir -p "${WEBHOOK_CA_COPY%/*}"
+  install -m 644 "$1" "$WEBHOOK_CA_COPY" || fail "couldn't copy $1 to $WEBHOOK_CA_COPY"
+  WEBHOOK_CA_FILE=$WEBHOOK_CA_COPY
+  save_settings
+  cmd_restart
+  docker exec "$CONTAINER" bin/wfm webhooks audit ca "$subject" > /dev/null || say "Couldn't note it in the audit trail (above)."
+  say "Webhooks trust $subject, besides the system's certificate authorities."
 }
 
 since() { awk -v started="$1" -v now="$(date +%s.%N)" 'BEGIN { printf "%.1f", now - started }'; }
@@ -976,7 +1096,7 @@ for argument; do case $argument in -h | --help) usage; exit 0 ;; esac; done
 case "${1:-}" in
   "" | help | -h | --help) usage; exit 0 ;;
   install | status | logs | restart | upgrade | rollback | backup | restore | export | version | --version | setup-link | reset-link | \
-    schedule | timeoff | licence | sso | two-factor | volumes) ;;
+    schedule | hours | timeoff | balances | people | licence | sso | two-factor | volumes | webhooks) ;;
   *) printf 'erlangly: there'"'"'s no command "%s"\n\n' "$1" >&2; usage >&2; exit 1 ;;
 esac
 
@@ -996,6 +1116,7 @@ case "${1:-}" in
   backup)   shift; cmd_backup "$@" ;;
   restore)  shift; cmd_restore "$@" ;;
   export)   shift; cmd_export "$@" ;;
+  webhooks) shift; cmd_webhooks "$@" ;;
   version | --version) image_version erlangly:current ;;
   setup-link)
     up || fail "Erlangly isn't running"
@@ -1010,7 +1131,20 @@ case "${1:-}" in
     echo "$(url)$path"
     echo "  It works once, for 15 minutes. Erlangly keeps a note of it in the audit trail." >&2
     private_address_note || true ;;
-  schedule|timeoff|licence|sso|two-factor)
+  timeoff | balances | people)
+    up || fail "Erlangly isn't running"
+    [ ! -t 2 ] || printf 'Asking Erlangly (a few seconds)…\n' >&2
+    # An HR system's file is on this server, not in the container: send it in, with its name.
+    if [ "${2:-}" = import ] && [ -n "${3:-}" ] && [ "$3" != - ]; then
+      [ -r "$3" ] || fail "can't read $3"
+      command=$1
+      file=$3
+      shift 3
+      docker exec -i "$CONTAINER" bin/wfm "$command" import - --filename "$(basename "$file")" "$@" < "$file"
+    else
+      docker exec -i "$CONTAINER" bin/wfm "$@"
+    fi ;;
+  schedule|hours|licence|sso|two-factor)
     up || fail "Erlangly isn't running"
     [ ! -t 2 ] || printf 'Asking Erlangly (a few seconds)…\n' >&2
     docker exec "$CONTAINER" bin/wfm "$@" ;;

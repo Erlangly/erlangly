@@ -75,7 +75,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | net-scp | 4.1.0 | MIT |
 | net-sftp | 4.0.0 | MIT |
 | net-smtp | 0.5.1 | Ruby, BSD-2-Clause |
-| net-ssh | 7.3.3 | MIT |
+| net-ssh | 7.3.8 | MIT |
 | nio4r | 2.7.5 | MIT, BSD-2-Clause |
 | nokogiri | 1.19.4 | MIT |
 | openid_connect | 2.5.0 | MIT |
@@ -2007,7 +2007,7 @@ Copyright Notice
    than English.
 ```
 
-For net-scp 4.1.0, net-sftp 4.0.0 and net-ssh 7.3.3:
+For net-scp 4.1.0, net-sftp 4.0.0 and net-ssh 7.3.8:
 
 ```text
 Copyright © 2008 Jamis Buck
