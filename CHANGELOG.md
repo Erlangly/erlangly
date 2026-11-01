@@ -1,5 +1,10 @@
 # Changes
 
+## 0.8.268 (2026-10-31)
+- **Leave that came from your HR system** now says so on its page: "from HR, through HR sync", instead of naming the integration as having asked for and decided it. An integration still can't ask for or decide time off.
+- **The MCP server's answer to a missing token** now says a token mustn't have been revoked, as well as not expired, as the API's does.
+- **Security:** Rack 3.2.8, for three advisories in how it parses uploads and serves static files.
+
 ## 0.8.267 (2026-10-31)
 - **Settings → Integrations** now says integrations can import people, as well as time off and balances, and that webhooks tell your systems what changed. The Personal details ability now mentions balances, and Settings → Time off now mentions what your HR system calls each kind of time off.
 - **The API's answer to a missing, expired or revoked token** now says where both kinds are made: a personal token under Your account, an integration's under Settings → Integrations.

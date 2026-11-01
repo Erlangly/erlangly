@@ -89,7 +89,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | puma | 8.0.2 | BSD-3-Clause |
 | raabro | 1.5.0 | MIT |
 | racc | 1.8.1 | Ruby, BSD-2-Clause |
-| rack | 3.2.7 | MIT |
+| rack | 3.2.8 | MIT |
 | rack-oauth2 | 2.3.0 | MIT |
 | rack-session | 2.1.2 | MIT |
 | rack-test | 2.2.0 | MIT |
@@ -4705,7 +4705,7 @@ THE SOFTWARE.
 Made in Japan.
 ```
 
-For rack 3.2.7:
+For rack 3.2.8:
 
 ```text
 The MIT License (MIT)
