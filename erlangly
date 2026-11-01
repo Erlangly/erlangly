@@ -387,7 +387,8 @@ host_addresses() {
 
 # `erlangly webhooks`: what webhooks may reach besides public addresses (planning/30 C2, IG-16). Only the server's
 # operator can widen it, here, never an admin in the app. Each change is checked by Erlangly, saved, applied by a
-# restart and noted in the audit trail, by "The server command".
+# restart and noted in the audit trail, by "The server command". It takes the lock first, as the restart does, so its
+# settings are never saved while an upgrade, a restore or another change is under way.
 cmd_webhooks() {
   case "${1:-}" in
     "" | status)
@@ -403,6 +404,7 @@ cmd_webhooks() {
 webhooks_allow() {
   local range ranges
   [ -n "$1" ] || fail "Usage: erlangly webhooks allow RANGE, like 10.20.0.0/16"
+  one_at_a_time "A change to webhooks' settings"
   up || fail "Erlangly isn't running"
   # shellcheck disable=SC2046 # one argument an address
   range=$(docker exec "$CONTAINER" bin/wfm webhooks check-range "$1" $(host_addresses)) || exit 1
@@ -418,6 +420,7 @@ webhooks_allow() {
 webhooks_disallow() {
   local ranges kept
   [ -n "$1" ] || fail "Usage: erlangly webhooks disallow RANGE, as erlangly webhooks lists it"
+  one_at_a_time "A change to webhooks' settings"
   IFS=', ' read -r -a ranges <<< "$WEBHOOK_PRIVATE_RANGES"
   printf '%s\n' "${ranges[@]}" | grep -qxF "$1" || fail "$1 isn't allowed, so there's nothing to stop. Allowed: ${WEBHOOK_PRIVATE_RANGES:-none}"
   kept=$(printf '%s\n' "${ranges[@]}" | grep -vxF "$1" | sed '/^$/d' | paste -sd, -) || true
@@ -432,6 +435,7 @@ webhooks_disallow() {
 webhooks_ca() {
   local subject
   [ -n "$1" ] || fail "Usage: erlangly webhooks ca FILE.pem, or erlangly webhooks ca off"
+  one_at_a_time "A change to webhooks' settings"
   up || fail "Erlangly isn't running"
   if [ "$1" = off ]; then
     [ -n "$WEBHOOK_CA_FILE" ] || { say "No certificate authority is trusted for webhooks besides the system's."; return; }

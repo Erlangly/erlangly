@@ -24,11 +24,15 @@ services:
     #   TRUSTED_PROXIES: "192.168.1.10"  # and, if that proxy runs on another machine, its address
     #   ERLANGLY_DAILY_BACKUPS: "7"   # nightly backups kept in the volume: one a day for this many days
     #   ERLANGLY_WEEKLY_BACKUPS: "4"  # then one a week for this many weeks before those
-    #   WEBHOOK_HOST_ADDRESSES: "203.0.113.10 2001:db8::10"  # this server's own addresses (hostname -I), which webhooks never reach
-    #   WEBHOOK_PRIVATE_RANGES: "10.20.0.0/16"  # private ranges webhooks may reach, no wider than /16 (the erlangly command checks them)
+    #   WEBHOOK_HOST_ADDRESSES: "203.0.113.10 2001:db8::10"  # this server's own addresses (hostname -I), which webhooks never reach; the ranges below need them
+    #   WEBHOOK_PRIVATE_RANGES: "10.20.0.0/16"  # private ranges webhooks may reach, no wider than /16; Erlangly checks each one, and uses none without WEBHOOK_HOST_ADDRESSES
+    #   WEBHOOK_CA_FILE: /etc/erlangly/webhook-ca.pem  # your own certificate authority for webhooks, mounted under volumes below
     #   (behind your own proxy, publish the port for it alone, like "127.0.0.1:8095:80", on Docker's usual network)
     volumes:
       - erlangly:/rails/storage
+      # Webhooks to an internal system whose certificate your own certificate authority signed: mount the authority's
+      # certificate, readable by the container's user (uid 1000), and set WEBHOOK_CA_FILE above, so webhooks trust it too.
+      # - ./internal-ca.pem:/etc/erlangly/webhook-ca.pem:ro
     networks:
       - erlangly
     # Docker keeps a container's log forever by default, until it fills the disk: keep the newest 100 MB.

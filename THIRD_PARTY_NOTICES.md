@@ -110,7 +110,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | solid_cable | 4.1.0 | MIT |
 | solid_cache | 1.0.10 | MIT |
 | solid_queue | 1.7.0 | MIT |
-| sqlite3 | 2.9.6 | BSD-3-Clause |
+| sqlite3 | 2.10.2 | BSD-3-Clause |
 | sshkit | 1.25.1 | MIT |
 | stimulus-rails | 1.3.4 | MIT |
 | swd | 2.0.3 | MIT |
@@ -5570,7 +5570,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For sqlite3 2.9.6:
+For sqlite3 2.10.2:
 
 ```text
 Copyright (c) 2004-2024, Jamis Buck, Luis Lavena, Aaron Patterson, Mike Dalessio, et al.

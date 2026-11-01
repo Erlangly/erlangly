@@ -1,5 +1,59 @@
 # Changes
 
+## 0.8.272 (2026-11-01)
+- **Webhooks say what happened, once.**
+  - `time_off.decided` and `exception.decided` come when something is decided.
+  - Later changes come as the new `time_off.changed` and `exception.changed`.
+  - `person.added` comes once for a new person, and `person.left` when a leaving is recorded or moved.
+  - An exception that counts as soon as it's reported is decided then.
+  - An approval of one that waited for a supervisor is decided when approved.
+  - Ignore event types you don't know.
+- **After a restore,** a webhook's event IDs never repeat, so a receiver that drops IDs it has seen won't miss a new event.
+- **Big changes stay fast with webhooks:** they're checked once for each change, however many rows it writes, rather than once a row.
+- **Webhook addresses:**
+  - They show only as their host, plus "/…", outside the webhook's own page: in emails, the log, the audit trail and `erlangly webhooks`. Many carry their key in the address.
+  - A failing webhook given a new address tries it at once.
+  - The address goes exactly as written.
+  - Cloud metadata addresses are never reached.
+  - With Docker Compose, private ranges need `WEBHOOK_HOST_ADDRESSES` set.
+- **Deliveries take turns of 10 seconds,** so a slow receiver can't hold up Erlangly's other work, and an old signing secret is forgotten once its 24 hours are up.
+- **The guide and the API reference** describe both ways to answer an event.
+
+## 0.8.271 (2026-11-01)
+- **People from your HR system: safer against a broken export or an old date.**
+  - **The guard against a broken export counts a whole day.** It refuses a file that, with the people files applied in the last 24 hours, would make more than a tenth of your active people (and at least 10) leave or go inactive. It checks again when a file is applied, and splitting a file no longer gets around it. Someone who has checked can send it with force.
+  - **Leaving dates are read with care.** One more than 7 days back needs force. For someone HR shows as active, an old leaving date is skipped with a note, and the rest of their row still comes in. A leaving recorded in Erlangly stays unless a planner cancels it.
+  - **No file or form can leave you without an admin who can sign in.**
+- **Time off and balances from HR:**
+  - Dates must be written YYYY-MM-DD, so 01/05/2027 is never read as May 1.
+  - A balance of "7,5" is refused instead of read as 75.
+  - A file with two columns for the same thing is refused.
+  - Past leave HR adds or moves is scored again for adherence, only where it changed.
+  - Undoing an import tells the people whose leave it changes.
+  - An integration sees and applies only its own imports, and balances show only to tokens allowed personal details.
+  - The audit trail names who applied or undid an import.
+- **The change feeds:**
+  - A sync never misses changes after a restore.
+  - People's lines come when a dated assignment starts or ends.
+  - More changes come: a line added or moved, billable exceptions, overtime cut by a new shift, time zones and renamed kinds.
+  - `/people` gives leaving dates, and the full time-off read takes `since=` for large floors.
+- **The Automating Erlangly guide's HR sync** reads a year back on its first run, sends leaving dates only when HR has one, and copes with a proxy's error page.
+
+## 0.8.270 (2026-11-01)
+- **Five9 connections can be saved.** Checking a new connection asked Five9 for something it doesn't have; it now checks by reading Five9's users. Five9's reason codes are matched as agents first use them. Erlangly says when Five9's user for it needs the Reporting role, and when it may be locked. Checked against Five9's developer sandbox.
+- **Confirming it's you with single sign-on** asks your identity provider properly when you last signed in, so admins who sign in with Google or Microsoft Entra ID can make and change integrations and webhooks. Settings → Sign-in and the admin guide say each provider's step. After confirming, you're back on the page you were on.
+- **A connection to Google** has to be in your organization's Google Workspace, however it was set up.
+- **Integrations:**
+  - The reminder before one expires comes once, even around a change of clocks or a missed night.
+  - Saving one with nothing changed doesn't email every admin.
+  - An integration limited to some clients can't be given "Import people", which it could never use.
+- **Tokens and the API:**
+  - Pages that show a new token once aren't kept by the browser.
+  - "Slow down" answers say how long to wait.
+  - An agent's token can't tell which people exist.
+- **The Automating Erlangly guide and the API reference** correct a number of details: limits, errors, Idempotency-Keys, balances' dates, the import parameters, `/me`, and a server's own certificate authority for webhooks. The payroll example script keeps names from being read as spreadsheet formulas. The security page counts balances among the personal details tokens leave out.
+- **Security:** addressable 2.9.2 and sqlite3 2.10.2 (SQLite 3.54.1), for advisories published today.
+
 ## 0.8.269 (2026-11-01)
 - **The API reference** has examples in curl, Python, C#, JavaScript, PowerShell and Rust: who you are, following what's changed, asking for time off, and checking a webhook's signature.
 - **The Automating Erlangly guide's scripts** come in Rust as well as Ruby, and both are safer:
