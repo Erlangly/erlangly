@@ -1,5 +1,11 @@
 # Changes
 
+## 0.8.269 (2026-11-01)
+- **The API reference** has examples in curl, Python, C#, JavaScript, PowerShell and Rust: who you are, following what's changed, asking for time off, and checking a webhook's signature.
+- **The Automating Erlangly guide's scripts** come in Rust as well as Ruby, and both are safer:
+  - **The nightly HR sync:** it never sends HR the same leave twice, nor leave from before its first run, even after reading everything again. It keeps its place in one state file, picked up from the earlier version's cursor file.
+  - **The building-access receiver:** it tells Erlangly to send an event again only when the door system is down, and every change gets its chat notice.
+
 ## 0.8.268 (2026-10-31)
 - **Leave that came from your HR system** now says so on its page: "from HR, through HR sync", instead of naming the integration as having asked for and decided it. An integration still can't ask for or decide time off.
 - **The MCP server's answer to a missing token** now says a token mustn't have been revoked, as well as not expired, as the API's does.
