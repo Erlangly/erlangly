@@ -1,5 +1,17 @@
 # Changes
 
+## 0.8.273 (2026-11-01)
+- **The guard against a broken HR export catches more:**
+  - People a file would take off a line of business they're scheduled on count toward it, as leavers do.
+  - So do leaving dates moved earlier.
+  - Someone counted twice in a day is counted once.
+- **Employee numbers match however they're capitalized:** "rs-1001" in a file is RS-1001, in every import and in the person pickers. A new employee number can't differ from someone else's only in capitals.
+- **Old HR imports don't keep personal details:** an import over 30 days old that can no longer be undone keeps its counts, who sent and applied it, and its audit trail, and its rows' details are cleared.
+- **"Counted", "Approved" and "Recorded" mean the same everywhere:** "Counted" means an exception counted as soon as it was reported, as it does for agents, on supervisors' pages and in webhooks. "Approved" and "Declined" mean a supervisor decided. "Recorded" means a supervisor recorded it.
+- **The API:** a request body that isn't valid UTF-8, or isn't JSON, gets a plain JSON error.
+- **Webhooks:** test sends are limited per receiving address.
+- **People a client's readers stop seeing** are told once, within the hour after midnight where you are.
+
 ## 0.8.272 (2026-11-01)
 - **Webhooks say what happened, once.**
   - `time_off.decided` and `exception.decided` come when something is decided.
