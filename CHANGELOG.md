@@ -1,5 +1,8 @@
 # Changes
 
+## 0.8.274 (2026-11-02)
+- **Security:** rails-html-sanitizer 1.7.2, with loofah 2.25.3 and nokogiri 1.19.6, for two advisories published today. The third-party notices list the new versions.
+
 ## 0.8.273 (2026-11-01)
 - **The guard against a broken HR export catches more:**
   - People a file would take off a line of business they're scheduled on count toward it, as leavers do.

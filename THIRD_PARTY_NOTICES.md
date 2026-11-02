@@ -62,7 +62,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | jwt | 3.3.0 | MIT |
 | kamal | 2.12.0 | MIT |
 | logger | 1.7.0 | Ruby, BSD-2-Clause |
-| loofah | 2.25.2 | MIT |
+| loofah | 2.25.3 | MIT |
 | mail | 2.9.1 | MIT |
 | marcel | 1.2.1 | MIT, Apache-2.0 |
 | mini_mime | 1.1.5 | MIT |
@@ -77,7 +77,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | net-smtp | 0.5.1 | Ruby, BSD-2-Clause |
 | net-ssh | 7.3.8 | MIT |
 | nio4r | 2.7.5 | MIT, BSD-2-Clause |
-| nokogiri | 1.19.4 | MIT |
+| nokogiri | 1.19.6 | MIT |
 | openid_connect | 2.5.0 | MIT |
 | openssl | 4.0.2 | Ruby, BSD-2-Clause |
 | ostruct | 0.6.3 | Ruby, BSD-2-Clause |
@@ -96,7 +96,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | rackup | 2.3.1 | MIT |
 | rails | 8.1.4 | MIT |
 | rails-dom-testing | 2.3.0 | MIT |
-| rails-html-sanitizer | 1.7.1 | MIT |
+| rails-html-sanitizer | 1.7.2 | MIT |
 | railties | 8.1.4 | MIT |
 | rake | 13.4.2 | MIT |
 | rake-compiler-dock | 1.12.0 | MIT |
@@ -1419,7 +1419,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For loofah 2.25.2:
+For loofah 2.25.3:
 
 ```text
 The MIT License
@@ -2123,7 +2123,7 @@ Copyright, 2007-2019, by Marc Alexander Lehmann.
 [ext/libev/LICENSE]: https://github.com/socketry/nio4r/blob/master/ext/libev/LICENSE
 ```
 
-For nokogiri 1.19.4:
+For nokogiri 1.19.6:
 
 ```text
 # Vendored Dependency Licenses
@@ -2143,6 +2143,7 @@ Note that this document is broken into multiple sections, each of which describe
   * [Native WindowsⓇ platform releases ("x64-mingw-ucrt")](#native-windows%E2%93%A1-platform-releases-x64-mingw-ucrt)
   * [JavaⓇ (JRuby) platform release ("java")](#java%E2%93%A1-jruby-platform-release-java)
 - [Appendix: Dependencies' License Texts](#appendix-dependencies-license-texts)
+  * [hashmap.c](#hashmapc)
   * [libgumbo](#libgumbo)
   * [libxml2](#libxml2)
   * [libxslt](#libxslt)
@@ -2240,6 +2241,34 @@ This distribution can be identified by inspecting the included Gem::Specificatio
 This section contains a subsection for each potentially-distributed dependency, which includes the name of the license and the license text.
 
 Please see previous sections to understand which of these potential dependencies is actually distributed in the gem file you're downloading and using.
+
+
+### hashmap.c
+
+MIT
+
+https://github.com/tidwall/hashmap.c/blob/master/LICENSE
+
+    The MIT License (MIT)
+
+    Copyright (c) 2020 Joshua J Baker
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of
+    this software and associated documentation files (the "Software"), to deal in
+    the Software without restriction, including without limitation the rights to
+    use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+    the Software, and to permit persons to whom the Software is furnished to do so,
+    subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 ### libgumbo
@@ -4539,7 +4568,7 @@ https://xerces.apache.org/xml-commons/
        END OF TERMS AND CONDITIONS
 ```
 
-For nokogiri 1.19.4:
+For nokogiri 1.19.6:
 
 ```text
 The MIT License
@@ -4944,7 +4973,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For rails-html-sanitizer 1.7.1:
+For rails-html-sanitizer 1.7.2:
 
 ```text
 Copyright (c) 2013-2023 Rafael Mendonça França, Kasper Timm Hansen, Mike Dalessio
