@@ -1,5 +1,16 @@
 # Changes
 
+## 0.8.276 (2026-11-03)
+- **Twilio Flex:** choosing a queue's line of business says Erlangly is reading the last 30 days, as far back as Twilio keeps, not 13 weeks; so does the button that reads them again. The Connect Twilio Flex page no longer says the connector is built from Twilio's documentation: it was checked on a live Flex account.
+
+## 0.8.275 (2026-11-03)
+- **Forecast groups lines by client:** when you see several clients, each client's lines of business go under its name, clients and lines in alphabetical order. With one client it's a plain list, as before.
+- **A line moved to another client takes what it needs with it:**
+  - From the move, the old client's schedules stop counting the line's need, and the new client's schedules count what its published forecasts say, including the schedule the move makes.
+  - "Generate again" shows only where the move leaves something to schedule, not on schedules the shifts moved from or into as they were.
+- **People → Download CSV:** planners and admins can download everyone they can see, in the people import's columns, so the file can be changed in a spreadsheet and imported back. A row left as it is changes nobody.
+- **Fixed:** a people import with a `client` column no longer fails with "ambiguous column name".
+
 ## 0.8.274 (2026-11-02)
 - **Security:** rails-html-sanitizer 1.7.2, with loofah 2.25.3 and nokogiri 1.19.6, for two advisories published today. The third-party notices list the new versions.
 
