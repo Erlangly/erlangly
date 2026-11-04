@@ -1,5 +1,15 @@
 # Changes
 
+## 0.8.279 (2026-11-04)
+- **Security:** Erlangly runs on Rails 8.1.4.1, which fixes the advisories Rails published for 8.1.4. Among them: a way around the checks on which fields a form may change, a way to fake a visitor's address, several ways to slip script into pages through text helpers, a way to slow a server down with crafted names, and file reading and writing through image and video processing (Erlangly doesn't process uploaded files, so that one couldn't be reached, but the fix ships anyway). Upgrade soon.
+- **Behind your own HTTPS proxy:** requests that carry two different claims of where they came from (a `Forwarded` header that disagrees with `X-Forwarded-For`) are now refused. If you put your own proxy in front of Erlangly, make sure `BEHIND_HTTPS_PROXY` is set (and `TRUSTED_PROXIES`, if the proxy runs on another machine), as `compose.yml` shows; then your proxy is trusted and nothing changes.
+
+## 0.8.278 (2026-11-04)
+- **People import:** when none of a file's dates show whether the month or the day comes first, like a file where everyone was hired on 1/6/2025, the dates Erlangly already has for the people in it decide, and the preview says which order it read. If they disagree, the import asks for the date columns in YYYY-MM-DD. Only people you can see count, and the order the preview read is the one the import applies.
+
+## 0.8.277 (2026-11-04)
+- **People import:** a file downloaded from People, edited in a spreadsheet and imported back keeps working when the spreadsheet re-saves its dates, like 1/6/2025 or 01/06/25. The file's own dates show whether the month or the day comes first; if none do, or they disagree, the import says so and asks for the date columns in YYYY-MM-DD. HR imports, through the API or the command line, still take YYYY-MM-DD only.
+
 ## 0.8.276 (2026-11-03)
 - **Twilio Flex:** choosing a queue's line of business says Erlangly is reading the last 30 days, as far back as Twilio keeps, not 13 weeks; so does the button that reads them again. The Connect Twilio Flex page no longer says the connector is built from Twilio's documentation: it was checked on a live Flex account.
 

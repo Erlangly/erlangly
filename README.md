@@ -96,7 +96,7 @@ If you lose the server, put your copy at `/etc/erlangly/erlangly.conf` on a new 
 
 ## License
 
-Erlangly is proprietary software from FrontLine Software Solutions Inc., licensed under the [Erlangly EULA](EULA.md). Every feature is in every plan, and every install needs its license activated, the free plan included; a license runs on one install at a time.
+Erlangly is proprietary software from [FrontLine Software Solutions Inc.](https://frontlinesoftware.ca), licensed under the [Erlangly EULA](EULA.md). Every feature is in every plan, and every install needs its license activated, the free plan included; a license runs on one install at a time.
 
 - **Free:** up to 25 active agents, for good. Choose it when Erlangly asks you to activate: the store asks for your organization, a work email (confirmed by email) and your country.
 - **Trial:** 30 days with unlimited agents and up to 5 people signing in, on one install. When it ends, activate the free plan or a paid license.

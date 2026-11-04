@@ -15,17 +15,17 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | Gem | Version | Licence |
 |---|---|---|
 | action_text-trix | 2.1.19 | MIT |
-| actioncable | 8.1.4 | MIT |
-| actionmailbox | 8.1.4 | MIT |
-| actionmailer | 8.1.4 | MIT |
-| actionpack | 8.1.4 | MIT |
-| actiontext | 8.1.4 | MIT |
-| actionview | 8.1.4 | MIT |
-| activejob | 8.1.4 | MIT |
-| activemodel | 8.1.4 | MIT |
-| activerecord | 8.1.4 | MIT |
-| activestorage | 8.1.4 | MIT |
-| activesupport | 8.1.4 | MIT |
+| actioncable | 8.1.4.1 | MIT |
+| actionmailbox | 8.1.4.1 | MIT |
+| actionmailer | 8.1.4.1 | MIT |
+| actionpack | 8.1.4.1 | MIT |
+| actiontext | 8.1.4.1 | MIT |
+| actionview | 8.1.4.1 | MIT |
+| activejob | 8.1.4.1 | MIT |
+| activemodel | 8.1.4.1 | MIT |
+| activerecord | 8.1.4.1 | MIT |
+| activestorage | 8.1.4.1 | MIT |
+| activesupport | 8.1.4.1 | MIT |
 | aes_key_wrap | 1.1.0 | MIT |
 | attr_required | 1.0.2 | MIT |
 | base64 | 0.3.0 | Ruby, BSD-2-Clause |
@@ -94,10 +94,10 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | rack-session | 2.1.2 | MIT |
 | rack-test | 2.2.0 | MIT |
 | rackup | 2.3.1 | MIT |
-| rails | 8.1.4 | MIT |
+| rails | 8.1.4.1 | MIT |
 | rails-dom-testing | 2.3.0 | MIT |
 | rails-html-sanitizer | 1.7.2 | MIT |
-| railties | 8.1.4 | MIT |
+| railties | 8.1.4.1 | MIT |
 | rake | 13.4.2 | MIT |
 | rake-compiler-dock | 1.12.0 | MIT |
 | rb_sys | 0.9.130 | MIT, Apache-2.0 |
@@ -366,7 +366,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For actioncable 8.1.4:
+For actioncable 8.1.4.1:
 
 ```text
 Copyright (c) 37signals LLC
@@ -391,7 +391,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For actionmailbox 8.1.4 and actiontext 8.1.4:
+For actionmailbox 8.1.4.1 and actiontext 8.1.4.1:
 
 ```text
 MIT License
@@ -417,7 +417,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-For actionmailer 8.1.4, actionpack 8.1.4, actionview 8.1.4, activejob 8.1.4, activemodel 8.1.4, activesupport 8.1.4, rails 8.1.4 and railties 8.1.4:
+For actionmailer 8.1.4.1, actionpack 8.1.4.1, actionview 8.1.4.1, activejob 8.1.4.1, activemodel 8.1.4.1, activesupport 8.1.4.1, rails 8.1.4.1 and railties 8.1.4.1:
 
 ```text
 Copyright (c) David Heinemeier Hansson
@@ -442,7 +442,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For activerecord 8.1.4:
+For activerecord 8.1.4.1:
 
 ```text
 Copyright (c) David Heinemeier Hansson
@@ -469,7 +469,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For activestorage 8.1.4:
+For activestorage 8.1.4.1:
 
 ```text
 Copyright (c) David Heinemeier Hansson, 37signals LLC
