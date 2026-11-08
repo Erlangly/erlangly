@@ -18,6 +18,10 @@ services:
     ports:
       - "80:80"
       # - "443:443"                 # with TLS_DOMAIN below
+      # Behind your own HTTPS proxy (BEHIND_HTTPS_PROXY below), publish the port for it alone and over IPv4 only, in
+      # place of "80:80": "127.0.0.1:8095:80" for a proxy on this server, "0.0.0.0:8095:80" for one on another machine,
+      # never "8095:80". Over IPv6, Docker hands connections on as if they came from its own gateway, whose word Erlangly
+      # takes as a proxy's, so anyone who reached the port over IPv6 could claim any address. `erlangly install` does the same.
     # environment:
     #   TLS_DOMAIN: wfm.example.com  # HTTPS with a Let's Encrypt certificate for this domain
     #   BEHIND_HTTPS_PROXY: "1"      # or: your own HTTPS proxy is in front (see erlangly.com/docs/install)
@@ -27,7 +31,6 @@ services:
     #   WEBHOOK_HOST_ADDRESSES: "203.0.113.10 2001:db8::10"  # this server's own addresses (hostname -I), which webhooks never reach; the ranges below need them
     #   WEBHOOK_PRIVATE_RANGES: "10.20.0.0/16"  # private ranges webhooks may reach, no wider than /16; Erlangly checks each one, and uses none without WEBHOOK_HOST_ADDRESSES
     #   WEBHOOK_CA_FILE: /etc/erlangly/webhook-ca.pem  # your own certificate authority for webhooks, mounted under volumes below
-    #   (behind your own proxy, publish the port for it alone, like "127.0.0.1:8095:80", on Docker's usual network)
     volumes:
       - erlangly:/rails/storage
       # Webhooks to an internal system whose certificate your own certificate authority signed: mount the authority's

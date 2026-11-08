@@ -328,9 +328,9 @@ Two Go programs: Litestream copies the database off the server when you set it u
 | Module | Version | Licence |
 |---|---|---|
 | github.com/klauspost/compress | v1.20.0 | BSD-3-Clause, Apache-2.0, MIT |
-| golang.org/x/crypto | v0.57.0 | BSD-3-Clause |
-| golang.org/x/net | v0.60.0 | BSD-3-Clause |
-| golang.org/x/text | v0.42.0 | BSD-3-Clause |
+| golang.org/x/crypto | v0.58.0 | BSD-3-Clause |
+| golang.org/x/net | v0.62.0 | BSD-3-Clause |
+| golang.org/x/text | v0.43.0 | BSD-3-Clause |
 
 ## Fonts and icons
 
@@ -8631,7 +8631,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-For golang.org/x/crypto v0.52.0, golang.org/x/crypto/x509roots/fallback v0.0.0-20260209214922-2f26647a795e, golang.org/x/net v0.55.0, golang.org/x/oauth2 v0.36.0, golang.org/x/sync v0.21.0, golang.org/x/sys v0.45.0, golang.org/x/text v0.39.0, golang.org/x/time v0.7.0, golang.org/x/crypto v0.57.0, golang.org/x/net v0.60.0, golang.org/x/text v0.42.0 and Go's runtime and standard library 1.25.14, 1.27.3:
+For golang.org/x/crypto v0.52.0, golang.org/x/crypto/x509roots/fallback v0.0.0-20260209214922-2f26647a795e, golang.org/x/net v0.55.0, golang.org/x/oauth2 v0.36.0, golang.org/x/sync v0.21.0, golang.org/x/sys v0.45.0, golang.org/x/text v0.39.0, golang.org/x/time v0.7.0, golang.org/x/crypto v0.58.0, golang.org/x/net v0.62.0, golang.org/x/text v0.43.0 and Go's runtime and standard library 1.25.14, 1.27.3:
 
 ```text
 Copyright 2009 The Go Authors.

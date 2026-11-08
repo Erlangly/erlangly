@@ -1,5 +1,59 @@
 # Changes
 
+## 0.8.293 (2026-11-08)
+- **Imports:** an .xlsx is read as it unpacks, with real limits on what it holds, whatever the file says about itself: Excel's own last row and column, 250,000 rows, and 5 MB of data, as for a CSV. Large sheets need a tenth of the memory, and a damaged cell says the file can't be read instead of showing an error page (#798).
+- **Volume imports:** the preview takes the same short time however much stored history the file overlaps: 10,000 intervals in about a second, down from 40 (#799).
+- **Adherence:** the page and its download show up to 62 days at a time, as the API does, and say so when you ask for more (#804).
+- **Privacy:** an import's rows and any notes are kept out of the server's log. The People page's column headers always link back to Erlangly, whatever the address holds, and live updates refuse oversized messages (#804).
+
+## 0.8.292 (2026-11-08)
+- **Single sign-on:** when it becomes required of someone (it's turned on, they're made staff while it's required of staff, or they stop being a break-glass admin), the password sessions they already had end at once, live updates included. Break-glass admins and single sign-on sessions carry on, and the settings page says who's signed out (#797).
+- **Test copies:** a test copy now switches its webhooks off, as it does its ACD connections, forgets the devices notifications were on for, and keeps this server's own TLS certificate rather than the one it was copied with (#794).
+- **Outbound connections:** webhooks, notifications and AI assistants' sign-in now share one list of addresses Erlangly never reaches, with Azure's host address added. The daily version check reads at most a few kilobytes, and the ACD diagnostics you can send to support keep only the IDs that tell agents, queues and contacts apart (#807).
+- **Install:** `erlangly export` saves only a file named as Erlangly names its exports. The install guide tells Compose installs behind their own HTTPS proxy to publish on IPv4, and the app no longer has the off-site backup bucket's key in its environment; only Litestream does (#803).
+
+## 0.8.291 (2026-11-08)
+- **Time zones:** clock changes of any size, at any minute, now come out right wherever Erlangly works out local times: forecasts, staffing, schedules and imports. That covers Lord Howe Island's 30-minute change and the Chatham Islands' at 02:45, and it fixes Newfoundland and Adelaide, where local times were wrong for half an hour around each change. A forecast import accepts the real times of those days, and a time the clocks repeat means the first one (#660).
+
+## 0.8.290 (2026-11-08)
+- **Wallboard, Intraday, Adherence and schedules:** where you work for several clients, each has a client choice beside the line of business, offering only the clients you see. The wallboard's line tabs name their client, so two clients' Billing lines can be told apart, and a saved wallboard view can keep its client, for a client's TV (#789).
+
+## 0.8.289 (2026-11-08)
+- **API:** a page of shifts comes back about a quarter faster: each time is put in its person's time zone once for the page, rather than once for every shift and break.
+
+## 0.8.288 (2026-11-07)
+- **API and AI assistants:** a planner or supervisor who sees only some clients now also gets, from the shifts API and the assistants' list of shifts, when the people they see work for other clients, with only that client's and line's names, as their schedule already shows it (#675).
+- **Guides:** corrections from the films' fact checks about clients, adherence, users and the Twilio Flex connection, and how to share someone between two clients in the same week (#791).
+
+## 0.8.287 (2026-11-07)
+- **Security:** Erlangly's web server is now built with golang.org/x/net 0.62.0, which fixes a denial-of-service bug in its HTML parser (CVE-2026-78661).
+
+## 0.8.286 (2026-11-07)
+- **Security:** Erlangly's web server no longer offers Multipath TCP, a networking feature nothing in Erlangly uses. A published exploit for a serious Linux kernel flaw, CVE-2026-98432, needs it. This doesn't patch your server's kernel, so keep installing your Linux updates too.
+
+## 0.8.285 (2026-11-06)
+- **Schedules:** a line of business's channel, opening hours, chat handle time and time zone now reach its schedules from today on, as forecast and shrinkage changes do, with nothing to generate again (#777).
+- **Schedules following their forecasts:** a draft's warnings about its forecasts now say how they are now. A schedule from before the planning interval changed follows again. A line added, or switched back on, after generation comes into the schedule's figures from today on (#778).
+- **Set up Erlangly:** the page that asks for the secret setup link now says where to find it on a DigitalOcean Droplet made from the Marketplace: the Droplet's Console.
+- **Billable:** changing whether an activity or exception is billable, for its type, a client or a line, now changes what's still to come on drafts, the published schedule and exceptions recorded ahead. Time already worked keeps its setting, so months already reported stay as they were (#782).
+- **Labor rules:** when a labor rule changes, or the jurisdiction of a person, a site or the organization, drafts and schedules still to come are checked against the rules again in the background (#779).
+
+## 0.8.284 (2026-11-06)
+- **Time off:** deciding time off or voluntary time off now says whether it fits the staffing plan left, or which times it would leave short and how short they are now. "How Erlangly determined this" opens the figures behind it, interval by interval: productive need, shrinkage allowed and used, target, and agents on (#768).
+
+## 0.8.283 (2026-11-06)
+- **Schedules:** drafts and the published schedule follow the published forecast, shrinkage and service targets from today on. A change shows at once as short or over, with nothing to generate again. Days already worked keep what they were measured against (#769).
+- **Activities:** changing what an activity counts as (Settings → Activities) applies to its time still to come, on drafts and the published schedule. Time already worked keeps what it counted as (#699).
+
+## 0.8.282 (2026-11-06)
+- **People:** **Download for Excel** gives the people download as an Excel workbook whose cells are text, so when Excel saves it, dates like 2025-01-06 and employee numbers like 00123 stay as they were, and so do rows typed in. Imports take an Excel workbook too (its first sheet), as well as a CSV; one that can't be read says to save it again or as CSV UTF-8 (#764).
+
+## 0.8.281 (2026-11-06)
+- **Schedules:** changing the shrinkage or service target of a line of business, a client or the organization now says which schedules need generating again, as a republished forecast does. A schedule keeps the shrinkage plan it was made with, so people away use up that plan, not rates set since (#769).
+
+## 0.8.280 (2026-11-05)
+- **Lines of business:** a line's own shrinkage rates and exception settings can be edited in their rows on its page, not only removed. A shrinkage rate changes its rate or start date (its category stays; that's another rate), and an exception setting changes how it's handled. Changes are kept in the audit log, and a mistake is explained in the row (#760).
+
 ## 0.8.279 (2026-11-04)
 - **Security:** Erlangly runs on Rails 8.1.4.1, which fixes the advisories Rails published for 8.1.4. Among them: a way around the checks on which fields a form may change, a way to fake a visitor's address, several ways to slip script into pages through text helpers, a way to slow a server down with crafted names, and file reading and writing through image and video processing (Erlangly doesn't process uploaded files, so that one couldn't be reached, but the fix ships anyway). Upgrade soon.
 - **Behind your own HTTPS proxy:** requests that carry two different claims of where they came from (a `Forwarded` header that disagrees with `X-Forwarded-For`) are now refused. If you put your own proxy in front of Erlangly, make sure `BEHIND_HTTPS_PROXY` is set (and `TRUSTED_PROXIES`, if the proxy runs on another machine), as `compose.yml` shows; then your proxy is trusted and nothing changes.

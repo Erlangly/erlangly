@@ -33,8 +33,8 @@ Usage: erlangly <command>
   restore <file>      Replace all data with a backup (stops Erlangly while it restores)
   restore --copy <file>
                       Make this server a test copy of the install the backup is from, for a test license: its
-                      own install id, no license or address and its ACD connections off, so it never runs as
-                      that install
+                      own install id, no license or address, its ACD connections and webhooks off and no
+                      devices to send notifications to, so it never runs as that install
   export [directory]  All your data as CSV files in a .zip, to take elsewhere (default $BACKUPS)
   version             Show the installed version
   help                This list
@@ -1059,11 +1059,15 @@ write_whole() {
   fi
 }
 
+# The container says where in it the export is, but never what it's called here: this runs as root, so only a name
+# Erlangly gives an export (Export: erlangly-export-<when, in UTC>.zip) is taken, never one that could be .bashrc.
 cmd_export() {
-  local directory=${1:-$BACKUPS} path file
+  local directory=${1:-$BACKUPS} path name file
   up || fail "Erlangly isn't running"
   path=$(docker exec "$CONTAINER" bin/wfm export) || fail "export failed"
-  file="$directory/$(basename "$path")"
+  name=$(basename -- "$path")
+  [[ "$name" =~ ^erlangly-export-[0-9]{8}T[0-9]{6}Z\.zip$ ]] || fail "export failed: Erlangly didn't name it as it names exports (erlangly-export-<time>.zip), so nothing was saved"
+  file="$directory/$name"
   write_whole export "$file" docker exec "$CONTAINER" cat "$path" || fail "export failed"
   say "Exported to $file ($(du -h "$file" | cut -f1))"
 }
@@ -1089,8 +1093,9 @@ cmd_restore() {
   [ -z "${copy:-}" ] || cat <<COPY
 This server is a test copy of the install the backup is from, with an install id of its own. It isn't activated, so it
 emails the floor nothing: sign in as one of its admins and activate your test license's key. It has no address for
-emails either, so it emails no one until you set its own under Settings → Email. Its ACD connections are switched
-off: switch on only those meant for testing, under Settings → Connections.
+emails either, so it emails no one until you set its own under Settings → Email. Its ACD connections and webhooks
+are switched off: switch on only those meant for testing, under Settings → Connections and Settings → Integrations.
+It forgot the devices notifications were on for in production, so people turn them on again here.
 COPY
 }
 
