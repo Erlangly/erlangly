@@ -8,14 +8,14 @@ We licence you to install and use Erlangly for your own organisation's internal 
 
 The licence isn't exclusive, and you can't transfer or sublicence it. You get it for the plan you choose:
 
-- **Free:** self-hosted, up to 25 active agents across all your installs. It doesn't expire.
+- **Free:** self-hosted, on one install, up to 25 active agents. One free licence per organisation. It doesn't expire.
 - **Trial:** 30 days, all features, unlimited agents and up to 5 people signing in. One trial per organisation.
 - **Paid:** the number of active agents on your licence key, for the term on it.
 - **Pay once (perpetual):** the number of active agents on your licence key, for good, with the versions released while your Updates run. The first year of Updates comes with it.
 
 An "active agent" is a person on your roster who is marked active, is marked as an agent (someone who takes contacts and is scheduled), and hasn't left. Supervisors, planners, trainers and admins who don't take contacts don't count, and signing in is free.
 
-Your plan's agent limit is for your whole organisation: if you run Erlangly on more than one server, the active agents on all of them count together. A licence key is for one organisation; you may not share it or use it for another. We may ask you to confirm the number of active agents across your installs.
+Your plan's agent limit is for your whole organisation: on a paid plan, if you run Erlangly on more than one server, the active agents on all of them count together. The free plan is for one install. A licence key is for one organisation; you may not share it or use it for another. We may ask you to confirm the number of active agents across your installs.
 
 **Activation.** Each install needs an activated licence, the free plan included: you activate it in Erlangly, which opens our store in your browser. A licence works on the one install it's activated on. To move it to another install, deactivate it first, or ask us to release an install that no longer runs; you may move a licence three times a year yourself, and more with our help. A trial can't be moved. With a paid licence, we'll give you a test licence on request, for as long as the paid licence runs (for pay once, while its Updates run), for one more install that you use only to try upgrades or train people. It covers the same number of agents, lets 5 people sign in, sends email only to them, and is marked as a test copy. If we ever close our store for good, we'll publish a version of Erlangly that runs without activation, so your licence can still be installed and moved.
 
@@ -100,4 +100,4 @@ When a paid plan ends (it runs out, you cancel it, or it's refunded), your insta
 - **What lasts:** sections 3, 7, 8 and 10, and anything owed, still apply after this agreement ends.
 - **Contact:** FrontLine Software Solutions Inc., 30 Hummingbird St., Charlottetown, PE C1E 0B2, Canada; legal@erlangly.com.
 
-Last updated: October 18, 2026.
+Last updated: November 9, 2026.

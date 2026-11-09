@@ -16,6 +16,12 @@ BACKUPS=/var/backups/erlangly
 LOCK=${ERLANGLY_LOCK:-/run/erlangly.lock} # in /run, where only root can write, unlike /run/lock on some systems
 LEAST_FREE_KB=2097152 # 2 GB: upgrades and backups need twice the databases' size free, and never less than this
 ACTIVATION_SINCE=0.8.165 # the first release whose installs are activated at the store
+# The public half of the key that signs this command (ECDSA P-256), for checking a new copy of it (update_self). Its
+# private half never goes on the server that hands the command out (script/get/deploy.sh signs each public release).
+COMMAND_PUBLIC_KEY='-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEdFfnyXo4qpVyD161+XQgO4QyCoAO
+miVSle0LYjgdxYp/3ck1tEy1cFr4tLX/kYQElvGXdH7zk5CKIpgGFrZdVw==
+-----END PUBLIC KEY-----'
 
 usage() {
   cat <<USAGE
@@ -52,6 +58,8 @@ Usage: erlangly <command>
   schedule [DATE] [--lob CODE] [--json]   Published shifts on a day (default today)
   hours FROM TO [--split client] [--days split] [--csv]
                                           Each person's scheduled minutes for a pay period
+  acd-time FROM TO [--days split] [--csv]
+                                          The ACD's record of each person's time by day
   volumes import FILE.csv                 Import volume history
   timeoff [--all]                         Time off waiting for a decision (--all: coming up)
   timeoff approve|decline ID [NOTE]       Decide a time-off request
@@ -609,26 +617,41 @@ cmd_restart() {
   keep_secret_key
 }
 
-# Before upgrading, the erlangly command brings itself up to date from get.erlangly.com (checked
-# like the installer checks it, and against the published checksums), so an install made long ago
-# upgrades by today's rules. Not with a local image, and only once per upgrade.
+# Before upgrading, the erlangly command brings itself up to date from get.erlangly.com, so an install made long ago
+# upgrades by today's rules. A new copy has to be complete (checked like the installer checks it), match the published
+# checksums and be signed with the key this copy holds (COMMAND_PUBLIC_KEY). The checksums come from the same server as
+# the copy, so the signature is what stops whoever takes over that server running what they like here as root.
+# ERLANGLY_SOURCE changes where the copy comes from, never the key it's checked against. A copy that fails any of this,
+# or no openssl to check it with, leaves this one in place: it says so and the upgrade goes on. A copy identical to this
+# one needs no signature, as nothing is replaced. Not with a local image, and only once per upgrade.
 update_self() {
   [ -z "${ERLANGLY_IMAGE_TAR:-}" ] && [ -z "${ERLANGLY_SELF_UPDATED:-}" ] || return 0
-  local new sums expected
-  new=$(mktemp)
+  local work new sums expected reason=""
+  work=$(mktemp -d) new=$work/erlangly
   if curl -fsSL "$SOURCE/erlangly" -o "$new" && bash -n "$new" && tail -n 1 "$new" | grep -q '^# end of erlangly' &&
      sums=$(curl -fsSL "$SOURCE/SHA256SUMS") && expected=$(printf '%s\n' "$sums" | awk '$2 == "erlangly" { print $1 }') &&
-     [ -n "$expected" ] && [ "$(sha256sum "$new" | cut -d' ' -f1)" = "$expected" ]; then
+     [ -n "$expected" ] && [ "$(sha256sum "$new" | cut -d' ' -f1)" = "$expected" ] &&
+     { cmp -s "$new" "$0" || properly_signed "$new" "$work"; }; then
     if ! cmp -s "$new" "$0"; then
-      install -m 755 "$new" "$0"
-      rm -f "$new"
+      install -m 755 "$new" "$0" || { rm -rf "$work"; exit 1; }
+      rm -rf "$work"
       say "Updated the erlangly command"
       ERLANGLY_SELF_UPDATED=1 exec "$0" upgrade "$@"
     fi
   else
-    say "Couldn't update the erlangly command from $SOURCE; upgrading with this one"
+    say "Couldn't update the erlangly command from $SOURCE${reason:+ ($reason)}; upgrading with this one"
   fi
-  rm -f "$new"
+  rm -rf "$work"
+}
+
+# Is the file $1 signed with the key this command holds? It downloads the signature and writes out the key in the
+# private folder $2. When it isn't, or can't be told, `reason` says why, for update_self to say so.
+properly_signed() {
+  command -v openssl > /dev/null || { reason="openssl isn't installed, so its signature can't be checked"; return 1; }
+  curl -fsL "$SOURCE/erlangly.sig" -o "$2/erlangly.sig" || { reason="its signature couldn't be downloaded"; return 1; }
+  printf '%s\n' "$COMMAND_PUBLIC_KEY" > "$2/command.pub"
+  openssl dgst -sha256 -verify "$2/command.pub" -signature "$2/erlangly.sig" "$1" > /dev/null 2>&1 ||
+    { reason="its signature isn't valid"; return 1; }
 }
 
 cmd_upgrade() {
@@ -1105,7 +1128,7 @@ for argument; do case $argument in -h | --help) usage; exit 0 ;; esac; done
 case "${1:-}" in
   "" | help | -h | --help) usage; exit 0 ;;
   install | status | logs | restart | upgrade | rollback | backup | restore | export | version | --version | setup-link | reset-link | \
-    schedule | hours | timeoff | balances | people | licence | sso | two-factor | volumes | webhooks) ;;
+    schedule | hours | acd-time | timeoff | balances | people | licence | sso | two-factor | volumes | webhooks) ;;
   *) printf 'erlangly: there'"'"'s no command "%s"\n\n' "$1" >&2; usage >&2; exit 1 ;;
 esac
 
@@ -1153,7 +1176,7 @@ case "${1:-}" in
     else
       docker exec -i "$CONTAINER" bin/wfm "$@"
     fi ;;
-  schedule|hours|licence|sso|two-factor)
+  schedule|hours|acd-time|licence|sso|two-factor)
     up || fail "Erlangly isn't running"
     [ ! -t 2 ] || printf 'Asking Erlangly (a few seconds)…\n' >&2
     docker exec "$CONTAINER" bin/wfm "$@" ;;

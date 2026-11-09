@@ -1,5 +1,22 @@
 # Changes
 
+## 0.8.295 (2026-11-09)
+- **ACD time for pay:** a new `GET /api/v1/acd_time`, and `erlangly acd-time` on the server, give the ACD's own record of each person's time, by person and day: logged in, on the phones (available, on a contact, after-contact work), and break and aux. It's labeled as the ACD's record, never hours worked. Your payroll decides what's owed, by the law where people work (#833).
+- **Against the schedule:** each day also shows the paid minutes scheduled, as `/hours` gives them, and the paid time on the phones with no ACD time behind it, so a missed login or a missed day shows up for your payroll adjustments process. Erlangly flags what looks wrong, such as someone who seems never to have logged out, and never changes the time. After upgrading, past days fill in over the following days, newest first (#833).
+
+## 0.8.294 (2026-11-09)
+- **Security: leaving dates:** only an admin can now record or cancel a leaving for someone who signs in as staff. For an admin's account, it takes the acting admin's code and every admin is emailed. Planners still do this for agents. HR imports skip staff people's leavings and list them for an admin (#795).
+- **Security: when someone leaves:** when a leaving takes effect, **Can sign in** goes off and the person's sessions, personal API tokens and AI assistants end, for agents too, so coming back always goes through Settings → Users. This also applies to anyone who has already left, within an hour of upgrading (#795).
+- **Security: invitations:** an invitation links only to an agent account with nobody on the roster yet, and otherwise says why not. To link a staff member who also takes contacts, an admin makes the account an agent, invites them, then gives the role back (#795).
+- **Security: people who've moved between clients:** someone limited to some clients can still read a person's history for 90 days after they've moved, and before a transfer starts. Deciding, adding and changing time off and exceptions now need the person to be with their client on every one of those days, on the pages, in imports, through the API and through AI assistants. The waiting lists, bell and morning email follow the same rule. Adding someone to a line of business takes someone who sees all their clients (#796).
+- **Security: connecting AI assistants:** only **Allow** sends anyone on to the app. A malformed request shows the problem on Erlangly's own page, and **Don't allow** stays there, with a link back that shows where it goes. **Don't allow** also no longer needs a code or password typed first (#805).
+- **Security: the erlangly command:** from this version on, a new copy of the command has to be signed with Erlangly's key before it replaces the one on your server. If it isn't, the command keeps what it has, says so, and carries on with the upgrade (#803).
+- **Sign-in:** wrong passwords are counted for each account from each network: 10 tries in 3 minutes, with a ceiling of 100 across all networks, so someone elsewhere can't easily keep a person shut out. The password checks inside the app are counted separately (#802).
+- **Single sign-on:** when someone's company account has been deleted and made again, an admin can now choose **Unlink company account** under Settings → Users. It's in the audit trail, and they link again at their next sign-in. Changing the client ID clears everyone's link in the same way (#802).
+- **API:** the agent-state and volume endpoints now have rate limits, like the rest of the API: 600 requests a minute from one address, 600 a minute of agent states for each connection, and 60 a minute of volumes for each token. Over a limit, wait a minute and send again (#806).
+- **Clients:** someone limited to some clients who enters an employee number, agent ID or queue ID already used under another client is told to ask a planner who sees every client (#801).
+- **Guides:** the description of what a person who works for two clients shows to each client's staff is now exact (#823).
+
 ## 0.8.293 (2026-11-08)
 - **Imports:** an .xlsx is read as it unpacks, with real limits on what it holds, whatever the file says about itself: Excel's own last row and column, 250,000 rows, and 5 MB of data, as for a CSV. Large sheets need a tenth of the memory, and a damaged cell says the file can't be read instead of showing an error page (#798).
 - **Volume imports:** the preview takes the same short time however much stored history the file overlaps: 10,000 intervals in about a second, down from 40 (#799).
