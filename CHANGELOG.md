@@ -1,5 +1,30 @@
 # Changes
 
+## 0.8.301 (2026-11-11)
+- **Published schedules:** a break or other activity you added to a shift can be removed again. Its **Edit** shows **Remove**, with a box asking why (#401).
+- **Search finds clients:** by name or code, for anyone who sees more than one client, each finding only their own.
+- **Search understands Canadian and British spellings:** typing them finds the same pages, settings and guides as the US spellings the app uses.
+
+## 0.8.300 (2026-11-11)
+- **Search:** press Ctrl+J (⌘J on a Mac) or `/`, or click **Jump to…** in the top bar, to find a person, team, line of business, site, schedule, forecast, time off or swap request, a settings page or a guide, by name, employee number or ACD ID. Before you type, it lists the places you opened last. Press Enter for the search page, with a filter for each kind.
+- **Search follows the pages:** each person finds only what their own pages already show them. Admins also find settings and users; agents find their own time off and swaps, and the guides.
+
+## 0.8.299 (2026-11-11)
+- **Labor rules, Canada (federal):** shifts and extra hours under 3 hours no longer warn. Federal reporting pay is owed only when someone is called in outside their schedule, which a schedule can't tell, so payroll settles it (Canada rule pack 2026.11.1).
+
+## 0.8.298 (2026-11-10)
+- **Settings → System:** a background job that failed stops being listed once a job of the same kind has run fine after it, so a warning no longer stays all day after the problem is over.
+- **Settings → System:** jobs that were running when the server or its background jobs stopped are listed on their own, as "cut short", rather than as failures of the jobs themselves. It's a warning, and clears once they've run again.
+- **Settings → System:** **Clear these failures** clears the failed background jobs listed there, once you've seen to them. It's recorded in the audit trail.
+- **Fixed notices:** when something admins were told needs looking at has been put right for an hour, they're told once, on their Notifications page and devices and by email ("Fixed: background jobs are running again"). Settings → System lists what was fixed in the last day, and `erlangly status` adds a line for it.
+
+## 0.8.297 (2026-11-10)
+- **0.8.296's changes, released again:** its build was fine, but a test failed by chance (a page's random security code happened to contain a client's name), so it didn't go out. The test now can't fail that way.
+
+## 0.8.296 (2026-11-10)
+- **Schedules: how a day's need adds up:** under a day's figures, one line now shows where the hours needed come from, for example "Needs 342.7 hours: 348.1 from the Reservations forecast published October 22, less 5.4 for people away within the 11.5% shrinkage plan". It names when the forecast last changed, each line of business's own shrinkage when they differ, and lines with no published forecast that day. Pointing at an interval in the coverage strip shows the same split. Days already worked say they keep what they were measured against (#769).
+- **Website:** the "Erlangly for BPOs" film is on /videos and in the Several clients guide, and /trust and the security questionnaire say the erlangly command's updates are signed.
+
 ## 0.8.295 (2026-11-09)
 - **ACD time for pay:** a new `GET /api/v1/acd_time`, and `erlangly acd-time` on the server, give the ACD's own record of each person's time, by person and day: logged in, on the phones (available, on a contact, after-contact work), and break and aux. It's labeled as the ACD's record, never hours worked. Your payroll decides what's owed, by the law where people work (#833).
 - **Against the schedule:** each day also shows the paid minutes scheduled, as `/hours` gives them, and the paid time on the phones with no ACD time behind it, so a missed login or a missed day shows up for your payroll adjustments process. Erlangly flags what looks wrong, such as someone who seems never to have logged out, and never changes the time. After upgrading, past days fill in over the following days, newest first (#833).
