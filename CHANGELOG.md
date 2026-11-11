@@ -1,5 +1,25 @@
 # Changes
 
+## 0.8.307 (2026-11-11)
+- **Security: clients kept apart when a line moves (CS-11):** when a line of business moves from one client to another, someone limited to one of those clients no longer sees the other's name: a person's page, People → Changes, a person's activity and a draft's reasons to generate again say the line moved to (or from) "another client". Anyone who sees both clients still sees the names (#858).
+
+## 0.8.306 (2026-11-11)
+- **Trash:** draft forecasts, schedule periods that only have drafts, discarded drafts, holidays added here and saved wallboard views go to **Settings → Trash** for 30 days when deleted, instead of disappearing, and can be put back from there. Deleting one says "Moved to Trash" with **Undo**, rather than asking "Are you sure?". After 30 days they're gone for good. Only people who can delete something see Trash, and each sees only what they could have deleted (#848).
+- Exceptions, and schedule periods that already have a schedule, still delete at once, after asking.
+
+## 0.8.305 (2026-11-11)
+- **Shift patterns:** a pattern can have different hours on some days: later starts and shorter shifts on Saturday, say, in the same pattern as the weekdays. Set them under **Different hours on some days** on the pattern's form; a day left blank works the usual hours (#576).
+
+## 0.8.304 (2026-11-11)
+- **What's been going on with someone:** a person's page has **What's been going on with Tanya**, a timeline of what was done to and with them in the last 2 weeks, 30 or 90 days, a day at a time, in plain words with who did it and when: shifts and breaks changed or removed by hand, swaps, time off, exceptions, and changes to their details, team, lines of business, contracts and availability. For a supervisor before a one-to-one. Each person sees only what their own pages already show them.
+
+## 0.8.303 (2026-11-11)
+- The same as 0.8.302, released again: 0.8.302's release check timed out downloading its image, so it never reached staging.
+
+## 0.8.302 (2026-11-11)
+- **New on your ACD:** an agent ID your ACD sends that nobody in Erlangly has now waits under **Settings → Connections → New on your ACD**, with its connection, when it was first and last seen, and how much it's sent. Match it to its person once, and their states count for adherence and the floor from then on, or set it aside as **Not ours** (a test login, a supervisor's ID), and it isn't asked about again. Not ours keeps a list of its own, to match or ask about again later.
+- The Connections list, Settings → System and `erlangly status` say how many are waiting.
+
 ## 0.8.301 (2026-11-11)
 - **Published schedules:** a break or other activity you added to a shift can be removed again. Its **Edit** shows **Remove**, with a box asking why (#401).
 - **Search finds clients:** by name or code, for anyone who sees more than one client, each finding only their own.
