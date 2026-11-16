@@ -1,5 +1,68 @@
 # Changes
 
+## 0.8.325 (2026-11-15)
+- **Publish a schedule later:** **Publish later…**, beside **Publish to agents**, picks a day and a time for a schedule to go out, before its period starts: Friday at 09:00, say, rather than when you finish at 23:00. Agents see their shifts, and are told, at that time. Until then the schedule's page and the Schedule list say when it publishes, changes you make go out with it, and **Change or cancel** moves the time or calls it off (#893).
+- Labor law has its look as you pick the time, as for publishing now, and again at that time. If it then finds violations, or warnings you didn't go ahead with, the schedule isn't published, and the admins and planners who see its client are told why (#893).
+
+## 0.8.324 (2026-11-15)
+- **Security update:** Erlangly's web server, Thruster, is built with Go 1.27.4 and klauspost/compress 1.20.4. Go 1.27.4 fixes a crash in web servers that cap the size of what they're sent, as Erlangly's does (CVE-2026-97054), and compress 1.20.2 fixes a crash in its compression (CVE-2026-116591) (#892).
+
+## 0.8.323 (2026-11-15)
+- **Half hours in time zones 45 minutes off the hour:** in Nepal, Eucla (Western Australia) and the Chatham Islands, an organization that plans in half hours now imports volumes and forecasts on the line's own half hours (08:00, 08:30), instead of refusing every row. Email and tickets planned to their response target there now get the people they need, where before they got none. Agent-state summaries are taken on the file's own half hours or on UTC's (#889, for #814).
+- **Agent-state summaries:** an interval that starts a few seconds in, like 09:00:45, is refused, as volume and forecast imports refuse it, instead of being scored as logged off (#889).
+- The Erlang C calculator on erlangly.com will write those zones' half hours the same way once it's next deployed (#889).
+
+## 0.8.322 (2026-11-15)
+- **Security update:** Erlangly's app server, Puma, is on 8.0.3, for seven advisories published on 2026-11-15. Five are about slow or stalled connections: a client that sends or reads very slowly could hold a connection or a worker longer than it should, keep others waiting, or keep the server from stopping cleanly. The other two are in Puma's own TLS and control-server options, which Erlangly doesn't use (#890).
+
+## 0.8.321 (2026-11-14)
+- **Sample data:** the simulated ACD shows people missing from the ACD on lines that look for them, logs agents off for activities their line lets them log off for, and now and then drops someone for a moment, as a real floor does (#888).
+
+## 0.8.320 (2026-11-14)
+- **People missing from the ACD (stage 1):** turn on *Find people missing from the ACD* for a line of business. The wallboard and Intraday then show who isn't logged in to the ACD when they should be, from the moment they should have been. Each person's day (on their page) shows when, for how long and why it ended, beside their shift and the states the ACD sent. It's off on every line until you turn it on (#885, #886).
+- **Importing agent states:** tick *It's everyone on this connection, for whole days* for a complete export, and someone not in it on those days is found missing from the ACD where their line looks; otherwise they're *Can't tell*, never missing (#887).
+- Connections that report late can say by how much (*Reports late by*), so nobody's found missing before their states could have arrived (#885).
+
+## 0.8.319 (2026-11-14)
+- **Adherence:** where your floor lets agents log off the ACD for lunch or another activity, being logged off then counts as in adherence for it (Settings → Activities, *ACD login*; per client or line under *Different for a client or line of business*). Every activity needs the login as before until you say otherwise (#882, #884).
+- The website's third-party notices list msgpack 1.8.7 (#883).
+
+## 0.8.318 (2026-11-13)
+- **Breaks don't stack where everyone's short.** Evening out breaks, when generating or with *Even out breaks…*, now puts breaks where they leave the most people on the phone, so two breaks no longer land in the same 15 minutes and leave nobody on. Shifts are placed as before (#880).
+
+## 0.8.317 (2026-11-13)
+- **Demo floors:** a line of business in a floor file can let supervisors schedule activities where there's overage (`supervisor_activities: true`). The Iterum demo has 9-hour days with an hour's lunch, and supervisors' activities on both lines (#879).
+- The Iterum demo has two lines of business, one per site, with forecasts its people can carry (#878).
+
+## 0.8.316 (2026-11-13)
+- **Security update:** msgpack 1.8.7, which the release's image scan asked for (CVE-2026-126366, in a part Erlangly doesn't use). 0.8.315's demo links go out with it (#877).
+
+## 0.8.315 (2026-11-13)
+- **Demo links open as any view (for demo installs):** `erlangly demo link "NAME" EMAIL admin` (or `planner`, `supervisor`, `agent`) makes a link that opens straight into that view, the planner by default. A demo floor now has an admin view too, and its planner is a planner rather than an admin (#876).
+
+## 0.8.314 (2026-11-12)
+- **Removing sample data works after it's run live:** the volumes the simulated ACD gave the sample's lines of business are removed with them. Before, "Remove sample data", and a demo install's reset, failed once the sample had played a day (#874).
+- **Demo floor for Iterum Connections:** the private floor file for its demo, kept out of the image (#871).
+
+## 0.8.313 (2026-11-12)
+- **Demo links (for demo installs):** `erlangly demo link "NAME" EMAIL` makes a link that signs one person straight in to a demo, with no password, for 30 days. `erlangly demo links` lists them, with first and last use, and `erlangly demo revoke` stops one. A demo floor now comes with a planner, a supervisor and an agent to sign in as, and a menu in the demo banner switches between them. On a demo install, the sign-in page is only for the server admin (planning/34, step 3).
+
+## 0.8.312 (2026-11-12)
+- **Demo mode (for demo installs):** with `DEMO=1` in `/etc/erlangly/erlangly.conf`, a banner on every page says it's a demo with made-up data (its wording can be set with `DEMO_NOTE`). Nothing leaves the install: no email, push or webhooks, though notifications still show in the app. Imports, exports, new ACD connections, API tokens, integrations, AI assistants, users, sign-in settings and the license are off, and their links are hidden. The demo's floor is reset every night (planning/34, step 1).
+
+## 0.8.311 (2026-11-12)
+- **Demo floors (for demo installs):** `erlangly demo load FILE.yml` builds a whole sample contact center from a file: sites, clients, lines of business, teams, people and shift patterns, with ten weeks of history ending yesterday, a forecast, and schedules published for this week and next. `erlangly demo reset` loads it again from today, and `erlangly demo remove` takes it away. On a demo install it's reloaded every night. Everything it loads is sample data, which counts toward the license and is removed in one go (planning/34, step 2).
+
+## 0.8.310 (2026-11-12)
+- **Wording fixes:** a generating draft says it usually takes a few seconds; a read-only personal token's refusal says it's a personal token; "dialer" in US English; and a line of business's time zone hint says schedules are laid out in its client's time zone (#809).
+
+## 0.8.309 (2026-11-11)
+- **Trash moves to the main menu:** it's at the bottom of the menu, with a can that looks full when there's something in it, for anyone who can delete something. It's no longer under Settings.
+- **Trash on the pages things are deleted from:** while something deleted from Forecast, Schedule, Labor rules or the Wallboard is in Trash, a **Trash** link at the foot of that page shows just those things, to put back (#863).
+
+## 0.8.308 (2026-11-11)
+- **Fixed:** a page title with an apostrophe, like "What's been going on with Tanya", showed as "What&#39;s…" in the browser tab.
+
 ## 0.8.307 (2026-11-11)
 - **Security: clients kept apart when a line moves (CS-11):** when a line of business moves from one client to another, someone limited to one of those clients no longer sees the other's name: a person's page, People → Changes, a person's activity and a draft's reasons to generate again say the line moved to (or from) "another client". Anyone who sees both clients still sees the names (#858).
 

@@ -79,9 +79,19 @@ Usage: erlangly <command>
   webhooks ca FILE.pem|off                Trust your internal certificate authority for webhooks, besides the system's
                                           (restarts Erlangly; in the audit trail)
 
+  demo load FILE.yml                      Load a demo floor from its file, anchored to today: sample people, ten
+                                          weeks of history, a forecast and schedules published for this week and next
+  demo reset                              Load that floor again from today (in demo mode, done every night at 03:00)
+  demo remove                             Remove the demo floor and all sample data (demo links stay)
+  demo link "NAME" EMAIL [VIEW]           A demo link for one person: it signs them in, with no password, for 30 days,
+                                          as the planner or VIEW: admin, supervisor or agent (in demo mode, with a
+                                          floor loaded)
+  demo links                              The demo links: who for, made, expiry, first and last use, revoked
+  demo revoke CODE|EMAIL                  Stop a demo link, or all of someone's
+
 Settings: $CONF (TLS_DOMAIN, ERLANGLY_URL, TRUSTED_PROXIES, ERLANGLY_HTTP_PORT, ERLANGLY_IMAGE,
           LITESTREAM_REPLICA_URL, LITESTREAM_ACCESS_KEY_ID, LITESTREAM_SECRET_ACCESS_KEY,
-          ERLANGLY_DAILY_BACKUPS, ERLANGLY_WEEKLY_BACKUPS, WEBHOOK_PRIVATE_RANGES, WEBHOOK_CA_FILE)
+          ERLANGLY_DAILY_BACKUPS, ERLANGLY_WEEKLY_BACKUPS, WEBHOOK_PRIVATE_RANGES, WEBHOOK_CA_FILE, DEMO, DEMO_NOTE)
 USAGE
 }
 
@@ -132,7 +142,8 @@ load_settings() {
         # later `erlangly upgrade` reinstall it (installs from before 0.8.33 still have it in their settings).
         ERLANGLY_IMAGE | ERLANGLY_HTTP_PORT | ERLANGLY_HTTPS_PORT | TLS_DOMAIN | ERLANGLY_URL | TRUSTED_PROXIES | \
           LITESTREAM_REPLICA_URL | LITESTREAM_ACCESS_KEY_ID | LITESTREAM_SECRET_ACCESS_KEY | \
-          ERLANGLY_DAILY_BACKUPS | ERLANGLY_WEEKLY_BACKUPS | ERLANGLY_SECRET_KEY | WEBHOOK_PRIVATE_RANGES | WEBHOOK_CA_FILE) printf -v "$key" '%s' "$value" ;;
+          ERLANGLY_DAILY_BACKUPS | ERLANGLY_WEEKLY_BACKUPS | ERLANGLY_SECRET_KEY | WEBHOOK_PRIVATE_RANGES | WEBHOOK_CA_FILE | \
+          DEMO | DEMO_NOTE) printf -v "$key" '%s' "$value" ;;
       esac
     done < "$CONF"
   fi
@@ -152,6 +163,8 @@ load_settings() {
   ERLANGLY_SECRET_KEY=${ERLANGLY_SECRET_KEY:-}
   WEBHOOK_PRIVATE_RANGES=${WEBHOOK_PRIVATE_RANGES:-}
   WEBHOOK_CA_FILE=${WEBHOOK_CA_FILE:-}
+  DEMO=${DEMO:-}
+  DEMO_NOTE=${DEMO_NOTE:-}
   check_settings
 }
 
@@ -178,6 +191,8 @@ check_settings() {
     proxy_address "$range" || fail "WEBHOOK_PRIVATE_RANGES should be ranges like 10.20.0.0/16 (several separated by commas), set with erlangly webhooks allow, not: $range"
   done
   [[ -z "$WEBHOOK_CA_FILE" || "$WEBHOOK_CA_FILE" =~ ^/[A-Za-z0-9._/-]+$ ]] || fail "WEBHOOK_CA_FILE should be the path of a certificate, set with erlangly webhooks ca FILE.pem"
+  [[ "$DEMO" =~ ^[01]?$ ]] || fail "DEMO should be 1 for a demo install, or empty"
+  [[ ${#DEMO_NOTE} -le 200 && "$DEMO_NOTE" != *[[:cntrl:]]* ]] || fail "DEMO_NOTE should be a line of up to 200 characters, like: Made-up sample data, shaped from Example's public website."
 }
 
 # An address for TRUSTED_PROXIES, or a range no wider than /16 (IPv4) or /48 (IPv6).
@@ -231,6 +246,14 @@ SETTINGS
 # with (kept while Litestream is on). A new server with this file reads them as before: keep a copy of this file
 # somewhere other than this server, as safe as your backups.
 ERLANGLY_SECRET_KEY=$ERLANGLY_SECRET_KEY
+SETTINGS
+  fi &&
+  if [ -n "$DEMO$DEMO_NOTE" ]; then
+    cat <<SETTINGS
+# A demo install (DEMO=1), for showing Erlangly on made-up sample data: nothing done in it leaves it, and every page says
+# so, with DEMO_NOTE's line about the sample data when there is one.
+DEMO=$DEMO
+DEMO_NOTE=$DEMO_NOTE
 SETTINGS
   fi
 }
@@ -348,7 +371,7 @@ remove_container() {
 }
 
 start_container() {
-  local image=$1 published=(-p "$ERLANGLY_HTTP_PORT:80") tls=() litestream=() backups=() logs=() webhooks=()
+  local image=$1 published=(-p "$ERLANGLY_HTTP_PORT:80") tls=() litestream=() backups=() logs=() webhooks=() demo=()
   [ -n "$TLS_DOMAIN" ] && tls=(-p "$ERLANGLY_HTTPS_PORT:443" -e "TLS_DOMAIN=$TLS_DOMAIN")
   # Behind the customer's own HTTPS proxy: the proxy terminates TLS, and Erlangly takes its word for each
   # visitor's address when it connects from this server or from TRUSTED_PROXIES. Over IPv4 only: Docker
@@ -371,13 +394,16 @@ start_container() {
   [ -z "${WEBHOOK_PRIVATE_RANGES:-}" ] || webhooks+=(-e "WEBHOOK_PRIVATE_RANGES=$WEBHOOK_PRIVATE_RANGES")
   [ -z "${WEBHOOK_CA_FILE:-}" ] || [ ! -r "$WEBHOOK_CA_FILE" ] ||
     webhooks+=(-v "$WEBHOOK_CA_FILE:/etc/erlangly/webhook-ca.pem:ro" -e "WEBHOOK_CA_FILE=/etc/erlangly/webhook-ca.pem")
+  # A demo install (planning/34_Demo_Instances.md §4), and its banner's line about the sample data.
+  [ "${DEMO:-}" != 1 ] || demo=(-e "DEMO=1")
+  [ "${DEMO:-}" != 1 ] || [ -z "${DEMO_NOTE:-}" ] || demo+=(-e "DEMO_NOTE=$DEMO_NOTE")
   # Docker's usual log driver keeps the log forever, until it fills the disk: keep the newest 100 MB.
   # Other drivers (journald, a log shipper) have limits of their own and are left as the server has them.
   [ "$(docker info --format '{{.LoggingDriver}}' 2>/dev/null)" != json-file ] || logs=(--log-opt max-size=20m --log-opt max-file=5)
   ensure_network # first: if Docker can't make it, Erlangly carries on as it was
   remove_container
   docker run -d --name "$CONTAINER" --network "$NETWORK" --restart unless-stopped "${logs[@]}" \
-    "${published[@]}" "${tls[@]}" "${litestream[@]}" "${backups[@]}" "${webhooks[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
+    "${published[@]}" "${tls[@]}" "${litestream[@]}" "${backups[@]}" "${webhooks[@]}" "${demo[@]}" -v "$VOLUME:/rails/storage" "$image" > /dev/null
 }
 
 # This server's addresses, IPv4 and IPv6, one line: webhooks never reach them, nor a range holding one. From ip, or
@@ -1128,7 +1154,7 @@ for argument; do case $argument in -h | --help) usage; exit 0 ;; esac; done
 case "${1:-}" in
   "" | help | -h | --help) usage; exit 0 ;;
   install | status | logs | restart | upgrade | rollback | backup | restore | export | version | --version | setup-link | reset-link | \
-    schedule | hours | acd-time | timeoff | balances | people | licence | sso | two-factor | volumes | webhooks) ;;
+    schedule | hours | acd-time | timeoff | balances | people | licence | sso | two-factor | volumes | webhooks | demo) ;;
   *) printf 'erlangly: there'"'"'s no command "%s"\n\n' "$1" >&2; usage >&2; exit 1 ;;
 esac
 
@@ -1186,6 +1212,21 @@ case "${1:-}" in
     if [ "${2:-}" = import ] && [ -n "${3:-}" ] && [ "$3" != - ]; then
       [ -r "$3" ] || fail "can't read $3"
       docker exec -i "$CONTAINER" bin/wfm volumes import - < "$3"
+    else
+      docker exec -i "$CONTAINER" bin/wfm "$@"
+    fi ;;
+  demo)
+    up || fail "Erlangly isn't running"
+    [ ! -t 2 ] || [[ ! "${2:-}" =~ ^(load|reset)$ ]] || printf 'Building the floor (a minute or so)…\n' >&2
+    # The floor file is on this server, not in the container: send it in.
+    if [ "${2:-}" = load ] && [ -n "${3:-}" ] && [ "$3" != - ]; then
+      [ -r "$3" ] || fail "can't read $3"
+      docker exec -i "$CONTAINER" bin/wfm demo load - < "$3"
+    elif [ "${2:-}" = link ]; then
+      # A link is its path in Erlangly: the address people open goes before it, as for reset-link.
+      path=$(docker exec "$CONTAINER" bin/wfm "$@") || exit 1
+      echo "$(url)$path"
+      echo "  It works for 30 days. erlangly demo links shows when it's used; erlangly demo revoke stops it." >&2
     else
       docker exec -i "$CONTAINER" bin/wfm "$@"
     fi ;;

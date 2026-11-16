@@ -67,7 +67,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | marcel | 1.2.1 | MIT, Apache-2.0 |
 | mini_mime | 1.1.5 | MIT |
 | minitest | 6.0.6 | MIT |
-| msgpack | 1.8.5 | Apache-2.0 |
+| msgpack | 1.8.7 | Apache-2.0 |
 | net-http | 0.9.1 | Ruby, BSD-2-Clause |
 | net-imap | 0.6.7 | Ruby, BSD-2-Clause |
 | net-pop | 0.1.2 | Ruby, BSD-2-Clause |
@@ -86,7 +86,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | prism | 1.9.0 | MIT |
 | propshaft | 1.3.2 | MIT |
 | public_suffix | 7.0.5 | MIT |
-| puma | 8.0.2 | BSD-3-Clause |
+| puma | 8.0.3 | BSD-3-Clause |
 | raabro | 1.5.0 | MIT |
 | racc | 1.8.1 | Ruby, BSD-2-Clause |
 | rack | 3.2.8 | MIT |
@@ -214,12 +214,12 @@ The JavaScript the app's pages load that isn't Erlangly's own (config/importmap.
 
 ## Programs
 
-Two Go programs: Litestream copies the database off the server when you set it up to, and Thruster, from the thruster gem, serves the app over HTTP and HTTPS. The image builds Thruster from its source, at the gem's version, with a newer Go and golang.org/x/net than the gem's own build has. Each includes Go's runtime and standard library (BSD-3-Clause) and the Go modules listed under it, with their licence texts below.
+Two Go programs: Litestream copies the database off the server when you set it up to, and Thruster, from the thruster gem, serves the app over HTTP and HTTPS. The image builds Thruster from its source, at the gem's version, with a newer Go, golang.org/x/net and klauspost/compress than the gem's own build has. Each includes Go's runtime and standard library (BSD-3-Clause) and the Go modules listed under it, with their licence texts below.
 
 | Program | Version | Licence | Built with |
 |---|---|---|---|
 | Litestream | 0.5.17 | Apache-2.0 | go1.25.14 |
-| Thruster | 0.1.27 | MIT | go1.27.3 |
+| Thruster | 0.1.27 | MIT | go1.27.4 |
 
 ### Litestream's Go modules
 
@@ -327,7 +327,7 @@ Two Go programs: Litestream copies the database off the server when you set it u
 
 | Module | Version | Licence |
 |---|---|---|
-| github.com/klauspost/compress | v1.20.0 | BSD-3-Clause, Apache-2.0, MIT |
+| github.com/klauspost/compress | v1.20.4 | BSD-3-Clause, Apache-2.0, MIT |
 | golang.org/x/crypto | v0.58.0 | BSD-3-Clause |
 | golang.org/x/net | v0.62.0 | BSD-3-Clause |
 | golang.org/x/text | v0.43.0 | BSD-3-Clause |
@@ -1756,7 +1756,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For msgpack 1.8.5:
+For msgpack 1.8.7:
 
 ```text
 Apache License
@@ -4673,7 +4673,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For puma 8.0.2:
+For puma 8.0.3:
 
 ```text
 BSD 3-Clause License
@@ -7708,7 +7708,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-For github.com/klauspost/compress v1.18.0 and github.com/klauspost/compress v1.20.0:
+For github.com/klauspost/compress v1.18.0 and github.com/klauspost/compress v1.20.4:
 
 ```text
 Copyright (c) 2012 The Go Authors. All rights reserved.
@@ -8631,7 +8631,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-For golang.org/x/crypto v0.52.0, golang.org/x/crypto/x509roots/fallback v0.0.0-20260209214922-2f26647a795e, golang.org/x/net v0.55.0, golang.org/x/oauth2 v0.36.0, golang.org/x/sync v0.21.0, golang.org/x/sys v0.45.0, golang.org/x/text v0.39.0, golang.org/x/time v0.7.0, golang.org/x/crypto v0.58.0, golang.org/x/net v0.62.0, golang.org/x/text v0.43.0 and Go's runtime and standard library 1.25.14, 1.27.3:
+For golang.org/x/crypto v0.52.0, golang.org/x/crypto/x509roots/fallback v0.0.0-20260209214922-2f26647a795e, golang.org/x/net v0.55.0, golang.org/x/oauth2 v0.36.0, golang.org/x/sync v0.21.0, golang.org/x/sys v0.45.0, golang.org/x/text v0.39.0, golang.org/x/time v0.7.0, golang.org/x/crypto v0.58.0, golang.org/x/net v0.62.0, golang.org/x/text v0.43.0 and Go's runtime and standard library 1.25.14, 1.27.4:
 
 ```text
 Copyright 2009 The Go Authors.
