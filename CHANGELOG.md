@@ -1,5 +1,24 @@
 # Changes
 
+## 0.8.331 (2026-11-17)
+- **A scripted test day for finding people missing from the ACD:** an admin can make one sample person the test agent from their day page. A connection of their own, the Test ACD, then plays the same script on each of their shifts: a logout mid-shift, short disconnects, a logout and the wrong state in breaks, leaving just before the end, the connection going quiet, and repeated and late events. Their day lists the script, and **Back to the sample ACD** ends it. Only sample people can be the test agent (#855).
+
+## 0.8.330 (2026-11-17)
+- **Everyone missing from the ACD over a day:** Intraday's **Missing now** leads to a page listing everyone found missing from the ACD on a day, a day at a time, with those found before and replaced, each linking to the person's day (#855).
+
+## 0.8.329 (2026-11-17)
+- **Twilio Flex setup:** the steps for the API key give the Twilio Console's current path, Admin → Account management → Keys & Credentials → API keys & tokens, and say the key reads your queues too.
+
+## 0.8.328 (2026-11-17)
+- **Breaks and lunches stay inside their windows:** on 30-minute intervals, generation could start a break or lunch up to half an hour before the window its shift pattern sets, so a pattern that kept within a meal rule on paper could still give meal warnings. Now each one starts inside its window, and one set for a time of day, like training at 12:15, stays at that time. A window too narrow to fit is named in the draft, as other activities without room are. Schedules already made keep their breaks until they're generated again (#902).
+
+## 0.8.327 (2026-11-16)
+- **Demo floors with long days get enough lunches:** a demo floor that doesn't set its own breaks gives days of 9 hours or more another lunch, and one more every 3.5 hours past that, so no one works 5 hours without a 30-minute break, as Canadian federal law asks (#897).
+- **Scheduling guide:** its shift pattern and schedule pictures show the sample's new lunch window and figures (#897).
+
+## 0.8.326 (2026-11-16)
+- **Sample data keeps lunches within 5 hours:** the sample's full-day lunch now starts by 4.5 hours into the shift, and 5-hour part days get a lunch too, so a sample loaded on a Canadian install no longer shows "meal due before 5 hours" on its first schedule (#897).
+
 ## 0.8.325 (2026-11-15)
 - **Publish a schedule later:** **Publish later…**, beside **Publish to agents**, picks a day and a time for a schedule to go out, before its period starts: Friday at 09:00, say, rather than when you finish at 23:00. Agents see their shifts, and are told, at that time. Until then the schedule's page and the Schedule list say when it publishes, changes you make go out with it, and **Change or cancel** moves the time or calls it off (#893).
 - Labor law has its look as you pick the time, as for publishing now, and again at that time. If it then finds violations, or warnings you didn't go ahead with, the schedule isn't published, and the admins and planners who see its client are told why (#893).
