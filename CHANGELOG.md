@@ -1,5 +1,12 @@
 # Changes
 
+## 0.8.333 (2026-11-18)
+- **Sample data keeps to its own Sample ACD:** its made-up agent states play only for sample people, on the Sample ACD it made. A connection of yours named Sample is never fed by it or removed with it. If a connection or people of yours already use the sample's source, loading sample data says which, and what to do (#908).
+- **Nobody real on the sample's ACDs:** an agent ID for someone real can't go on the Sample ACD or the Test ACD, by hand or in a people import, and an import that names no source puts IDs on your only connection. When you upgrade, sample people you made yours before now lose the agent IDs the sample made up for them, and are logged off its ACD if it had them signed in. IDs you typed or imported onto the Sample ACD stay: it then counts as yours, and the sample's made-up states stop playing on it (#908).
+
+## 0.8.332 (2026-11-18)
+- **A connection named Sample Test is offered again:** when you add a person's agent ID, the System list left out any connection of yours named Sample Test, not only the test day's own Test ACD. Now it leaves out just the Test ACD (#855).
+
 ## 0.8.331 (2026-11-17)
 - **A scripted test day for finding people missing from the ACD:** an admin can make one sample person the test agent from their day page. A connection of their own, the Test ACD, then plays the same script on each of their shifts: a logout mid-shift, short disconnects, a logout and the wrong state in breaks, leaving just before the end, the connection going quiet, and repeated and late events. Their day lists the script, and **Back to the sample ACD** ends it. Only sample people can be the test agent (#855).
 
