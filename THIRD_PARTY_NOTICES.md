@@ -86,7 +86,7 @@ The gems Erlangly installs (Gemfile.lock, without the ones for development and t
 | prism | 1.9.0 | MIT |
 | propshaft | 1.3.2 | MIT |
 | public_suffix | 7.0.5 | MIT |
-| puma | 8.0.3 | BSD-3-Clause |
+| puma | 8.0.4 | BSD-3-Clause |
 | raabro | 1.5.0 | MIT |
 | racc | 1.8.1 | Ruby, BSD-2-Clause |
 | rack | 3.2.8 | MIT |
@@ -4673,7 +4673,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For puma 8.0.3:
+For puma 8.0.4:
 
 ```text
 BSD 3-Clause License

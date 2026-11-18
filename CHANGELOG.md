@@ -1,5 +1,14 @@
 # Changes
 
+## 0.8.335 (2026-11-18)
+- **Amazon Connect: service level is right again.** Connect sends the target it's asked about back as 20.0 for 20 seconds, and Erlangly didn't recognize it, so calls answered within target and short abandons were always 0, and service level showed 0% in Intraday on every Amazon Connect connection. Intervals read from this release on have them; ones read before it keep 0 (#921).
+- **Amazon Connect's setup page** no longer says it's built from AWS's API documentation, as it has now run against a live instance, and says that IAM's review may warn about some of the policy's actions: create the policy anyway (#921).
+
+## 0.8.334 (2026-11-18)
+- **Two connections can each read a queue with the same ID:** NICE CXone and Five9 number their skills, so two clients' accounts can have queues with the same number. A queue a connection reads is now known by its connection and its ID, so the second connection reads its own instead of leaving it out. A queue added by hand still has an ID of its own, and the alert when a connection's queue clashes with one says which line it's on and how to free the ID (#788).
+- **Volume imports and the volumes API name a queue's connection when they need to:** where two connections have a queue with the same ID, a row says which in an `acd_source` column, and the import asks for it otherwise. A connection's token means only its own queues. Removing a connection also removes its queues whose ID another connection's queue has, and says which (#788).
+- **App server update:** puma 8.0.4. Its two security fixes don't reach Erlangly, which doesn't serve TLS through puma, so this one is routine.
+
 ## 0.8.333 (2026-11-18)
 - **Sample data keeps to its own Sample ACD:** its made-up agent states play only for sample people, on the Sample ACD it made. A connection of yours named Sample is never fed by it or removed with it. If a connection or people of yours already use the sample's source, loading sample data says which, and what to do (#908).
 - **Nobody real on the sample's ACDs:** an agent ID for someone real can't go on the Sample ACD or the Test ACD, by hand or in a people import, and an import that names no source puts IDs on your only connection. When you upgrade, sample people you made yours before now lose the agent IDs the sample made up for them, and are logged off its ACD if it had them signed in. IDs you typed or imported onto the Sample ACD stay: it then counts as yours, and the sample's made-up states stop playing on it (#908).
