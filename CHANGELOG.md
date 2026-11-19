@@ -1,5 +1,13 @@
 # Changes
 
+## 0.8.337 (2026-11-19)
+- The same as 0.8.336, released again. 0.8.336's security scan stopped on a new finding in Litestream, the image's database backup tool, which nothing outside the image can reach, so it never reached staging.
+
+## 0.8.336 (2026-11-19)
+- **Amazon Connect: a queue with no traffic yet.** A queue with no contacts in the last 4 weeks, as on a new instance, is now listed once as **No traffic yet** instead of as a voice queue. You can choose its line of business right away. When its first contacts come, the channels they come on feed that line of business, with nothing more to choose. A queue that goes quiet keeps the channels it's read on (#922).
+- **Amazon Connect: a target longer than 7 days no longer stops volume reads.** Connect counts contacts answered and abandoned within 7 days at most. So a line of business with a longer target, such as 14 days for email, made Connect refuse every volume read on its connection. That line now gets its volumes without a service level (Intraday shows a dash), and the connection's other lines are read as before (#924).
+- **Ruby 4.0.10**, with Ruby's security fixes of November 18. None of them reached Erlangly as it's configured, so this update is routine.
+
 ## 0.8.335 (2026-11-18)
 - **Amazon Connect: service level is right again.** Connect sends the target it's asked about back as 20.0 for 20 seconds, and Erlangly didn't recognize it, so calls answered within target and short abandons were always 0, and service level showed 0% in Intraday on every Amazon Connect connection. Intervals read from this release on have them; ones read before it keep 0 (#921).
 - **Amazon Connect's setup page** no longer says it's built from AWS's API documentation, as it has now run against a live instance, and says that IAM's review may warn about some of the policy's actions: create the policy anyway (#921).

@@ -6,7 +6,7 @@ Thank you to everyone who makes them.
 
 ## Ruby
 
-Erlangly runs on Ruby 4.0.9, from the official Ruby image (ruby:4.0.9-slim), under Ruby's licence or the 2-clause BSD licence (texts below). Ruby comes with its standard library, default gems and bundled gems: the parts under other licences are listed in Ruby's LEGAL file (below), and each bundled gem's licence is in its folder in the image (`/usr/local/lib/ruby/gems`).
+Erlangly runs on Ruby 4.0.10, from the official Ruby image (ruby:4.0.10-slim), under Ruby's licence or the 2-clause BSD licence (texts below). Ruby comes with its standard library, default gems and bundled gems: the parts under other licences are listed in Ruby's LEGAL file (below), and each bundled gem's licence is in its folder in the image (`/usr/local/lib/ruby/gems`).
 
 ## Ruby gems
 
@@ -545,7 +545,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-For base64 0.3.0, date 3.5.1, drb 2.2.3, erb 6.0.7, io-console 0.9.4, irb 1.18.0, json 3.0.2, logger 1.7.0, net-http 0.9.1, net-imap 0.6.7, net-pop 0.1.2, net-protocol 0.4.0, openssl 4.0.2, ostruct 0.6.3, pp 0.6.4, prettyprint 0.2.0, racc 1.8.1, reline 0.7.0, securerandom 0.4.1, timeout 0.6.1, tsort 0.2.0, uri 1.1.1 and Ruby 4.0.9:
+For base64 0.3.0, date 3.5.1, drb 2.2.3, erb 6.0.7, io-console 0.9.4, irb 1.18.0, json 3.0.2, logger 1.7.0, net-http 0.9.1, net-imap 0.6.7, net-pop 0.1.2, net-protocol 0.4.0, openssl 4.0.2, ostruct 0.6.3, pp 0.6.4, prettyprint 0.2.0, racc 1.8.1, reline 0.7.0, securerandom 0.4.1, timeout 0.6.1, tsort 0.2.0, uri 1.1.1 and Ruby 4.0.10:
 
 ```text
 Copyright (C) 1993-2013 Yukihiro Matsumoto. All rights reserved.
@@ -9448,7 +9448,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-For Ruby 4.0.9:
+For Ruby 4.0.10:
 
 ```text
 {日本語}[rdoc-ref:COPYING.ja]
@@ -9511,7 +9511,7 @@ You can redistribute it and/or modify it under either the terms of the
    PURPOSE.
 ```
 
-For Ruby 4.0.9:
+For Ruby 4.0.10:
 
 ```text
 # -*- rdoc -*-
@@ -10819,4 +10819,4 @@ mentioned below.
 
 ## Debian packages
 
-The image is built on the official Ruby image (ruby:4.0.9-slim), which is Debian. Each Debian package's copyright and licence are in the image, at `/usr/share/doc/<package>/copyright`, and `dpkg-query --show` in the container lists the packages. Their source, at these versions, is in Debian's archive (https://snapshot.debian.org). For three years after each Erlangly release, we'll also give anyone the complete, machine-readable source of the GPL and LGPL packages in its image, at the versions it has, for no more than our cost of sending it: write to licences@erlangly.com with the release's version. The copy of this file in the image lists them below, as it was built.
+The image is built on the official Ruby image (ruby:4.0.10-slim), which is Debian. Each Debian package's copyright and licence are in the image, at `/usr/share/doc/<package>/copyright`, and `dpkg-query --show` in the container lists the packages. Their source, at these versions, is in Debian's archive (https://snapshot.debian.org). For three years after each Erlangly release, we'll also give anyone the complete, machine-readable source of the GPL and LGPL packages in its image, at the versions it has, for no more than our cost of sending it: write to licences@erlangly.com with the release's version. The copy of this file in the image lists them below, as it was built.
