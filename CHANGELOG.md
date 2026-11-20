@@ -1,5 +1,8 @@
 # Changes
 
+## 0.8.338 (2026-11-19)
+- **Genesys Cloud and Twilio Flex: a queue with no traffic yet.** As with Amazon Connect since 0.8.336, a queue with no contacts in the last 4 weeks, as on a new organization or workspace, is now listed once as **No traffic yet** instead of as a voice queue. You can choose its line of business right away. When its first contacts come, the channels they come on feed that line of business, with nothing more to choose. A queue that goes quiet keeps the channels it's read on, instead of showing as no longer listed (#935).
+
 ## 0.8.337 (2026-11-19)
 - The same as 0.8.336, released again. 0.8.336's security scan stopped on a new finding in Litestream, the image's database backup tool, which nothing outside the image can reach, so it never reached staging.
 
